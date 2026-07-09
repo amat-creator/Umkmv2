@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -977,6 +976,13 @@
     // SILAKAN GANTI URL DI BAWAH INI DENGAN URL WEB APP DARI APPS SCRIPT ANDA NANTI
     const API_URL = "https://script.google.com/macros/s/AKfycbxeTNuvjBtnBrT2kow3VQQfD2Yd-pWRavtw5wRPpIG63ClLRk9AUd_C_K7PHzX6FGwP/exec";
     
+    // VARIABEL DATABASE YANG SEBELUMNYA HILANG
+    let db = { 
+        dompet: [], produk: [], pelanggan: [], transaksi: [], utang: [], alokasi: [], 
+        kategoriProduk: [], pengeluaran: [], pemasukanLain: [], simulasi: { piutang: false, utang: false, terapkanKeHeader: false }, 
+        templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''}
+    };
+
     let filterSaatIni = 'semua';
     let modePencarian = ''; 
     let tempPesanWA = ""; 
