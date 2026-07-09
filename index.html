@@ -961,6 +961,17 @@
             <p class="text-small" style="margin-bottom:10px;">Paste (Tempel) teks dari Excel ke kotak ini. Sistem otomatis membaca isinya.</p>
             <textarea id="pasteExcelText" rows="6" placeholder="Paste data Excel di sini..." style="font-size:12px; font-family:monospace;"></textarea>
             <button type="button" class="btn-blue" style="color:white; margin-bottom:0;" onclick="imporDataExcelPintar()">📥 Proses Impor Cerdas</button>
+
+            <hr style="margin:25px 0; border:0; border-top:1px dashed #ccc;">
+            
+            <h4 style="color:var(--primary); margin-bottom:5px;">💾 Backup Data Database (JSON)</h4>
+            <p class="text-small" style="margin-bottom:10px;">Download seluruh database aplikasi ini untuk diamankan ke HP/Laptop.</p>
+            <button type="button" class="btn-warning" style="margin-bottom:15px; border:none;" onclick="downloadBackupJSON()">⬇️ Download File Backup (.json)</button>
+            
+            <h4 style="color:#d81b60; margin-bottom:5px;">📂 Restore Data (Pulihkan)</h4>
+            <p class="text-small" style="margin-bottom:10px;">Pilih file backup (.json) yang pernah didownload untuk memulihkan data.</p>
+            <input type="file" id="fileRestoreJSON" accept=".json" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+            <button type="button" class="btn-green" onclick="restoreBackupJSON()">🔄 Pulihkan & Sinkron ke Sheet</button>
         </div>
     </div>
 
@@ -3361,6 +3372,67 @@ function renderDaftarTransaksiBeranda() {
         document.getElementById('listRaporPelanggan').innerHTML = html || '<div class="text-small text-center" style="padding:15px; color:gray;">Tidak ada pelanggan dengan transaksi atau kasbon.</div>';
     }
     
+    // ==========================================
+    // MESIN BACKUP & RESTORE JSON (VERSI 2 - SINKRON GOOGLE SHEET)
+    // ==========================================
+    function downloadBackupJSON() {
+        let dataLokal = JSON.stringify(db);
+        if(!dataLokal || dataLokal === '{}') {
+            return alert("Data masih kosong, tidak ada yang bisa di-backup!");
+        }
+        
+        let blob = new Blob([dataLokal], {type: "application/json"});
+        let url = URL.createObjectURL(blob);
+        
+        let a = document.createElement('a');
+        a.href = url;
+        let d = new Date(); 
+        let tglStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        a.download = `Backup_UMKM_Pro_V2_${tglStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert("✅ File backup (.json) berhasil didownload!\nSimpan file ini baik-baik.");
+    }
+
+    function restoreBackupJSON() {
+        let fileInput = document.getElementById('fileRestoreJSON');
+        let file = fileInput.files[0];
+        
+        if(!file) {
+            return alert("Pilih file backup .json nya dulu ya!");
+        }
+        
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let isiData = e.target.result;
+                let tesParse = JSON.parse(isiData); 
+                
+                if(tesParse.dompet === undefined && tesParse.produk === undefined) {
+                    return alert("❌ Format file tidak dikenali! Pastikan ini file backup dari aplikasi Sistem UMKM Pro.");
+                }
+                
+                if(confirm("⚠️ PERINGATAN!\n\nSeluruh data saat ini (di HP & di Google Sheets) akan TERTEMPA dengan data dari file backup ini.\n\nYakin ingin melanjutkan?")) {
+                    
+                    // Gabungkan data JSON ke dalam sistem
+                    db = { ...db, ...tesParse };
+                    
+                    // Gunakan fungsi bawaan Versi 2 untuk menyimpan ke HP sekaligus NGE-PUSH ke Google Sheet
+                    simpanData(); 
+                    
+                    alert("✅ Data berhasil dipulihkan!\nSistem sedang melakukan sinkronisasi ke Google Sheets.");
+                    location.reload(); 
+                }
+            } catch(err) {
+                alert("❌ Gagal membaca file! Pastikan kamu memilih file berakhiran .json yang benar.");
+            }
+        };
+        reader.readAsText(file);
+    }
 </script>
 </body>
 </html>
