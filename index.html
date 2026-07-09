@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -973,11 +974,8 @@
 </div>
 
 <script>
-    let db = { 
-        dompet: [], produk: [], pelanggan: [], transaksi: [], utang: [], alokasi: [], 
-        kategoriProduk: [], pengeluaran: [], simulasi: { piutang: false, utang: false, terapkanKeHeader: false }, 
-        templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''}
-    };
+    // SILAKAN GANTI URL DI BAWAH INI DENGAN URL WEB APP DARI APPS SCRIPT ANDA NANTI
+    const API_URL = "https://script.google.com/macros/s/AKfycbxeTNuvjBtnBrT2kow3VQQfD2Yd-pWRavtw5wRPpIG63ClLRk9AUd_C_K7PHzX6FGwP/exec";
     
     let filterSaatIni = 'semua';
     let modePencarian = ''; 
@@ -1014,7 +1012,8 @@
         } catch(e) { console.log('Suara tidak support di HP ini', e); }
     }
 
-    window.onload = function() {
+    window.onload = async function() {
+        // 1. Ambil data lokal dulu agar aplikasi tidak kosong saat loading internet
         let savedData = localStorage.getItem('sistemUMKMPro');
         if(savedData) {
             let parsedData = JSON.parse(savedData);
@@ -1022,6 +1021,19 @@
             if(typeof db.saldo !== 'undefined') { db.dompet = [{ id: Date.now(), nama: "Dompet Utama", kategori: "Kas Fisik", saldo: db.saldo, pecahan: [] }]; delete db.saldo; }
         }
         
+        // 2. AMBIL DATA TERBARU DARI GOOGLE SHEET (SINKRONISASI ONLINE)
+        try {
+            let response = await fetch(API_URL + "?aksi=ambil");
+            let sheetData = await response.json();
+            if(sheetData) {
+                db = { ...db, ...sheetData };
+                localStorage.setItem('sistemUMKMPro', JSON.stringify(db)); // Update cadangan lokal
+            }
+        } catch(e) {
+            console.log("Koneksi gagal atau belum set up Google Sheets, menggunakan data internal HP.", e);
+        }
+        
+        // 3. Pengaturan otomatis sistem bawaan aplikasi Anda
         db.pelanggan.forEach(p => { if(p.nomor && !p.info) { p.info = [{ label: 'HP', value: p.nomor }]; delete p.nomor; } if(!p.info) p.info = []; });
         if(!db.dompet || db.dompet.length === 0) { db.dompet = [{ id: Date.now(), nama: "Dompet Utama", kategori: "Kas Fisik", saldo: 0, pecahan: [] }]; }
         db.dompet.forEach(d => { if(!d.pecahan) d.pecahan = []; });
@@ -1071,7 +1083,7 @@
         updateSemuaTampilan();
     };
 
-    // MESIN BUNGA PERSEN OTOMATIS
+    // MESIN BUNGA PERSEN OTOMATIS (TETAP DIPERTAHANKAN)
     function prosesBungaOtomatis() {
         let hariIni = ambilTanggal();
         let adaPerubahan = false;
@@ -1114,8 +1126,17 @@
 
     function simpanData() { 
         db.transaksi.sort((a, b) => { if(a.tanggal === b.tanggal) return a.id - b.id; return a.tanggal > b.tanggal ? 1 : -1; });
+        
+        // Tetap simpan di HP sebagai cadangan darurat jika internet offline
         localStorage.setItem('sistemUMKMPro', JSON.stringify(db)); 
         updateSemuaTampilan(); 
+
+        // OTOMATIS KIRIM DATA TERBARU KE GOOGLE SHEET
+        fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Mencegah error CORS/keamanan di browser
+            body: JSON.stringify({ aksi: 'simpan', data: db })
+        }).catch(err => console.error("Gagal sinkronisasi ke Google Sheet:", err));
     }
 
     // WAJIB: Memastikan semua komponen ter-render saat aplikasi mulai
