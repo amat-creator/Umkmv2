@@ -1,4 +1,21 @@
 
+                            else if(u.jenis === 'Utang') d.saldo -= sisa;
+                        }
+                    }
+                    db.utang = db.utang.filter(x => String(x.id) !== String(id));
+                }
+            });
+            document.getElementById('checkSemuaUtang').checked = false;
+            simpanData();
+            alert("✅ Berhasil dihapus!");
+        }
+    }
+
+
+</script>
+</body>
+</html>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -1478,18 +1495,7 @@
     function switchKasbonTab(tab) { kasbonTabAktif = tab; document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.getElementById('tab-btn-' + tab.toLowerCase()).classList.add('active'); renderKasbonList(); }
     function toggleAccordionUtang(id) { document.getElementById('acc-'+id).classList.toggle('active'); }
 
-    function renderKasbonList() {
-        let kw = (document.getElementById('cariKasbonInput') || {}).value || ""; kw = kw.toLowerCase();
-        let filterUtang = db.utang.filter(u => {
-            if (kasbonTabAktif === 'Lunas') return u.status === 'Lunas' && u.nama.toLowerCase().includes(kw);
-            return u.status !== 'Lunas' && u.jenis === kasbonTabAktif && u.nama.toLowerCase().includes(kw);
-        });
-
-        // Tampilkan tombol hapus massal
-        document.getElementById('wadahHapusMassalUtang').style.display = (filterUtang.length > 0) ? 'block' : 'none';
-
-        let tombolTambahTab = kasbonTabAktif === 'Utang' ? `<button type="button" class="btn-green" style="margin-bottom:10px;" onclick="bukaModalTambahTabungan()">➕ Buka Tabungan Baru</button>` : '';
-
+    
         function renderKasbonList() {
         let kw = (document.getElementById('cariKasbonInput') || {}).value || ""; kw = kw.toLowerCase();
         let filterUtang = db.utang.filter(u => {
