@@ -542,6 +542,14 @@
                 <div id="tab-btn-lunas" class="tab-btn" onclick="switchKasbonTab('Lunas')">✅ Arsip Lunas</div>
             </div>
             <input type="text" id="cariKasbonInput" placeholder="🔍 Cari nama pelanggan..." oninput="renderKasbonList()" style="background:#f0f8ff;">
+            
+            <div id="wadahHapusMassalUtang" style="background:#ffeeba; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #ffdf7e; display:none;">
+                <label style="display:flex; align-items:center; font-size:13px; font-weight:bold; margin-bottom:8px;">
+                    <input type="checkbox" id="checkSemuaUtang" onchange="togglePilihSemuaUtang()" style="width: auto; margin:0 10px 0 0;"> Pilih Semua Baris
+                </label>
+                <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusUtangTerpilih()">🗑 Hapus Terpilih</button>
+            </div>
+            
             <div id="listUtang"></div>
         </div>
     </div>
@@ -1477,7 +1485,21 @@
             return u.status !== 'Lunas' && u.jenis === kasbonTabAktif && u.nama.toLowerCase().includes(kw);
         });
 
-        // Tombol Tambah khusus Tabungan
+        // Tampilkan tombol hapus massal
+        document.getElementById('wadahHapusMassalUtang').style.display = (filterUtang.length > 0) ? 'block' : 'none';
+
+        let tombolTambahTab = kasbonTabAktif === 'Utang' ? `<button type="button" class="btn-green" style="margin-bottom:10px;" onclick="bukaModalTambahTabungan()">➕ Buka Tabungan Baru</button>` : '';
+
+        function renderKasbonList() {
+        let kw = (document.getElementById('cariKasbonInput') || {}).value || ""; kw = kw.toLowerCase();
+        let filterUtang = db.utang.filter(u => {
+            if (kasbonTabAktif === 'Lunas') return u.status === 'Lunas' && u.nama.toLowerCase().includes(kw);
+            return u.status !== 'Lunas' && u.jenis === kasbonTabAktif && u.nama.toLowerCase().includes(kw);
+        });
+
+        // Update tampilan tombol hapus massal
+        document.getElementById('wadahHapusMassalUtang').style.display = (filterUtang.length > 0) ? 'block' : 'none';
+
         let tombolTambahTab = kasbonTabAktif === 'Utang' ? `<button type="button" class="btn-green" style="margin-bottom:10px;" onclick="bukaModalTambahTabungan()">➕ Buka Tabungan Baru</button>` : '';
 
         document.getElementById('listUtang').innerHTML = tombolTambahTab + filterUtang.map(u => {
@@ -1503,9 +1525,33 @@
                     </div>
                 </div>`).join('') : `<div class="text-small">${u.namaProduk}</div>`;
             
-            return `<div class="list-item" style="background:#fcfcfc; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;"><div class="accordion-header flex-between" onclick="toggleAccordionUtang('${u.id}')"><div><b style="font-size:15px;">${u.nama}</b><br><span class="text-small">Total Tagihan: Rp ${formatRupiah(u.nominal)}</span><br><span class="${u.jenis==='Piutang'?'text-blue':'text-red'}" style="font-weight:bold;">Sisa Tagihan: Rp ${formatRupiah(sU)}</span></div><div><span class="text-small" style="background:#eee; padding:5px 10px; border-radius:15px; font-weight:bold;">${u.status} ⬇️</span></div></div><div id="acc-${u.id}" class="accordion-content"><div style="margin-bottom: 10px;"><b class="text-small text-blue">📝 Rincian Barang:</b><div style="background:#fff; padding:5px 8px; border-radius:5px; border:1px solid #ddd; margin-top:5px; max-height:150px; overflow-y:auto;">${hr}</div></div><div style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;"><b class="text-small">Riwayat Cicilan:</b><br>${hc}</div><div class="flex-between" style="gap:5px; flex-wrap:wrap; margin-top:10px;"><button type="button" class="btn-outline" style="width:auto; padding:8px 10px; margin:0; font-size:11px; flex:1;" onclick="editPintarKasbon('${u.id}')">✏️ Edit Info</button><button type="button" class="btn-warning" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="bukaModalCicilan('${u.id}')">💳 Cicil</button><button type="button" class="btn-green" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="lunasSekaligus('${u.id}')">✅ Lunas Full</button><button type="button" class="btn-wa" style="width:auto; padding:8px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan('${u.id}')">📱 WA</button><button type="button" class="btn-red" style="width:auto; padding:8px 10px; margin:0;" onclick="hapusUtang('${u.id}')">🗑</button></div></div></div>`;
+            return `<div class="list-item" style="background:#fcfcfc; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:10px;">
+                <div class="accordion-header flex-between" onclick="toggleAccordionUtang('${u.id}')">
+                    <div style="display:flex; align-items:center;">
+                        <input type="checkbox" class="check-utang" value="${u.id}" style="width:auto; margin-right:8px;">
+                        <div>
+                            <b style="font-size:15px;">${u.nama}</b><br>
+                            <span class="text-small">Total Tagihan: Rp ${formatRupiah(u.nominal)}</span><br>
+                            <span class="${u.jenis==='Piutang'?'text-blue':'text-red'}" style="font-weight:bold;">Sisa Tagihan: Rp ${formatRupiah(sU)}</span>
+                        </div>
+                    </div>
+                    <div><span class="text-small" style="background:#eee; padding:5px 10px; border-radius:15px; font-weight:bold;">${u.status} ⬇️</span></div>
+                </div>
+                <div id="acc-${u.id}" class="accordion-content">
+                    <div style="margin-bottom: 10px;"><b class="text-small text-blue">📝 Rincian Barang:</b><div style="background:#fff; padding:5px 8px; border-radius:5px; border:1px solid #ddd; margin-top:5px; max-height:150px; overflow-y:auto;">${hr}</div></div>
+                    <div style="margin-bottom: 10px; max-height: 100px; overflow-y: auto;"><b class="text-small">Riwayat Cicilan:</b><br>${hc}</div>
+                    <div class="flex-between" style="gap:5px; flex-wrap:wrap; margin-top:10px;">
+                        <button type="button" class="btn-outline" style="width:auto; padding:8px 10px; margin:0; font-size:11px; flex:1;" onclick="editPintarKasbon('${u.id}')">✏️ Edit Info</button>
+                        <button type="button" class="btn-warning" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="bukaModalCicilan('${u.id}')">💳 Cicil</button>
+                        <button type="button" class="btn-green" style="width:auto; flex:1; padding:8px 10px; margin:0; font-size:11px;" onclick="lunasSekaligus('${u.id}')">✅ Lunas Full</button>
+                        <button type="button" class="btn-wa" style="width:auto; padding:8px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWATagihan('${u.id}')">📱 WA</button>
+                        <button type="button" class="btn-red" style="width:auto; padding:8px 10px; margin:0;" onclick="hapusUtang('${u.id}')">🗑</button>
+                    </div>
+                </div>
+            </div>`;
         }).join('') || '<div class="text-small text-center" style="padding:15px; color: gray;">Kosong / Semua lunas! 🎉</div>';
     }
+
 
     function bukaEditRincian(idUtang, idx) {
         let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
@@ -3440,6 +3486,37 @@ function renderDaftarTransaksiBeranda() {
         };
         reader.readAsText(file);
     }
+
+    function togglePilihSemuaUtang() {
+        let chk = document.getElementById('checkSemuaUtang').checked;
+        document.querySelectorAll('.check-utang').forEach(cb => cb.checked = chk);
+    }
+
+    function hapusUtangTerpilih() {
+        let arr = Array.from(document.querySelectorAll('.check-utang:checked')).map(cb => String(cb.value));
+        if (arr.length === 0) return alert("Pilih minimal satu kasbon untuk dihapus!");
+        if (confirm(`Yakin ingin menghapus ${arr.length} catatan kasbon ini?`)) {
+            arr.forEach(id => {
+                let u = db.utang.find(x => String(x.id) === String(id));
+                if (u) {
+                    if(u.dompetId && u.dompetId !== 'none' && (!u.rincianBarang || !u.rincianBarang.some(r => r.transId))) {
+                        let d = db.dompet.find(x => String(x.id) === String(u.dompetId));
+                        if(d) {
+                            let dibayar = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
+                            let sisa = (Number(u.nominal) || 0) - dibayar;
+                            if(u.jenis === 'Piutang') d.saldo += sisa;
+                            else if(u.jenis === 'Utang') d.saldo -= sisa;
+                        }
+                    }
+                    db.utang = db.utang.filter(x => String(x.id) !== String(id));
+                }
+            });
+            document.getElementById('checkSemuaUtang').checked = false;
+            simpanData();
+            alert("✅ Berhasil dihapus!");
+        }
+    }
+
 
 </script>
 </body>
