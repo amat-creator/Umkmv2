@@ -1,21 +1,4 @@
 
-                            else if(u.jenis === 'Utang') d.saldo -= sisa;
-                        }
-                    }
-                    db.utang = db.utang.filter(x => String(x.id) !== String(id));
-                }
-            });
-            document.getElementById('checkSemuaUtang').checked = false;
-            simpanData();
-            alert("✅ Berhasil dihapus!");
-        }
-    }
-
-
-</script>
-</body>
-</html>
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -3498,6 +3481,14 @@ function renderDaftarTransaksiBeranda() {
         document.querySelectorAll('.check-utang').forEach(cb => cb.checked = chk);
     }
 
+       // ... fungsi-fungsi lainnya ...
+
+    // FUNGSI INI HARUS BERADA DI PALING BAWAH (SEBELUM </script>)
+    function togglePilihSemuaUtang() {
+        let chk = document.getElementById('checkSemuaUtang').checked;
+        document.querySelectorAll('.check-utang').forEach(cb => cb.checked = chk);
+    }
+
     function hapusUtangTerpilih() {
         let arr = Array.from(document.querySelectorAll('.check-utang:checked')).map(cb => String(cb.value));
         if (arr.length === 0) return alert("Pilih minimal satu kasbon untuk dihapus!");
@@ -3522,7 +3513,6 @@ function renderDaftarTransaksiBeranda() {
             alert("✅ Berhasil dihapus!");
         }
     }
-
 
 </script>
 </body>
