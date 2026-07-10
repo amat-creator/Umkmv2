@@ -3398,7 +3398,7 @@ function renderDaftarTransaksiBeranda() {
         alert("✅ File backup (.json) berhasil didownload!\nSimpan file ini baik-baik.");
     }
 
-    function restoreBackupJSON() {
+        function restoreBackupJSON() {
         let fileInput = document.getElementById('fileRestoreJSON');
         let file = fileInput.files[0];
         
@@ -3418,14 +3418,17 @@ function renderDaftarTransaksiBeranda() {
                 
                 if(confirm("⚠️ PERINGATAN!\n\nSeluruh data saat ini (di HP & di Google Sheets) akan TERTEMPA dengan data dari file backup ini.\n\nYakin ingin melanjutkan?")) {
                     
-                    // Gabungkan data JSON ke dalam sistem
                     db = { ...db, ...tesParse };
-                    
-                    // Gunakan fungsi bawaan Versi 2 untuk menyimpan ke HP sekaligus NGE-PUSH ke Google Sheet
                     simpanData(); 
                     
-                    alert("✅ Data berhasil dipulihkan!\nSistem sedang melakukan sinkronisasi ke Google Sheets.");
-                    location.reload(); 
+                    // --- BAGIAN INI YANG DIPERBAIKI ---
+                    alert("✅ Data berhasil ditarik!\nMohon tunggu sekitar 3 detik, sistem sedang mengirim data penuh ini ke Google Sheets...");
+                    
+                    // Kasih waktu 3 detik agar pengiriman fetch() ke Google Sheets selesai, baru refresh
+                    setTimeout(() => {
+                        location.reload(); 
+                    }, 3000); 
+                    // -----------------------------------
                 }
             } catch(err) {
                 alert("❌ Gagal membaca file! Pastikan kamu memilih file berakhiran .json yang benar.");
@@ -3433,6 +3436,7 @@ function renderDaftarTransaksiBeranda() {
         };
         reader.readAsText(file);
     }
+
 </script>
 </body>
 </html>
