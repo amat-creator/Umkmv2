@@ -1148,10 +1148,12 @@
         localStorage.setItem('sistemUMKMPro', JSON.stringify(db)); 
         updateSemuaTampilan(); 
 
-        // OTOMATIS KIRIM DATA TERBARU KE GOOGLE SHEET
-        fetch(API_URL, {
+        // OTOMATIS KIRIM DATA TERBARU KE GOOGLE SHEET (DIPERBAIKI)
+        return fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors', // Mencegah error CORS/keamanan di browser
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8'
+            },
             body: JSON.stringify({ aksi: 'simpan', data: db })
         }).catch(err => console.error("Gagal sinkronisasi ke Google Sheet:", err));
     }
@@ -3419,16 +3421,18 @@ function renderDaftarTransaksiBeranda() {
                 if(confirm("⚠️ PERINGATAN!\n\nSeluruh data saat ini (di HP & di Google Sheets) akan TERTEMPA dengan data dari file backup ini.\n\nYakin ingin melanjutkan?")) {
                     
                     db = { ...db, ...tesParse };
-                    simpanData(); 
                     
-                    // --- BAGIAN INI YANG DIPERBAIKI ---
-                    alert("✅ Data berhasil ditarik!\nMohon tunggu sekitar 3 detik, sistem sedang mengirim data penuh ini ke Google Sheets...");
+                    alert("✅ Data berhasil ditarik!\nSistem sedang mengirim data ke Google Sheets, mohon tunggu sebentar...");
                     
-                    // Kasih waktu 3 detik agar pengiriman fetch() ke Google Sheets selesai, baru refresh
-                    setTimeout(() => {
-                        location.reload(); 
-                    }, 3000); 
-                    // -----------------------------------
+                    // Panggil simpanData dan tunggu proses kirim selesai baru reload halaman
+                    let prosesSimpan = simpanData();
+                    if(prosesSimpan) {
+                        prosesSimpan.then(() => {
+                            location.reload(); 
+                        });
+                    } else {
+                        setTimeout(() => { location.reload(); }, 2000);
+                    }
                 }
             } catch(err) {
                 alert("❌ Gagal membaca file! Pastikan kamu memilih file berakhiran .json yang benar.");
