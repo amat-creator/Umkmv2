@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -1237,32 +1238,18 @@
     function simpanData() { 
         db.transaksi.sort((a, b) => { if(a.tanggal === b.tanggal) return a.id - b.id; return a.tanggal > b.tanggal ? 1 : -1; });
         
-        let jsonString = JSON.stringify(db);
-        localStorage.setItem('sistemUMKMPro', jsonString); 
+        localStorage.setItem('sistemUMKMPro', JSON.stringify(db)); 
         updateSemuaTampilan(); 
         
+        // Kirim ke Google Sheets dengan format JSON yang rapi
         if(API_URL.includes("script.google.com")) {
             fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain' },
-                body: jsonString
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(db)
             }).catch(err => console.log("Gagal backup ke cloud", err));
         }
-    }
-
-    // WAJIB: Memastikan semua komponen ter-render saat aplikasi mulai
-    document.addEventListener('DOMContentLoaded', () => {
-        updateSemuaTampilan();
-    });
-    
-    function formatTanggalIndo(tglStr) {
-        if(!tglStr) return "";
-        let parts = tglStr.split('-');
-        if(parts.length !== 3) return tglStr;
-        let d = parseInt(parts[2]), m = parseInt(parts[1]), y = parseInt(parts[0]);
-        let hari = getNamaHari(tglStr);
-        return `${hari}, ${d} ${namaBulanIndo[m-1]} ${y}`;
     }
     
 
