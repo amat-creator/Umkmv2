@@ -561,6 +561,15 @@
                 <div id="tab-btn-utang" class="tab-btn" onclick="switchKasbonTab('Utang')">💰 Tabungan</div>
                 <div id="tab-btn-lunas" class="tab-btn" onclick="switchKasbonTab('Lunas')">✅ Riwayat Lunas</div>
             </div>
+            
+            <!-- TOMBOL HAPUS MASSAL KASBON -->
+            <div id="wadahHapusKasbon" class="flex-between" style="background: #fff3cd; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed #ffc107; display:none;">
+                <label style="display: flex; align-items: center; font-size: 13px; font-weight: bold; cursor: pointer;">
+                    <input type="checkbox" id="checkSemuaKasbon" onchange="togglePilihSemuaKasbon()" style="width: auto; margin: 0 10px 0 0;"> Pilih Semua
+                </label>
+                <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusKasbonTerpilih()">🗑 Hapus Terpilih</button>
+            </div>
+
             <input type="text" id="cariKasbonInput" placeholder="🔍 Cari nama pelanggan..." oninput="renderKasbonList()" style="background:#f0f8ff;">
             <div id="listUtang"></div>
         </div>
@@ -3658,6 +3667,30 @@ function salinBackupJSON() {
         };
         reader.readAsText(file);
     }
+    
+function togglePilihSemuaKasbon() { 
+        let chk = document.getElementById('checkSemuaKasbon').checked; 
+        document.querySelectorAll('.check-kasbon').forEach(cb => cb.checked = chk); 
+    }
+    
+    function cekStatusPilihSemuaKasbon() { 
+        let cb = document.querySelectorAll('.check-kasbon'); 
+        let wadah = document.getElementById('wadahHapusKasbon');
+        wadah.style.display = (cb.length > 0) ? 'flex' : 'none';
+        if(document.getElementById('checkSemuaKasbon')) 
+            document.getElementById('checkSemuaKasbon').checked = (cb.length > 0 && document.querySelectorAll('.check-kasbon:not(:checked)').length === 0); 
+    }
+    
+    function hapusKasbonTerpilih() { 
+        let arr = Array.from(document.querySelectorAll('.check-kasbon:checked')).map(cb => String(cb.value)); 
+        if(arr.length === 0) return alert("Pilih minimal 1 data kasbon!"); 
+        if(confirm(`Yakin ingin menghapus ${arr.length} data kasbon terpilih? (Modal akan otomatis di-refund ke dompet!)`)) { 
+            arr.forEach(id => hapusUtang(id)); // Memanggil fungsi hapusUtang yang sudah ada (termasuk logika refund)
+            if(document.getElementById('checkSemuaKasbon')) document.getElementById('checkSemuaKasbon').checked = false;
+            document.getElementById('wadahHapusKasbon').style.display = 'none';
+        } 
+    }
+    
 </script>
 </body>
 </html>
