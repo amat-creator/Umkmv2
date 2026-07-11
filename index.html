@@ -3681,13 +3681,51 @@ function togglePilihSemuaKasbon() {
             document.getElementById('checkSemuaKasbon').checked = (cb.length > 0 && document.querySelectorAll('.check-kasbon:not(:checked)').length === 0); 
     }
     
-    function hapusKasbonTerpilih() { 
+   function hapusKasbonTerpilih() { 
         let arr = Array.from(document.querySelectorAll('.check-kasbon:checked')).map(cb => String(cb.value)); 
         if(arr.length === 0) return alert("Pilih minimal 1 data kasbon!"); 
+        
         if(confirm(`Yakin ingin menghapus ${arr.length} data kasbon terpilih? (Modal akan otomatis di-refund ke dompet!)`)) { 
-            arr.forEach(id => hapusUtang(id)); // Memanggil fungsi hapusUtang yang sudah ada (termasuk logika refund)
+            // Kita proses satu per satu dengan memanggil fungsi hapusUtang yang sudah kita miliki
+            // Fungsi hapusUtang sudah aman karena mengandung logika refund
+            arr.forEach(id => {
+                // Kita panggil logika hapus yang sudah ada (tanpa konfirmasi berulang)
+                let u = db.utang.find(x => String(x.id) === String(id));
+                if(u) {
+                    // Logika Refund
+                    if(u.dompetId && u.dompetId !== 'none' && (!u.rincianBarang || !u.rincianBarang.some(r => r.transId))) {
+                        let d = db.dompet.find(x => String(x.id) === String(u.dompetId));
+                        if(d) {
+                            let dibayar = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
+                            let sisa = (Number(u.nominal) || 0) - dibayar;
+                            if(u.jenis === 'Piutang') d.saldo += sisa;
+                            else if(u.jenis === 'Utang') d.saldo -= sisa;
+                        }
+                    }
+                    if(u.rincianBarang) {
+                        u.rincianBarang.forEach(r => {
+                            if(r.transId) {
+                                let t = db.transaksi.find(tx => String(tx.id) === String(r.transId));
+                                if(t) {
+                                    if(t.dompetModal && t.dompetModal !== 'none') {
+                                        let dm = db.dompet.find(x => String(x.id) === String(t.dompetModal));
+                                        if(dm) dm.saldo += t.modal;
+                                    }
+                                    db.transaksi = db.transaksi.filter(tx => String(tx.id) !== String(r.transId));
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Setelah semua proses refund selesai, baru kita filter datanya sekali jalan
+            db.utang = db.utang.filter(u => !arr.includes(String(u.id)));
+            
             if(document.getElementById('checkSemuaKasbon')) document.getElementById('checkSemuaKasbon').checked = false;
             document.getElementById('wadahHapusKasbon').style.display = 'none';
+            simpanData();
+            alert("✅ Berhasil dihapus & saldo telah di-refund!");
         } 
     }
     
