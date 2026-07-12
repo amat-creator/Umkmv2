@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -1045,7 +1044,7 @@
     const PIN_AKSES = "1234"; 
     
     // ⬇️ LINK GOOGLE SCRIPT KAMU SUDAH OTOMATIS TERPASANG DI SINI
-    const API_URL = "https://script.google.com/macros/s/AKfycbwxgUDIk0gAmanyAvv43GfS2V5zmHEPIf-1yx-GUaW7CYKCBbltqJPz9ELT1RwUuu4/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbxO38puHz0kq6KA1f8NbVnT-urj2y2b5b0GicVd58FPsdgnSUVr-vHIHZEzWEKzOXA-CA/exec"; 
 
     let filterSaatIni = 'semua';
     let modePencarian = ''; 
@@ -3640,36 +3639,34 @@ function salinBackupJSON() {
     }
 
     function restoreBackupJSON() {
-    let fileInput = document.getElementById('fileRestoreJSON');
-    let file = fileInput.files[0];
-    
-    if(!file) return alert("Pilih file backup .json nya dulu ya!");
-    
-    let reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            let isiData = e.target.result;
-            let dataBaru = JSON.parse(isiData); 
-            
-            // SECURITY CHECK: Pastikan struktur data tetap ada
-            if(!dataBaru.dompet) dataBaru.dompet = [];
-            if(!dataBaru.produk) dataBaru.produk = [];
-            if(!dataBaru.pelanggan) dataBaru.pelanggan = []; // Memastikan pelanggan tidak hilang saat restore
-            if(!dataBaru.transaksi) dataBaru.transaksi = [];
-            if(!dataBaru.utang) dataBaru.utang = [];
-            
-            if(confirm("⚠️ Data saat ini akan diganti dengan data dari file backup. Yakin?")) {
-                db = dataBaru; // Update variabel db utama
-                simpanData(); // Simpan ke localStorage
-                alert("✅ Data berhasil dipulihkan termasuk data pelanggan!");
-                location.reload(); 
-            }
-        } catch(err) {
-            alert("❌ Gagal membaca file! Format JSON tidak valid.");
+        let fileInput = document.getElementById('fileRestoreJSON');
+        let file = fileInput.files[0];
+        
+        if(!file) {
+            return alert("Pilih file backup .json nya dulu ya!");
         }
-    };
-    reader.readAsText(file);
-}
+        
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let isiData = e.target.result;
+                let tesParse = JSON.parse(isiData); 
+                
+                if(tesParse.dompet === undefined && tesParse.produk === undefined) {
+                    return alert("❌ Format file tidak dikenali! Pastikan ini file backup dari aplikasi Sistem UMKM Pro.");
+                }
+                
+                if(confirm("⚠️ PERINGATAN!\n\nSeluruh data saat ini akan TERTEMPA (dihapus dan diganti) dengan data dari file backup ini.\n\nYakin ingin melanjutkan?")) {
+                    localStorage.setItem('sistemUMKMPro', isiData);
+                    alert("✅ Data berhasil dipulihkan! Aplikasi akan dimuat ulang untuk menyegarkan sistem.");
+                    location.reload(); 
+                }
+            } catch(err) {
+                alert("❌ Gagal membaca file! Pastikan kamu memilih file berakhiran .json yang benar.");
+            }
+        };
+        reader.readAsText(file);
+    }
     
 function togglePilihSemuaKasbon() { 
         let chk = document.getElementById('checkSemuaKasbon').checked; 
