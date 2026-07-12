@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -1069,37 +1070,28 @@
     }
 
     function tarikDataCloud() {
-    document.getElementById('loading-sync').style.display = 'block';
-    
-    if(!API_URL.includes("script.google.com")) {
-        document.getElementById('login-screen').style.display = 'none';
-        return;
-    }
-    
-    fetch(API_URL)
-    .then(res => res.json())
-    .then(dataCloud => {
-        if(dataCloud && dataCloud.dompet) {
-            db = { 
-                ...db, 
-                dompet: dataCloud.dompet || db.dompet,
-                produk: dataCloud.produk || db.produk,
-                pelanggan: dataCloud.pelanggan || db.pelanggan,
-                transaksi: dataCloud.transaksi || db.transaksi,
-                utang: dataCloud.utang || db.utang,
-                catatan: dataCloud.catatan || db.catatan
-            };
-            
-            localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
-            updateSemuaTampilan();
+        document.getElementById('loading-sync').style.display = 'block';
+        
+        if(!API_URL.includes("script.google.com")) {
+            document.getElementById('login-screen').style.display = 'none';
+            return;
         }
-        document.getElementById('login-screen').style.display = 'none';
-    })
-    .catch(err => {
-        alert("Gagal koneksi ke Cloud Google! Masuk menggunakan data Offline.");
-        document.getElementById('login-screen').style.display = 'none';
-    });
-} 
+        
+        fetch(API_URL)
+        .then(res => res.json())
+        .then(dataCloud => {
+            if(dataCloud && dataCloud.dompet) {
+                db = dataCloud; 
+                localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
+                updateSemuaTampilan();
+            }
+            document.getElementById('login-screen').style.display = 'none';
+        })
+        .catch(err => {
+            alert("Gagal koneksi ke Cloud Google! Masuk menggunakan data Offline.");
+            document.getElementById('login-screen').style.display = 'none';
+        });
+    } 
     let tempPesanWA = ""; 
     let idDompetAktif = null;
     let kasbonTabAktif = 'Piutang'; 
@@ -2773,63 +2765,58 @@ function renderDaftarTransaksiBeranda() {
     function salinDataExcelPintar() {
         let text = "";
         
-        // 1. Data Transaksi
         if(document.getElementById('exTrans').checked) {
-            text += "### DATA TRANSAKSI ###\nTanggal\tPelanggan\tProduk\tModal\tJual\tUntung\tStatus\n";
+            text += "### DATA TRANSAKSI ###\nTanggal\tHari\tPelanggan\tProduk\tModal\tJual\tUntung\tStatus\n";
             db.transaksi.forEach(t => { 
-                text += `${t.tanggal||''}\t${(t.pembeli||'Umum').toString().replace(/\t|\n/g,' ')}\t${(t.namaProduk||'').toString().replace(/\t|\n/g,' ')}\t${t.modal||0}\t${t.total||0}\t${t.untung||0}\t${t.status||'Lunas'}\n`; 
+                let pel = (t.pembeli||'Umum').toString().replace(/\t|\n/g,' '); 
+                let prod = (t.namaProduk||'').toString().replace(/\t|\n/g,' '); 
+                text += `${t.tanggal||''}\t${t.tanggal?getNamaHari(t.tanggal):''}\t${pel}\t${prod}\t${t.modal||0}\t${t.total||0}\t${t.untung||0}\t${t.status||'Lunas'}\n`; 
             });
             text += "\n";
         }
         
-        // 2. Data Produk
         if(document.getElementById('exProd').checked) {
             text += "### DATA PRODUK ###\nNama Produk\tKategori\tHarga Modal\tHarga Jual\n";
             db.produk.forEach(p => { 
+                let n = (p.nama||'').toString().replace(/\t|\n/g,' '); 
                 let katObj = db.kategoriProduk.find(k => k.id === p.kategoriId);
                 let namaKat = katObj ? katObj.nama : 'Umum';
-                text += `${(p.nama||'').toString().replace(/\t|\n/g,' ')}\t${namaKat}\t${p.modal||0}\t${p.harga||0}\n`; 
+                text += `${n}\t${namaKat}\t${p.modal||0}\t${p.harga||0}\n`; 
             });
             text += "\n";
         }
         
-        // 3. Data Pelanggan
         if(document.getElementById('exPel').checked) {
-            text += "### DATA PELANGGAN ###\nNama Pelanggan\tData Kontak\n";
+            text += "### DATA PELANGGAN ###\nNama Pelanggan\tData Kontak Pintar\n";
             db.pelanggan.forEach(p => { 
-                let infoStr = (p.info||[]).map(i => `${i.label}:${i.value}`).join(' | '); 
-                text += `${(p.nama||'').toString().replace(/\t|\n/g,' ')}\t${infoStr}\n`; 
+                let n = (p.nama||'').toString().replace(/\t|\n/g,' '); 
+                let infoStr = (p.info||[]).map(i => `${i.label}:${i.value}`).join(', '); 
+                text += `${n}\t${infoStr}\n`; 
             });
             text += "\n";
         }
         
-        // 4. Data Dompet
         if(document.getElementById('exDom').checked) {
             text += "### DATA DOMPET ###\nNama Dompet\tKategori\tSaldo\n";
             db.dompet.forEach(d => { 
-                text += `${(d.nama||'').toString().replace(/\t|\n/g,' ')}\t${d.kategori||'Kas Fisik'}\t${d.saldo||0}\n`; 
+                let n = (d.nama||'').toString().replace(/\t|\n/g,' '); 
+                text += `${n}\t${d.kategori||'Kas Fisik'}\t${d.saldo||0}\n`; 
             });
             text += "\n";
         }
 
-        // 5. Data Kasbon & Tabungan
         if(document.getElementById('exKasbon') && document.getElementById('exKasbon').checked) {
-            text += "### DATA KASBON ###\nJenis\tPelanggan\tProduk\tNominal\tStatus\n";
+            text += "### DATA KASBON ###\nID\tJenis\tPelanggan\tProduk\tNominal\tStatus\tDompet ID\n";
             db.utang.forEach(u => { 
-                text += `${u.jenis||''}\t${(u.nama||'').toString().replace(/\t|\n/g,' ')}\t${(u.namaProduk||'').toString().replace(/\t|\n/g,' ')}\t${u.nominal||0}\t${u.status||''}\n`; 
+                let n = (u.nama||'').toString().replace(/\t|\n/g,' '); 
+                let p = (u.namaProduk||'').toString().replace(/\t|\n/g,' '); 
+                text += `${u.id}\t${u.jenis}\t${n}\t${p}\t${u.nominal||0}\t${u.status}\t${u.dompetId||'none'}\n`; 
             });
             text += "\n";
         }
-
-        // 6. Data Catatan (Notes)
-        text += "### DATA CATATAN ###\nTanggal\tJudul\tIsi\n";
-        (db.catatan||[]).forEach(c => {
-            text += `${c.tanggal||''}\t${(c.judul||'').toString().replace(/\t|\n/g,' ')}\t${(c.isi||'').toString().replace(/\t|\n/g,' ')}\n`;
-        });
         
-        if(text.trim() === "### DATA CATATAN ###\nTanggal\tJudul\tIsi\n") return alert("Data kosong, tidak ada yang diekspor!");
-        
-        salinTeks(text, "Data berhasil disalin! Silakan Buka Excel dan tekan CTRL+V (Paste)."); 
+        if(text.trim() === "") return alert("Pilih minimal satu data untuk diekspor!");
+        salinTeks(text, "Semua data terpilih berhasil disalin! Silakan Paste (Tempel) di Excel."); 
     }
 
     function imporDataExcelPintar() {
