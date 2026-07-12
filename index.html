@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -117,18 +118,6 @@
 <div class="app-container">
 
     <!-- LAYAR LOGIN & LOADING SINKRONISASI -->
-    <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--primary); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white;">
-        <h2 style="margin-bottom:5px;">🔒 Sistem Kasir</h2>
-        <p style="font-size:12px; margin-bottom:20px;">Masukkan PIN Akses Karyawan/Owner</p>
-        <input type="password" id="pin-login" inputmode="numeric" placeholder="****" style="text-align:center; font-size:24px; letter-spacing:10px; width:200px; border-radius:10px; border:none; padding:15px; margin-bottom:15px; color:#333; font-weight:bold;" maxlength="4">
-        <button type="button" class="btn-warning" style="width:200px; border:none; font-size:16px; padding:12px;" onclick="cekLogin()">Buka Kunci</button>
-        <p id="pesan-login" style="color:#ffcdd2; font-size:12px; margin-top:10px; display:none; font-weight:bold;">❌ PIN Salah!</p>
-        
-        <div id="loading-sync" style="display:none; margin-top:20px; font-size:12px; background:rgba(0,0,0,0.5); padding:10px; border-radius:8px;">
-            ⏳ Mengambil data dari Cloud Google...
-        </div>
-    </div>
-
     <div class="header" style="position: relative;">
         <div style="position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 24px; z-index: 10;" onclick="document.getElementById('modal-sawer').classList.add('active')">☕</div>
         <h2 id="judulHalaman">Kasir</h2>
@@ -595,7 +584,6 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-manual')"><span>🧾</span>Struk Manual</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-cetak')"><span>🖨️</span>Struk Cetak</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
-            <div class="menu-btn" onclick="logoutSistem()" style="background:#fffafa; border:1px solid #ffcdd2; color:#dc3545;"><span>🚪</span>Keluar (Logout)</div>
         </div>
 
         
@@ -1040,124 +1028,16 @@
         templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''}
     };
     
-    // ⬇️ UBAH ANGKA 1234 DI BAWAH INI DENGAN PIN RAHASIAMU
-    const PIN_AKSES = "1234"; 
-    
-    // ⬇️ LINK GOOGLE SCRIPT KAMU SUDAH OTOMATIS TERPASANG DI SINI
-    const API_URL = ""; 
-
     let filterSaatIni = 'semua';
     let modePencarian = ''; 
 
-    // --- MESIN LOGIN & CLOUD SYNC ---
-    function cekLogin() {
-        let input = document.getElementById('pin-login').value;
-        if(input === PIN_AKSES) {
-            localStorage.setItem('isLoggedIn', 'true');
-            document.getElementById('pesan-login').style.display = 'none';
-            tarikDataCloud(); 
-        } else {
-            document.getElementById('pesan-login').style.display = 'block';
-        }
-    }
-
-    function logoutSistem() {
-        if(confirm("Yakin ingin keluar (Logout)? Kamu butuh PIN lagi untuk masuk.")) {
-            localStorage.removeItem('isLoggedIn');
-            location.reload();
-        }
-    }
-
-    function tarikDataCloud() {
-        document.getElementById('loading-sync').style.display = 'block';
-        
-        if(!API_URL.includes("script.google.com")) {
-            document.getElementById('login-screen').style.display = 'none';
-            return;
-        }
-        
-        fetch(API_URL)
-        .then(res => res.json())
-        .then(dataCloud => {
-            if(dataCloud && dataCloud.dompet) {
-                db = dataCloud; 
-                localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
-                updateSemuaTampilan();
-            }
-            document.getElementById('login-screen').style.display = 'none';
-        })
-        .catch(err => {
-            alert("Gagal koneksi ke Cloud Google! Masuk menggunakan data Offline.");
-            document.getElementById('login-screen').style.display = 'none';
-        });
-    } 
     let tempPesanWA = ""; 
     let idDompetAktif = null;
     let kasbonTabAktif = 'Piutang'; 
     let mutasiTabAktif = 'global'; 
     const namaBulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-    // --- MESIN SUARA OFFLINE (WEB AUDIO function salinDataExcelPintar() {
-        let text = "";
-        
-        // 1. Data Transaksi
-        if(document.getElementById('exTrans').checked) {
-            text += "### DATA TRANSAKSI ###\nTanggal\tPelanggan\tProduk\tModal\tJual\tUntung\tStatus\n";
-            db.transaksi.forEach(t => { 
-                text += `${t.tanggal||''}\t${(t.pembeli||'Umum').toString().replace(/\t|\n/g,' ')}\t${(t.namaProduk||'').toString().replace(/\t|\n/g,' ')}\t${t.modal||0}\t${t.total||0}\t${t.untung||0}\t${t.status||'Lunas'}\n`; 
-            });
-            text += "\n";
-        }
-        
-        // 2. Data Produk
-        if(document.getElementById('exProd').checked) {
-            text += "### DATA PRODUK ###\nNama Produk\tKategori\tHarga Modal\tHarga Jual\n";
-            db.produk.forEach(p => { 
-                let katObj = db.kategoriProduk.find(k => k.id === p.kategoriId);
-                let namaKat = katObj ? katObj.nama : 'Umum';
-                text += `${(p.nama||'').toString().replace(/\t|\n/g,' ')}\t${namaKat}\t${p.modal||0}\t${p.harga||0}\n`; 
-            });
-            text += "\n";
-        }
-        
-        // 3. Data Pelanggan
-        if(document.getElementById('exPel').checked) {
-            text += "### DATA PELANGGAN ###\nNama Pelanggan\tData Kontak\n";
-            db.pelanggan.forEach(p => { 
-                let infoStr = (p.info||[]).map(i => `${i.label}:${i.value}`).join(' | '); 
-                text += `${(p.nama||'').toString().replace(/\t|\n/g,' ')}\t${infoStr}\n`; 
-            });
-            text += "\n";
-        }
-        
-        // 4. Data Dompet
-        if(document.getElementById('exDom').checked) {
-            text += "### DATA DOMPET ###\nNama Dompet\tKategori\tSaldo\n";
-            db.dompet.forEach(d => { 
-                text += `${(d.nama||'').toString().replace(/\t|\n/g,' ')}\t${d.kategori||'Kas Fisik'}\t${d.saldo||0}\n`; 
-            });
-            text += "\n";
-        }
-
-        // 5. Data Kasbon & Tabungan
-        if(document.getElementById('exKasbon') && document.getElementById('exKasbon').checked) {
-            text += "### DATA KASBON ###\nJenis\tPelanggan\tProduk\tNominal\tStatus\n";
-            db.utang.forEach(u => { 
-                text += `${u.jenis||''}\t${(u.nama||'').toString().replace(/\t|\n/g,' ')}\t${(u.namaProduk||'').toString().replace(/\t|\n/g,' ')}\t${u.nominal||0}\t${u.status||''}\n`; 
-            });
-            text += "\n";
-        }
-
-        // 6. Data Catatan (Notes)
-        text += "### DATA CATATAN ###\nTanggal\tJudul\tIsi\n";
-        (db.catatan||[]).forEach(c => {
-            text += `${c.tanggal||''}\t${(c.judul||'').toString().replace(/\t|\n/g,' ')}\t${(c.isi||'').toString().replace(/\t|\n/g,' ')}\n`;
-        });
-        
-        if(text.trim() === "### DATA CATATAN ###\nTanggal\tJudul\tIsi\n") return alert("Data kosong, tidak ada yang diekspor!");
-        
-        salinTeks(text, "Data berhasil disalin! Silakan Buka Excel dan tekan CTRL+V (Paste)."); 
-    }) ---
+    // --- MESIN SUARA OFFLINE (WEB AUDIO API) ---
     function mainkanSuara(tipe) {
         try {
             let ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1244,13 +1124,6 @@
         // Panggil fungsi krusial ini!
         prosesBungaOtomatis();
         updateSemuaTampilan();
-
-        // Cek apakah sudah login sebelumnya
-        if(localStorage.getItem('isLoggedIn') === 'true') {
-            tarikDataCloud();
-        } else {
-            document.getElementById('login-screen').style.display = 'flex';
-        }
     };
 
     // MESIN BUNGA PERSEN OTOMATIS
@@ -1300,15 +1173,6 @@
         let jsonString = JSON.stringify(db);
         localStorage.setItem('sistemUMKMPro', jsonString); 
         updateSemuaTampilan(); 
-        
-        if(API_URL.includes("script.google.com")) {
-            fetch(API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain' },
-                body: jsonString
-            }).catch(err => console.log("Gagal backup ke cloud", err));
-        }
     }
 
     // WAJIB: Memastikan semua komponen ter-render saat aplikasi mulai
@@ -1338,7 +1202,7 @@
         }
     }
     function getAngkaMurni(str) { return parseInt(str.toString().replace(/[^0-9]/g, ''), 10) || 0; }
-    function formatRupiah(angka) { return parseInt(angka).toLocaleString('id-ID'); }
+    function formatRupiah(angka) { return (parseInt(angka) || 0).toLocaleString('id-ID'); } // Diperbaiki: Tambahan || 0 sebagai pengaman
     function ambilTanggal() { let d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function getNamaHari(tglString) { return ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][new Date(tglString).getDay()]; }
     
@@ -1651,7 +1515,8 @@
             let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
             let sU = (Number(u.nominal) || 0) - tD;
             
-            let hc = u.cicilan&&u.cicilan.length ? u.cicilan.map((c, idx) => ({c, idx})).reverse().map(item => `
+            // Menggunakan .slice() terlebih dahulu agar tidak merusak urutan array asli di database
+            let hc = u.cicilan&&u.cicilan.length ? u.cicilan.map((c, idx) => ({c, idx})).slice().reverse().map(item => `
                 <div class="cicilan-item flex-between" style="border-bottom:1px dashed #eee; padding-bottom:3px; margin-bottom:3px;">
                     <div>
                         <span>${formatTanggalIndo(item.c.tanggal)}</span>
@@ -1664,7 +1529,7 @@
                     </div>
                 </div>`).join('') : '<div class="text-small" style="color:#aaa;">Belum ada cicilan.</div>';
                 
-            let hr = u.rincianBarang&&u.rincianBarang.length ? u.rincianBarang.map((r, idx) => ({r, idx})).reverse().map(item => `
+            let hr = u.rincianBarang&&u.rincianBarang.length ? u.rincianBarang.map((r, idx) => ({r, idx})).slice().reverse().map(item => `
                 <div style="font-size:11px; padding:5px 0; border-bottom:1px dashed #ddd; display:flex; justify-content:space-between; align-items:center;">
                     <div>📅 <b>${formatTanggalIndo(item.r.tanggal)}</b>: ${item.r.produk} <span class="text-blue">(Rp ${formatRupiah(item.r.nominal)})</span></div>
                     <div style="display:flex; gap:3px;">
@@ -1986,7 +1851,7 @@ function eksekusiSimpanCicilan(e) {
         db.utang.push({ 
             id: Date.now(), 
             transId: null, 
-            jenis: 'Tabungan', 
+            jenis: 'Utang', // Diperbaiki: Sinkronisasi tipe data agar muncul di tab dan dibaca oleh sistem saldo
             nama: nama, 
             nominal: nom, 
             status: 'Belum Lunas', 
