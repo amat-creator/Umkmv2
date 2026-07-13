@@ -668,7 +668,16 @@
         <div id="sub-grafik" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4>📈 Grafik Bisnis (7 Hari)</h4>
-            <p class="text-small" style="margin-bottom: 15px;">Pantau performa omset dan keuntungan harian.</p>
+            <p class="text-small" style="margin-bottom: 10px;">Pantau performa omset dan keuntungan harian.</p>
+            
+            <!-- [ FITUR 15 ] SAKLAR PISAH LAPORAN TOKO -->
+            <div style="background: #eef2f5; padding: 10px; border-radius: 8px; border: 1px solid #d1e3f8; margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; font-size: 12px; font-weight: bold; cursor: pointer; color: #0056b3;">
+                    <input type="checkbox" id="cb-grafik-pribadi" onchange="renderGrafik()" checked style="width: auto; margin: 0 10px 0 0;">
+                    Gabungkan Data Dompet Pribadi ke Grafik
+                </label>
+            </div>
+
             <div style="position: relative; height: 300px; width: 100%;">
                 <canvas id="grafikCanvas"></canvas>
             </div>
@@ -2820,6 +2829,19 @@ function renderDaftarTransaksiBeranda() {
         
         document.getElementById('listPelanggan').innerHTML = pFiltered.map(p => { 
             let infoHtml = (p.info||[]).map(inf => `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px dashed #eee; padding-bottom:5px;"><span class="badge-info"><b>${inf.label}</b> ${inf.value}</span> <button type="button" class="btn-outline" style="padding:2px 8px; font-size:10px; border-radius:4px; border-color:#28a745; color:#28a745; width:auto; margin:0;" onclick="salinTeks('${inf.value}')">Salin</button></div>`).join(''); 
+            
+            // [ FITUR 10 ] RINGKASAN HASIL PELANGGAN
+            let txPelanggan = db.transaksi.filter(t => t.pembeli === p.nama && t.status === 'Lunas');
+            let tJual = txPelanggan.reduce((s,t) => s + t.total, 0);
+            let tModal = txPelanggan.reduce((s,t) => s + t.modal, 0);
+            let tUntung = txPelanggan.reduce((s,t) => s + t.untung, 0);
+            
+            let infoKeuangan = `<div class="grid-3" style="text-align:center; gap:5px; margin-top:10px; padding-top:10px; border-top:1px dashed #eee;">
+                <div style="background:#ffebee; padding:5px; border-radius:5px;"><div style="font-size:9px; color:#666;">Total Modal</div><b class="text-red" style="font-size:11px;">Rp ${formatRupiah(tModal)}</b></div>
+                <div style="background:#eef2f5; padding:5px; border-radius:5px;"><div style="font-size:9px; color:#666;">Total Belanja</div><b class="text-blue" style="font-size:11px;">Rp ${formatRupiah(tJual)}</b></div>
+                <div style="background:#e8f5e9; padding:5px; border-radius:5px;"><div style="font-size:9px; color:#666;">Untung Bersih</div><b class="text-green" style="font-size:11px;">Rp ${formatRupiah(tUntung)}</b></div>
+            </div>`;
+
             return `<div class="card" style="padding:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
                 <div class="flex-between" style="margin-bottom:8px; border-bottom:2px solid var(--primary); padding-bottom:5px;">
                     <div style="display:flex; align-items:center;">
@@ -2830,9 +2852,12 @@ function renderDaftarTransaksiBeranda() {
                         <button type="button" class="btn-outline" style="padding:2px 8px; font-size:10px; width:auto; margin:0;" onclick="editPelangganList('${p.id}')">Edit</button>
                         <button type="button" class="btn-red" style="padding:2px 8px; font-size:10px; width:auto; margin:0;" onclick="hapusPelanggan('${p.id}')">Hapus</button>
                     </div>
-                </div>${infoHtml}
+                </div>
+                ${infoHtml}
+                ${infoKeuangan}
             </div>`; 
         }).join('') || '<div class="text-small text-center" style="padding:10px;">Data tidak ditemukan</div>'; 
+ 
     }
 
     function togglePilihSemuaPelanggan() { let chk = document.getElementById('checkSemuaPelanggan').checked; document.querySelectorAll('.check-pelanggan').forEach(cb => cb.checked = chk); }
@@ -3206,9 +3231,25 @@ function renderDaftarTransaksiBeranda() {
             
             tglLabels.push(`${dd}/${mm}`); 
 
-            let omsetHarian = db.transaksi.filter(t => t.tanggal === tglStr).reduce((sum, t) => sum + t.total, 0);
-            let keluarHarian = db.pengeluaran.filter(p => p.tanggal === tglStr).reduce((sum, p) => sum + p.nominal, 0);
-            let untungHarian = db.transaksi.filter(t => t.tanggal === tglStr).reduce((sum, t) => sum + t.untung, 0);
+            // [ FITUR 15 ] LOGIKA FILTER DOMPET PRIBADI
+            let gabungPribadi = document.getElementById('cb-grafik-pribadi') ? document.getElementById('cb-grafik-pribadi').checked : true;
+            let idDompetPribadi = db.dompet.filter(d => d.kategori === 'Pribadi').map(d => String(d.id));
+
+            let txFilter = db.transaksi.filter(t => {
+                if (t.tanggal !== tglStr) return false;
+                if (!gabungPribadi && (idDompetPribadi.includes(String(t.dompetMasuk)) || idDompetPribadi.includes(String(t.dompetModal)))) return false;
+                return true;
+            });
+
+            let pengeluaranFilter = db.pengeluaran.filter(p => {
+                if (p.tanggal !== tglStr) return false;
+                if (!gabungPribadi && idDompetPribadi.includes(String(p.dompetId))) return false;
+                return true;
+            });
+
+            let omsetHarian = txFilter.reduce((sum, t) => sum + t.total, 0);
+            let keluarHarian = pengeluaranFilter.reduce((sum, p) => sum + p.nominal, 0);
+            let untungHarian = txFilter.reduce((sum, t) => sum + t.untung, 0);
             let bersihHarian = untungHarian - keluarHarian;
 
             dataOmset.push(omsetHarian);
@@ -3818,6 +3859,27 @@ function togglePilihSemuaKasbon() {
             alert("✅ Berhasil dihapus & saldo telah di-refund!");
         } 
     }
+
+    // [ FITUR 17 ] PENGAMAN TOMBOL KEMBALI HP (HARDWARE BACK BUTTON)
+    history.pushState(null, null, window.location.href);
+    window.addEventListener('popstate', function(event) {
+        let adaModal = document.querySelector('.modal-popup.active, .modal-search.active');
+        let menuTertutup = document.getElementById('main-menu-grid') && document.getElementById('main-menu-grid').style.display === 'none';
+        let detailDompet = document.getElementById('sub-dompet-detail') && document.getElementById('sub-dompet-detail').style.display === 'block';
+
+        if (adaModal) {
+            adaModal.classList.remove('active');
+            history.pushState(null, null, window.location.href); 
+        } else if (detailDompet) {
+            kembaliKeDompetUtama();
+            history.pushState(null, null, window.location.href);
+        } else if (menuTertutup && document.getElementById('page-menu').classList.contains('active')) {
+            kembaliKeMenu();
+            history.pushState(null, null, window.location.href);
+        } else {
+            // Jika tidak ada pop-up, biarkan keluar dari aplikasi dengan normal
+        }
+    });
     
 </script>
 </body>
