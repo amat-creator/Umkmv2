@@ -1,0 +1,18 @@
+{
+  "name": "Sistem Manajemen UMKM Pro",
+  "short_name": "UMKM Pro",
+  "description": "Sistem Kasir dan Manajemen UMKM Pro Offline First",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#007bff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/9624/9624235.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
