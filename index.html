@@ -13,8 +13,9 @@
     <style>
         :root { --primary: #007bff; --bg-color: #f4f7f6; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
-        body { background-color: var(--bg-color); padding-bottom: 120px; transition: background 0.3s; overscroll-behavior-y: none; }
-        .app-container { max-width: 480px; margin: 0 auto; background-color: var(--bg-color); min-height: 100vh; position: relative; overflow-x: hidden; }
+        body { background-color: var(--bg-color); background-size: cover; background-position: center; background-attachment: fixed; padding-bottom: 120px; transition: background 0.3s; overscroll-behavior-y: none; }
+.app-container { max-width: 480px; margin: 0 auto; background: rgba(244, 247, 246, 0.85); min-height: 100vh; position: relative; overflow-x: hidden; }
+
         
         .header { background: var(--primary); color: white; padding: 20px; border-radius: 0 0 20px 20px; text-align: center; transition: background 0.3s; }
         .saldo-badge { background: rgba(255,255,255,0.2); display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 10px; font-weight: bold; }
@@ -28,8 +29,6 @@
         .page { display: none; padding: 15px; }
         .page.active { display: block; }
 
-        body { background-size: cover; background-position: center; background-attachment: fixed; transition: background 0.3s; }
-        .app-container { max-width: 480px; margin: 0 auto; background: rgba(244, 247, 246, 0.85); min-height: 100vh; position: relative; overflow-x: hidden; }
         .card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(255, 255, 255, 0.4); margin-bottom: 15px; }
         .theme-grid-aesthetic { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
         .theme-box { padding: 10px; border-radius: 8px; text-align: center; color: white; font-size: 11px; font-weight: bold; cursor: pointer; border: 2px solid transparent; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -110,9 +109,8 @@
         
         /* Desain Struk */
         .struk-kertas { background: #fff; color: #000; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13px; text-align: left; width: 100%; border: 1px solid #ddd; margin-bottom: 15px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
-        .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
-    /* Desain Kertas Struk Thermal */
-        .kertas-struk { background: white; color: black; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13px; width: 100%; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); margin-top: 20px; box-sizing: border-box; }
+        /* Desain Kertas Struk Thermal */
+        .kertas-struk { background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Courier New', Courier, monospace; color: #000; }
         .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
         .kotak-token { border: 1.5px dashed #000; padding: 8px; margin: 10px 0; text-align: center; font-weight: bold; font-size: 14px; background: #fafafa; }
 </style>
@@ -122,6 +120,18 @@
 <div class="app-container">
 
     <!-- LAYAR LOGIN & LOADING SINKRONISASI -->
+    <div id="layar-login" style="display:none; position:absolute; top:0; left:0; width:100%; height:100vh; background:var(--bg-color); z-index:99999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
+        <h2 style="color:var(--primary); margin-bottom:10px;">🔒 Aplikasi Terkunci</h2>
+        <p class="text-small" style="margin-bottom:20px;">Silakan upload file kunci (JSON) Anda untuk masuk.</p>
+        <input type="file" id="fileLoginKunci" accept=".json" style="width:100%; max-width:300px; padding:10px; margin-bottom:15px; border:1px solid #ddd; background:#fff; border-radius:8px;">
+        <button class="btn-green" style="width:100%; max-width:300px; padding:15px; font-size:16px;" onclick="prosesLoginKunci()">🔓 Buka Aplikasi</button>
+        
+        <div id="btnGenerateAwal" style="display:none; margin-top:30px; border-top:1px dashed #ccc; padding-top:20px;">
+            <p class="text-small text-red" style="font-weight:bold; margin-bottom:10px;">⚠️ Belum Punya Kunci? (Hanya muncul saat pertama kali)</p>
+            <button class="btn-warning" style="width:100%; max-width:300px;" onclick="generateKunciBaru()">🔑 Buat & Download Kunci Baru</button>
+        </div>
+    </div>
+
     <div class="header" style="position: relative;">
         <div style="position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 24px; z-index: 10;" onclick="document.getElementById('modal-sawer').classList.add('active')">☕</div>
         <h2 id="judulHalaman">Kasir</h2>
@@ -604,6 +614,8 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-mutasi')"><span>📑</span>Mutasi Kas</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-manual')"><span>🧾</span>Struk Manual</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-cetak')"><span>🖨️</span>Struk Cetak</div>
+            <div class="menu-btn" onclick="generateKunciBaru()"><span>🔑</span>Ganti Kunci</div>
+            <div class="menu-btn" onclick="prosesLogout()"><span>🚪</span>Keluar (Kunci)</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
         </div>
 
@@ -1102,6 +1114,71 @@
     let mutasiTabAktif = 'global'; 
     const namaBulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
+    // --- MESIN KEAMANAN LOGIN JSON ---
+    function cekStatusLogin() {
+        let layarLogin = document.getElementById('layar-login');
+        if (!db.appKey) {
+            layarLogin.style.display = 'flex';
+            document.getElementById('btnGenerateAwal').style.display = 'block';
+        } else if (!sessionStorage.getItem('isLoggedInUMKM')) {
+            layarLogin.style.display = 'flex';
+            document.getElementById('btnGenerateAwal').style.display = 'none';
+        } else {
+            layarLogin.style.display = 'none';
+        }
+    }
+
+    function generateKunciBaru() {
+        if (db.appKey && !sessionStorage.getItem('isLoggedInUMKM')) return alert('Anda harus login dulu untuk ganti kunci!');
+        if (db.appKey && !confirm('⚠️ YAKIN INGIN MENGGANTI KUNCI?\n\nKunci (JSON) yang lama akan hangus dan tidak bisa dipakai lagi untuk masuk. Pastikan Anda menyimpan file yang baru ini!')) return;
+        
+        let newKey = 'UMKM-' + Date.now() + '-' + Math.random().toString(36).substr(2, 10).toUpperCase();
+        db.appKey = newKey;
+        simpanData();
+        
+        let blob = new Blob([JSON.stringify({ kunciAksesUMKM: newKey })], {type: "application/json"});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `Kunci-Rahasia-Aplikasi-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        sessionStorage.setItem('isLoggedInUMKM', 'true');
+        cekStatusLogin();
+        alert('✅ Kunci berhasil dibuat dan didownload!\n\nSimpan file JSON tersebut baik-baik. Anda membutuhkannya saat masuk kembali.');
+    }
+
+    function prosesLoginKunci() {
+        let file = document.getElementById('fileLoginKunci').files[0];
+        if(!file) return alert('Silakan pilih file kunci JSON Anda terlebih dahulu!');
+        
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let isi = JSON.parse(e.target.result);
+                if(isi.kunciAksesUMKM && isi.kunciAksesUMKM === db.appKey) {
+                    sessionStorage.setItem('isLoggedInUMKM', 'true');
+                    document.getElementById('fileLoginKunci').value = '';
+                    cekStatusLogin();
+                    mainkanSuara('ting');
+                } else {
+                    alert('❌ GAGAL! Kunci tidak cocok atau file JSON salah.');
+                }
+            } catch(err) {
+                alert('❌ GAGAL! File rusak atau bukan file JSON yang valid.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function prosesLogout() {
+        if(confirm('🔒 Yakin ingin keluar dan mengunci aplikasi?\n\nPastikan Anda MASIH MENYIMPAN file kunci JSON Anda untuk masuk kembali nanti!')) {
+            sessionStorage.removeItem('isLoggedInUMKM');
+            window.location.reload(); 
+        }
+    }
+
     // --- MESIN SUARA OFFLINE (WEB AUDIO API) ---
     function mainkanSuara(tipe) {
         try {
@@ -1191,6 +1268,13 @@
         // Panggil fungsi krusial ini!
         prosesBungaOtomatis();
         updateSemuaTampilan();
+
+        // [ OTOMATISASI KEYBOARD NUMPAD UNTUK HP ]
+        // Memaksa browser HP Android/iPhone mengeluarkan numpad angka besar
+        document.querySelectorAll('input[inputmode="numeric"]').forEach(el => el.setAttribute('pattern', '[0-9]*'));
+
+        // [ AKTIFKAN GEMBOK KEAMANAN ]
+        cekStatusLogin();
     };
 
 
