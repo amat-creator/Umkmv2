@@ -9,10 +9,10 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/9624/9624235.png",
+      "src": "https://amat-creator.github.io/Sistem-Manajemen-UMKM-Pro/https://cdn-icons-png.flaticon.com/512/9624/9624235.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
