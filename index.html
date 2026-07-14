@@ -877,7 +877,10 @@
             </div>
             <h4 style="margin-bottom: 10px;">Hitung Pecahan Uang Fisik</h4>
             <div id="daftar-pecahan-dinamis"></div>
-            <button type="button" onclick="tambahPecahan()" style="background-color: #ffc107; color: #333; margin-top: 15px; border: 1px dashed #d39e00;">➕ Tambah Jenis Pecahan Baru</button>
+            <div class="grid-2" style="margin-top: 15px;">
+                <button type="button" onclick="tambahPecahan()" style="background-color: #ffc107; color: #333; border: 1px dashed #d39e00; margin-bottom: 0;">➕ Tambah Pecahan Baru</button>
+                <button type="button" onclick="resetSemuaPecahan()" class="btn-outline" style="border-color: #dc3545; color: #dc3545; margin-bottom: 0;">🧹 Reset Semua</button>
+            </div>
             <button type="button" class="btn-green" onclick="simpanFinalPecahan()" style="margin-top: 20px; font-size: 16px; padding: 15px;">💾 Simpan & Kunci Hasil Hitungan</button>
         </div>
 
@@ -2426,6 +2429,16 @@
     }
 
     function tambahPecahan() { let namaP = prompt("Masukkan jenis pecahan:"); if(namaP && namaP.trim() !== "") { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.push({ nama: namaP.trim(), nilai: 0 }); renderPecahanDompet(); } }
+    
+    function resetSemuaPecahan() { 
+        if(confirm("Yakin ingin mengosongkan semua isian nilai pecahan?")) { 
+            let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); 
+            if(d && d.pecahan) { 
+                d.pecahan.forEach(p => p.nilai = 0); 
+                renderPecahanDompet(); 
+            } 
+        } 
+    }
     function hapusBarisPecahan(idx) { if(confirm("Hapus baris pecahan ini?")) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.splice(idx, 1); renderPecahanDompet(); } }
     function updateNilaiPecahan(idx, val) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); let angka = getAngkaMurni(val); d.pecahan[idx].nilai = angka; document.getElementById('bantuan-pecahan-'+idx).innerText = "Terbaca: Rp " + formatRupiah(angka); hitungOtomatisPecahan(); }
     function hitungOtomatisPecahan() {
