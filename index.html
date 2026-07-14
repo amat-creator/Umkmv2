@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Manajemen UMKM Pro</title>
+    <link rel="manifest" href="./manifest.json">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -28,7 +29,7 @@
         .page.active { display: block; }
 
         body { background-size: cover; background-position: center; background-attachment: fixed; transition: background 0.3s; }
-        .app-container { max-width: 480px; margin: 0 auto; background: rgba(244, 247, 246, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); min-height: 100vh; position: relative; overflow-x: hidden; }
+        .app-container { max-width: 480px; margin: 0 auto; background: rgba(244, 247, 246, 0.85); min-height: 100vh; position: relative; overflow-x: hidden; }
         .card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(255, 255, 255, 0.4); margin-bottom: 15px; }
         .theme-grid-aesthetic { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
         .theme-box { padding: 10px; border-radius: 8px; text-align: center; color: white; font-size: 11px; font-weight: bold; cursor: pointer; border: 2px solid transparent; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -3860,6 +3861,15 @@ function togglePilihSemuaKasbon() {
             simpanData();
             alert("✅ Berhasil dihapus & saldo telah di-refund!");
         } 
+    }
+
+    // DAFTARKAN PWA & SERVICE WORKER
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker terdaftar!', reg))
+                .catch(err => console.log('Gagal daftar Service Worker', err));
+        });
     }
 
     // [ FITUR 17 ] PENGAMAN TOMBOL KEMBALI HP (HARDWARE BACK BUTTON)
