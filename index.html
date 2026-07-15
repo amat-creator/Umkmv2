@@ -1123,12 +1123,12 @@
     // URL Jalan Tol ke Google Sheets V3
     const API_URL = "https://script.google.com/macros/s/AKfycbw3Q5zhkiQwux7s1JgUd4bpBa3rNmjUTNUMNytLhxrJUBUQ8P-mPbqJ2rlzDefkv-ui/exec";
     
-    async function syncToCloud(sheetName, data) {
+    async function syncToCloud(actionType, dataPayload) {
         try {
             await fetch(API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ sheet: sheetName, data: data })
+                body: JSON.stringify({ action: actionType, data: dataPayload })
             });
         } catch(e) { console.log("Gagal sync ke cloud", e); }
     }
@@ -1359,12 +1359,6 @@
         
         let jsonString = JSON.stringify(db);
         localStorage.setItem('sistemUMKMPro', jsonString); 
-        
-        // Kirim data transaksi terakhir ke Google Sheets secara real-time
-        let terakhir = db.transaksi[db.transaksi.length - 1];
-        if(terakhir) {
-            syncToCloud("Data_Transaksi", terakhir);
-        }
         
         updateSemuaTampilan(); 
     }
@@ -2767,6 +2761,7 @@
             else if(tempStatusLama==='Piutang'&&t.status==='Lunas') hapusDariUtangOtomatis(t.id); 
             else if(t.status==='Piutang') { hapusDariUtangOtomatis(t.id); tambahUtangOtomatis(t); }
             
+            syncToCloud("edit_transaksi", t);
             simpanData(); tutupEditTransaksi(); alert("Perubahan disimpan & dompet disesuaikan!");
         } 
     }
@@ -2780,9 +2775,10 @@
 }
     function togglePilihSemuaTransaksi() { let chk = document.getElementById('checkSemuaTransaksi').checked; document.querySelectorAll('.check-transaksi-beranda').forEach(cb => cb.checked = chk); }
     function togglePilihSemuaTransaksiRiwayat() { let chk = document.getElementById('checkSemuaTransaksiRiwayat').checked; document.querySelectorAll('.check-transaksi-riwayat').forEach(cb => cb.checked = chk); }
-    function hapusTransaksiTerpilih() { let arr = Array.from(document.querySelectorAll('.check-transaksi-beranda:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Centang barisnya!"); if(confirm(`Hapus ${arr.length} baris?`)) { arr.forEach(id => hapusDariUtangOtomatis(id)); db.transaksi = db.transaksi.filter(t => !arr.includes(String(t.id))); document.getElementById('checkSemuaTransaksi').checked=false; simpanData(); } }
-    function hapusTransaksiTerpilihRiwayat() { let arr = Array.from(document.querySelectorAll('.check-transaksi-riwayat:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Centang barisnya!"); if(confirm(`Hapus ${arr.length} baris?`)) { arr.forEach(id => hapusDariUtangOtomatis(id)); db.transaksi = db.transaksi.filter(t => !arr.includes(String(t.id))); document.getElementById('checkSemuaTransaksiRiwayat').checked=false; simpanData(); } }
-    function hapusTransaksi(id) { if(confirm("Yakin menghapus?")) { hapusDariUtangOtomatis(id); db.transaksi = db.transaksi.filter(t => String(t.id) !== String(id)); simpanData(); } }
+        function hapusTransaksiTerpilih() { let arr = Array.from(document.querySelectorAll('.check-transaksi-beranda:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Centang barisnya!"); if(confirm(`Hapus ${arr.length} baris?`)) { arr.forEach(id => hapusDariUtangOtomatis(id)); db.transaksi = db.transaksi.filter(t => !arr.includes(String(t.id))); document.getElementById('checkSemuaTransaksi').checked=false; arr.forEach(id => syncToCloud("delete_transaksi", { id: id })); simpanData(); } }
+    function hapusTransaksiTerpilihRiwayat() { let arr = Array.from(document.querySelectorAll('.check-transaksi-riwayat:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Centang barisnya!"); if(confirm(`Hapus ${arr.length} baris?`)) { arr.forEach(id => hapusDariUtangOtomatis(id)); db.transaksi = db.transaksi.filter(t => !arr.includes(String(t.id))); document.getElementById('checkSemuaTransaksiRiwayat').checked=false; arr.forEach(id => syncToCloud("delete_transaksi", { id: id })); simpanData(); } }
+getElementById('checkSemuaTransaksiRiwayat').checked=false; simpanData(); } }
+    function hapusTransaksi(id) { if(confirm("Yakin menghapus?")) { hapusDariUtangOtomatis(id); db.transaksi = db.transaksi.filter(t => String(t.id) !== String(id)); syncToCloud("delete_transaksi", { id: id }); simpanData(); } }
 
     let tempStatusLama = "";
     function bukaEditTransaksi(id) { let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return; tempStatusLama = t.status; document.getElementById('editTransId').value = t.id; document.getElementById('editTransTgl').value = t.tanggal; document.getElementById('editTransPelangganNama').value = t.pembeli || 'Umum'; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${t.pembeli || 'Umum'}</b>`; document.getElementById('editTransProduk').value = t.namaProduk; document.getElementById('editTransModal').value = formatRupiah(t.modal); document.getElementById('editTransTotal').value = formatRupiah(t.total); document.getElementById('editTransStatus').value = t.status; if(t.dompetModal) document.getElementById('editTransDompetModal').value = t.dompetModal; if(t.dompetMasuk) document.getElementById('editTransDompetMasuk').value = t.dompetMasuk; document.getElementById('modal-edit-transaksi').classList.add('active'); }
