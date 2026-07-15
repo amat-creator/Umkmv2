@@ -120,7 +120,7 @@
 <div class="app-container">
 
     <!-- LAYAR LOGIN & LOADING SINKRONISASI -->
-    <div id="layar-login" style="display:none; position:absolute; top:0; left:0; width:100%; height:100vh; background:var(--bg-color); z-index:99999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
+    <div id="layar-login" style="display:none; position:fixed; top:0; bottom:0; left:0; right:0; width:100%; height:100%; background:var(--bg-color); z-index:99999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
         <h2 style="color:var(--primary); margin-bottom:10px;">🔒 Aplikasi Terkunci</h2>
         <p class="text-small" style="margin-bottom:20px;">Silakan upload file kunci (JSON) Anda untuk masuk.</p>
         <input type="file" id="fileLoginKunci" accept=".json" style="width:100%; max-width:300px; padding:10px; margin-bottom:15px; border:1px solid #ddd; background:#fff; border-radius:8px;">
@@ -150,15 +150,25 @@
         </div>
     </div>
 
-    <div id="modal-pilih-wa" class="modal-popup">
+    <    <div id="modal-pilih-wa" class="modal-popup">
         <div class="popup-content">
-            <h4 style="margin-bottom: 15px; color: #333;">Kirim via Aplikasi Apa?</h4>
+            <h4 style="margin-bottom: 15px;">Kirim via Aplikasi Apa?</h4>
             <button type="button" class="btn-green" style="background: #25D366;" onclick="eksekusiKirimWA('biasa')">🟢 WhatsApp Biasa</button>
             <button type="button" class="btn-green" style="background: #128C7E;" onclick="eksekusiKirimWA('bisnis')">💼 WhatsApp Business</button>
             <button type="button" class="btn-outline" style="border-color: #007bff; color: #007bff; margin-bottom: 15px;" onclick="eksekusiKirimWA('umum')">🌐 WA Web / Pilihan Sistem</button>
             <button type="button" class="btn-red" style="margin-bottom: 0; width: auto; padding: 8px 30px;" onclick="tutupModalWA()">❌ Batal</button>
         </div>
     </div>
+
+    <div id="modal-ganti-kunci-manual" class="modal-popup">
+        <div class="popup-content">
+            <h4 style="margin-bottom: 15px;">🔑 Ganti Kunci Manual</h4>
+            <input type="text" id="inputKunciManual" placeholder="Masukkan kunci baru..." style="border: 1px solid var(--primary);">
+            <button type="button" class="btn-green" onclick="eksekusiGantiKunciManual()">Simpan Kunci Baru</button>
+            <button type="button" class="btn-red" style="margin-top: 10px;" onclick="document.getElementById('modal-ganti-kunci-manual').classList.remove('active')">Batal</button>
+        </div>
+    </div>
+
 
     <div id="modal-pencarian" class="modal-search" style="z-index: 3000;">
         <div class="modal-header"><button type="button" class="btn-outline btn-back" onclick="tutupPencarian()">⬅ Kembali</button><h4 id="judulPencarian">Cari</h4></div>
@@ -614,7 +624,7 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-mutasi')"><span>📑</span>Mutasi Kas</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-manual')"><span>🧾</span>Struk Manual</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-cetak')"><span>🖨️</span>Struk Cetak</div>
-            <div class="menu-btn" onclick="generateKunciBaru()"><span>🔑</span>Ganti Kunci</div>
+            <div class="menu-btn" onclick="bukaModalGantiKunciManual()"><span>🔑</span>Ganti Kunci Manual</div>
             <div class="menu-btn" onclick="prosesLogout()"><span>🚪</span>Keluar (Kunci)</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
         </div>
@@ -1274,7 +1284,11 @@
         document.querySelectorAll('input[inputmode="numeric"]').forEach(el => el.setAttribute('pattern', '[0-9]*'));
 
         // [ AKTIFKAN GEMBOK KEAMANAN ]
+        // Panggil fungsi cekStatusLogin setelah data di-load
         cekStatusLogin();
+        
+        // Tambahan: Pastikan layar kasir/beranda aktif setelah kunci terbuka
+        updateSemuaTampilan(); 
     };
 
 
@@ -3980,6 +3994,31 @@ function togglePilihSemuaKasbon() {
             // Jika tidak ada pop-up, biarkan keluar dari aplikasi dengan normal
         }
     });
+    
+function bukaModalGantiKunciManual() {
+    document.getElementById('modal-ganti-kunci-manual').classList.add('active');
+}
+
+function eksekusiGantiKunciManual() {
+    let kunciBaru = document.getElementById('inputKunciManual').value.trim();
+    if(kunciBaru === "") return alert("Kunci tidak boleh kosong!");
+    
+    if(confirm("⚠️ Yakin ingin mengganti kunci ke: " + kunciBaru + "?\n\nPastikan lu ingat kuncinya, karena kunci lama gak bakal bisa dipake lagi!")) {
+        db.appKey = kunciBaru;
+        simpanData();
+        
+        let blob = new Blob([JSON.stringify({ kunciAksesUMKM: kunciBaru })], {type: "application/json"});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `Kunci-Manual-${Date.now()}.json`;
+        a.click();
+        
+        document.getElementById('modal-ganti-kunci-manual').classList.remove('active');
+        alert("✅ Kunci manual berhasil diupdate & file JSON kunci baru sudah didownload!");
+    }
+}
+
     
 </script>
 </body>
