@@ -1094,6 +1094,11 @@
                 <button type="button" class="btn-blue" style="margin-bottom:0; border:none; font-size:12px; color:white;" onclick="salinBackupJSON()">📋 Salin Teks (Copy)</button>
             </div>
             
+            <div class="grid-2" style="margin-top:15px;">
+                <button type="button" class="btn-green" style="background:var(--primary); margin-bottom:0; font-size:12px;" onclick="backupKunciKeCloud()">🛡️ Simpan Kunci ke Cloud</button>
+                <button type="button" class="btn-outline" style="margin-bottom:0; font-size:12px;" onclick="ambilKunciDariCloud()">🔓 Ambil Kunci dari Cloud</button>
+            </div>
+            
             <h4 style="color:#d81b60; margin-bottom:5px;">📂 Restore Data (Pulihkan)</h4>
             <p class="text-small" style="margin-bottom:10px;">Pilih file backup (.json) yang pernah didownload untuk memulihkan data jika aplikasi tereset.</p>
             <input type="file" id="fileRestoreJSON" accept=".json" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
@@ -1114,6 +1119,20 @@
         kategoriProduk: [], pengeluaran: [], simulasi: { piutang: false, utang: false, terapkanKeHeader: false }, 
         templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''}
     };
+    
+    // URL Jalan Tol ke Google Sheets V3
+    const API_URL = "https://script.google.com/macros/s/AKfycbw3Q5zhkiQwux7s1JgUd4bpBa3rNmjUTNUMNytLhxrJUBUQ8P-mPbqJ2rlzDefkv-ui/exec";
+    
+    async function syncToCloud(sheetName, data) {
+        try {
+            await fetch(API_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sheet: sheetName, data: data })
+            });
+        } catch(e) { console.log("Gagal sync ke cloud", e); }
+    }
     
     let filterSaatIni = 'semua';
     let modePencarian = ''; 
@@ -1341,6 +1360,13 @@
         
         let jsonString = JSON.stringify(db);
         localStorage.setItem('sistemUMKMPro', jsonString); 
+        
+        // Kirim data transaksi terakhir ke Google Sheets secara real-time
+        let terakhir = db.transaksi[db.transaksi.length - 1];
+        if(terakhir) {
+            syncToCloud("Data_Transaksi", terakhir);
+        }
+        
         updateSemuaTampilan(); 
     }
 
@@ -4022,7 +4048,34 @@ function eksekusiGantiKunciManual() {
     }
 }
 
-    
+function backupKunciKeCloud() {
+    if(!confirm("Yakin ingin mengamankan kunci aplikasi ke Google Sheets? (Akan disimpan di brankas tersembunyi)")) return;
+    fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "saveKey", key: db.appKey })
+    }).then(() => alert("✅ Kunci berhasil diamankan di Brankas Sheets!"));
+}
+
+function ambilKunciDariCloud() {
+    if(!confirm("Yakin ingin memulihkan kunci dari Google Sheets?")) return;
+    fetch(API_URL + "?sheet=System_Config")
+    .then(res => res.json())
+    .then(res => {
+        if(res && res.length > 0) {
+            let keyBaru = res[0].Value;
+            if(keyBaru) {
+                db.appKey = keyBaru;
+                simpanData();
+                alert("🔑 Kunci dipulihkan! Aplikasi akan dimuat ulang.");
+                location.reload();
+            } else { alert("Brankas cloud kosong!"); }
+        } else { alert("Gagal menarik data brankas!"); }
+    }).catch(err => alert("Error ambil kunci: " + err.message));
+}
+
+
 </script>
 </body>
 </html>
