@@ -150,7 +150,7 @@
         </div>
     </div>
 
-    <    <div id="modal-pilih-wa" class="modal-popup">
+    <div id="modal-pilih-wa" class="modal-popup">
         <div class="popup-content">
             <h4 style="margin-bottom: 15px;">Kirim via Aplikasi Apa?</h4>
             <button type="button" class="btn-green" style="background: #25D366;" onclick="eksekusiKirimWA('biasa')">🟢 WhatsApp Biasa</button>
@@ -1280,8 +1280,11 @@
         updateSemuaTampilan();
 
         // [ OTOMATISASI KEYBOARD NUMPAD UNTUK HP ]
-        // Memaksa browser HP Android/iPhone mengeluarkan numpad angka besar
-        document.querySelectorAll('input[inputmode="numeric"]').forEach(el => el.setAttribute('pattern', '[0-9]*'));
+        // Memaksa semua HP ngeluarin keyboard angka besar (kalkulator) dan bebas error titik
+        document.querySelectorAll('input[inputmode="numeric"]').forEach(el => {
+            el.type = 'tel';
+            el.removeAttribute('pattern');
+        });
 
         // [ AKTIFKAN GEMBOK KEAMANAN ]
         // Panggil fungsi cekStatusLogin setelah data di-load
