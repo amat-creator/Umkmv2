@@ -119,17 +119,25 @@
 
 <div class="app-container">
 
-    <!-- LAYAR LOGIN & LOADING SINKRONISASI -->
+    <!-- LAYAR LOGIN USERNAME & PASSWORD -->
     <div id="layar-login" style="display:none; position:fixed; top:0; bottom:0; left:0; right:0; width:100%; height:100%; background:var(--bg-color); z-index:99999; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
         <h2 style="color:var(--primary); margin-bottom:10px;">🔒 Aplikasi Terkunci</h2>
-        <p class="text-small" style="margin-bottom:20px;">Silakan upload file kunci (JSON) Anda untuk masuk.</p>
-        <input type="file" id="fileLoginKunci" accept=".json" style="width:100%; max-width:300px; padding:10px; margin-bottom:15px; border:1px solid #ddd; background:#fff; border-radius:8px;">
-        <button class="btn-green" style="width:100%; max-width:300px; padding:15px; font-size:16px;" onclick="prosesLoginKunci()">🔓 Buka Aplikasi</button>
+        <p class="text-small" style="margin-bottom:20px;" id="teksPanduanLogin">Silakan masukkan Username dan Password Anda.</p>
         
-        <div id="btnGenerateAwal" style="display:none; margin-top:30px; border-top:1px dashed #ccc; padding-top:20px;">
-            <p class="text-small text-red" style="font-weight:bold; margin-bottom:10px;">⚠️ Belum Punya Kunci? (Hanya muncul saat pertama kali)</p>
-            <button class="btn-warning" style="width:100%; max-width:300px;" onclick="generateKunciBaru()">🔑 Buat & Download Kunci Baru</button>
-        </div>
+        <input type="text" id="inputUser" placeholder="Username" style="width:100%; max-width:300px; padding:12px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+        <input type="password" id="inputPass" placeholder="Password" style="width:100%; max-width:300px; padding:12px; margin-bottom:20px; border:1px solid #ccc; border-radius:8px; font-size:15px;">
+        
+        <button class="btn-green" id="btnMasukApp" style="width:100%; max-width:300px; padding:15px; font-size:16px;" onclick="prosesLoginManual()">🔓 Masuk Aplikasi</button>
+        <button class="btn-warning" id="btnBuatAkun" style="display:none; width:100%; max-width:300px; padding:15px; font-size:16px;" onclick="buatAkunBaru()">📝 Daftar / Buat Akun</button>
+    </div>
+
+    <!-- LAYAR PENGUNCI BACKUP WAJIB BERKALA -->
+    <div id="layar-backup-wajib" style="display:none; position:fixed; top:0; bottom:0; left:0; right:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); z-index:99998; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; color:white;">
+        <h2 style="color:#ffc107; margin-bottom:10px;">⚠️ Waktunya Backup Data!</h2>
+        <p style="font-size:14px; max-width:320px; margin-bottom:20px; line-height: 1.5;">
+            Demi keamanan warung kita, Bos sudah lewat waktu dari batas jadwal backup berkala. Download data sekarang untuk membuka kembali aplikasi.
+        </p>
+        <button class="btn-warning" style="width:100%; max-width:300px; padding:15px; font-size:16px; border:none;" onclick="eksekusiBackupWajibOtomatis()">📥 Download & Amankan Data</button>
     </div>
 
     <div class="header" style="position: relative;">
@@ -163,7 +171,8 @@
     <div id="modal-ganti-kunci-manual" class="modal-popup">
         <div class="popup-content">
             <h4 style="margin-bottom: 15px;">🔑 Ganti Kunci Manual</h4>
-            <input type="text" id="inputKunciManual" placeholder="Masukkan kunci baru..." style="border: 1px solid var(--primary);">
+            <input type="text" id="inputUserBaru" placeholder="Username Baru" style="width:100%; padding:10px; margin-bottom:10px; border: 1px solid var(--primary); border-radius:8px;">
+            <input type="text" id="inputPassBaru" placeholder="Password Baru" style="width:100%; padding:10px; margin-bottom:15px; border: 1px solid var(--primary); border-radius:8px;">
             <button type="button" class="btn-green" onclick="eksekusiGantiKunciManual()">Simpan Kunci Baru</button>
             <button type="button" class="btn-red" style="margin-top: 10px;" onclick="document.getElementById('modal-ganti-kunci-manual').classList.remove('active')">Batal</button>
         </div>
@@ -1062,6 +1071,16 @@
 
         <div id="sub-backup" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            
+            <!-- Pengaturan Hari Pengingat Backup -->
+            <div style="background:#fff3cd; padding:12px; border-radius:8px; border:1px solid #ffeeba; margin-bottom:15px;">
+                <label class="text-small" style="font-weight:bold; color:#856404; display:block; margin-bottom:5px;">⚙️ Batas Rutin Backup Wajib (Hari):</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="number" id="inputHariRutinBackup" min="1" placeholder="5" style="margin-bottom:0; width:80px; text-align:center; border-color:#ffc107;" oninput="simpanSetelanHariBackup(this.value)">
+                    <span class="text-small" style="color:#856404; font-weight:bold;">Hari sekali saat buka aplikasi.</span>
+                </div>
+            </div>
+
             <h4 style="color:var(--primary); margin-bottom:5px;">📋 Ekspor Data (Ke Excel)</h4>
             <p class="text-small" style="margin-bottom:10px;">Centang data yang mau diekspor, lalu salin sekaligus ke Excel.</p>
             
@@ -1130,88 +1149,10 @@
         templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''}
     };
     
-    // URL Jalan Tol ke Google Sheets V3
-    const API_URL = "https://https://script.google.com/macros/s/AKfycbycSnVuwRgBDEgNRsOicQBgWN9JjBj2wVMbJs4UYtiaI9aA88udKJ2X6DGYBLCd3ifECw/exec";
-    
-    async function syncToCloud(actionType, dataPayload) {
-        try {
-            await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: actionType, data: dataPayload })
-            });
-        } catch(e) { console.log("Gagal sync ke cloud", e); }
-    }
-    
-    let filterSaatIni = 'semua';
-    let modePencarian = ''; 
-
-    let tempPesanWA = ""; 
-    let idDompetAktif = null;
-    let kasbonTabAktif = 'Piutang'; 
-    let mutasiTabAktif = 'global'; 
-    const namaBulanIndo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-
-    // --- MESIN KEAMANAN LOGIN JSON ---
-    function cekStatusLogin() {
-        let layarLogin = document.getElementById('layar-login');
-        if (!db.appKey) {
-            layarLogin.style.display = 'flex';
-            document.getElementById('btnGenerateAwal').style.display = 'block';
-        } else if (!sessionStorage.getItem('isLoggedInUMKM')) {
-            layarLogin.style.display = 'flex';
-            document.getElementById('btnGenerateAwal').style.display = 'none';
-        } else {
-            layarLogin.style.display = 'none';
-        }
-    }
-
-    function generateKunciBaru() {
-        if (db.appKey && !sessionStorage.getItem('isLoggedInUMKM')) return alert('Anda harus login dulu untuk ganti kunci!');
-        if (db.appKey && !confirm('⚠️ YAKIN INGIN MENGGANTI KUNCI?\n\nKunci (JSON) yang lama akan hangus dan tidak bisa dipakai lagi untuk masuk. Pastikan Anda menyimpan file yang baru ini!')) return;
-        
-        let newKey = 'UMKM-' + Date.now() + '-' + Math.random().toString(36).substr(2, 10).toUpperCase();
-        db.appKey = newKey;
-        simpanData();
-        
-        let blob = new Blob([JSON.stringify({ kunciAksesUMKM: newKey })], {type: "application/json"});
-        let url = URL.createObjectURL(blob);
-        let a = document.createElement('a');
-        a.href = url;
-        a.download = `Kunci-Rahasia-Aplikasi-${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        
-        sessionStorage.setItem('isLoggedInUMKM', 'true');
-        cekStatusLogin();
-        alert('✅ Kunci berhasil dibuat dan didownload!\n\nSimpan file JSON tersebut baik-baik. Anda membutuhkannya saat masuk kembali.');
-    }
-
-    function prosesLoginKunci() {
-        let file = document.getElementById('fileLoginKunci').files[0];
-        if(!file) return alert('Silakan pilih file kunci JSON Anda terlebih dahulu!');
-        
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                let isi = JSON.parse(e.target.result);
-                if(isi.kunciAksesUMKM && isi.kunciAksesUMKM === db.appKey) {
-                    sessionStorage.setItem('isLoggedInUMKM', 'true');
-                    document.getElementById('fileLoginKunci').value = '';
-                    cekStatusLogin();
-                    mainkanSuara('ting');
-                } else {
-                    alert('❌ GAGAL! Kunci tidak cocok atau file JSON salah.');
-                }
-            } catch(err) {
-                alert('❌ GAGAL! File rusak atau bukan file JSON yang valid.');
-            }
-        };
-        reader.readAsText(file);
-    }
+    /    let filterSaatIni = 'semua';
 
     function prosesLogout() {
-        if(confirm('🔒 Yakin ingin keluar dan mengunci aplikasi?\n\nPastikan Anda MASIH MENYIMPAN file kunci JSON Anda untuk masuk kembali nanti!')) {
+        if(confirm('🔒 Yakin ingin keluar dan mengunci aplikasi?')) {
             sessionStorage.removeItem('isLoggedInUMKM');
             window.location.reload(); 
         }
@@ -1270,6 +1211,10 @@
         db.pelanggan.forEach(p => { if(!p.level) p.level = 'Umum'; });
         if(typeof db.simulasi.terapkanKeHeader === 'undefined') db.simulasi.terapkanKeHeader = false;
         
+        // Setup database pengingat backup
+        if(!db.intervalBackup) db.intervalBackup = 5;
+        if(!db.terakhirBackup) db.terakhirBackup = ambilTanggal();
+        
         if(!db.alokasi) { db.alokasi = [{ id: Date.now(), nama: 'Putar Modal', persen: 100 }]; }
         if(!db.pengeluaran) db.pengeluaran = [];
         if(!db.pemasukanLain) db.pemasukanLain = [];
@@ -1320,6 +1265,14 @@
         // Panggil fungsi cekStatusLogin setelah data di-load
         cekStatusLogin();
         
+        // Jalankan pemeriksaan jadwal backup berkala
+        cekJadwalBackupBerkala();
+        
+        // Set nilai input di halaman pengaturan backup sesuai data tersimpan
+        if(document.getElementById('inputHariRutinBackup')) {
+            document.getElementById('inputHariRutinBackup').value = db.intervalBackup;
+        }
+        
         // Tambahan: Pastikan layar kasir/beranda aktif setelah kunci terbuka
         updateSemuaTampilan(); 
     };
@@ -1369,8 +1322,16 @@
     function simpanData() { 
         db.transaksi.sort((a, b) => { if(a.tanggal === b.tanggal) return a.id - b.id; return a.tanggal > b.tanggal ? 1 : -1; });
         
-        let jsonString = JSON.stringify(db);
-        localStorage.setItem('sistemUMKMPro', jsonString); 
+        try {
+            let jsonString = JSON.stringify(db);
+            localStorage.setItem('sistemUMKMPro', jsonString); 
+        } catch (e) {
+            if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                alert('⚠️ MEMORI BROWSER PENULL! Gagal menyimpan data transaksi terbaru.\n\nHarap segera masuk ke menu [Data Excel / Backup] untuk mengunduh database JSON kamu, lalu kosongkan transaksi lama agar aplikasi bisa kembali menulis data baru.');
+            } else {
+                alert('⚠️ Terjadi masalah pada penyimpanan lokal browser: ' + e.message);
+            }
+        }
         
         updateSemuaTampilan(); 
     }
@@ -1391,20 +1352,47 @@
     
 
     function formatInputRupiah(e) { 
-        let v = e.target.value.replace(/[^0-9]/g, ''); 
+        let input = e.target;
+        let originalValue = input.value;
+        let cursorPosition = input.selectionStart;
+        
+        // Hitung jumlah angka murni sebelum posisi kursor awal
+        let digitsBeforeCursor = originalValue.slice(0, cursorPosition).replace(/[^0-9]/g, '').length;
+        
+        let v = originalValue.replace(/[^0-9]/g, ''); 
         if (v === '') {
-            e.target.value = '';
+            input.value = '';
+            return;
         } else if (/^0+$/.test(v)) {
-            // Jika isinya cuma kumpulan angka nol (misal: 000), biarkan saja agar bisa diketik angka baru di depannya
-            e.target.value = v; 
+            input.value = v; 
+            return;
         } else {
-            e.target.value = parseInt(v, 10).toLocaleString('id-ID'); 
+            input.value = parseInt(v, 10).toLocaleString('id-ID'); 
         }
+        
+        // Kembalikan kursor ke posisi yang benar berdasarkan jumlah angka murni
+        let newCursorPosition = 0;
+        let digitCount = 0;
+        while (digitCount < digitsBeforeCursor && newCursorPosition < input.value.length) {
+            if (/[0-9]/.test(input.value[newCursorPosition])) {
+                digitCount++;
+            }
+            newCursorPosition++;
+        }
+        
+        // Kunci posisi kursor agar diam di tempatnya dan tidak lompat ke belakang
+        input.setSelectionRange(newCursorPosition, newCursorPosition);
     }
     function getAngkaMurni(str) { return parseInt(str.toString().replace(/[^0-9]/g, ''), 10) || 0; }
     function formatRupiah(angka) { return (parseInt(angka) || 0).toLocaleString('id-ID'); } // Diperbaiki: Tambahan || 0 sebagai pengaman
     function ambilTanggal() { let d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function getNamaHari(tglString) { return ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][new Date(tglString).getDay()]; }
+    
+    // Fungsi baru untuk menetralkan skrip berbahaya sebelum masuk ke innerHTML
+    function amankanTeks(str) { 
+        if(typeof str !== 'string') return str; 
+        return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); 
+    }
     
     function salinTeks(teks, pesan = "Berhasil disalin!") {
         if (navigator.clipboard && window.isSecureContext) {
@@ -1712,8 +1700,15 @@
             // Sistem sekarang merekam keterangan yang kamu ketik, bukan lagi "Pinjaman/Manual"
             let r = { transId: null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: ket, nominal: n };
             
-            if(ex) { ex.nominal = (Number(ex.nominal) || 0) + n; if(!ex.rincianBarang) ex.rincianBarang=[]; ex.rincianBarang.push(r); } 
-            else { db.utang.push({ id: Date.now(), transId: null, jenis: j, nama: nmUtang, namaProduk: "Manual", nominal: n, status: 'Belum Lunas', cicilan: [], rincianBarang: [r], dompetId: dId }); }
+            if(ex) { 
+                ex.nominal = (Number(ex.nominal) || 0) + n; if(!ex.rincianBarang) ex.rincianBarang=[]; ex.rincianBarang.push(r); 
+                syncToCloud("edit_utang", ex);
+            } 
+            else { 
+                let utangBaru = { id: Date.now(), transId: null, jenis: j, nama: nmUtang, namaProduk: "Manual", nominal: n, status: 'Belum Lunas', cicilan: [], rincianBarang: [r], dompetId: dId };
+                db.utang.push(utangBaru); 
+                syncToCloud("tambah_utang", utangBaru);
+            }
             
             if(dId && dId !== 'none') {
                 let d = db.dompet.find(x => String(x.id) === String(dId));
@@ -1997,6 +1992,7 @@
             }
 
             db.utang = db.utang.filter(x => String(x.id) !== String(id)); 
+            syncToCloud("delete_utang", { id: id });
             simpanData(); 
             alert("✅ Berhasil Dihapus & Di-Refund!");
         } 
@@ -2400,7 +2396,7 @@
         } catch(err) { alert("Error: " + err.message); }
     }
     
-    function hapusDompetItem(id) { if(confirm("Hapus dompet ini beserta isinya?")) { db.dompet = db.dompet.filter(d => String(d.id) !== String(id)); simpanData(); } }
+    function hapusDompetItem(id) { if(confirm("Hapus dompet ini beserta isinya?")) { db.dompet = db.dompet.filter(d => String(d.id) !== String(id)); syncToCloud("delete_dompet", { id: id }); simpanData(); } }
     
     function bukaModalEditSaldo(id) {
         let d = db.dompet.find(x => String(x.id) === String(id)); 
@@ -2601,9 +2597,11 @@
         db.kategoriProduk.forEach(kat => {
             let prods = db.produk.filter(p => p.kategoriId === kat.id && (p.nama.toLowerCase().includes(kw) || kat.nama.toLowerCase().includes(kw)));
             if(prods.length > 0) {
-                html += `<div class="kat-folder" onclick="toggleKatFolder('${kat.id}')">📁 ${kat.nama} <span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:15px; font-size:11px;">${prods.length} Produk</span></div>`;
+                // Perhatikan penambahan amankanTeks(kat.nama)
+                html += `<div class="kat-folder" onclick="toggleKatFolder('${kat.id}')">📁 ${amankanTeks(kat.nama)} <span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:15px; font-size:11px;">${prods.length} Produk</span></div>`;
                 html += `<div id="kat-konten-${kat.id}" class="kat-content ${kw !== '' ? 'active' : ''}">`;
-                html += prods.map(p => `<div class="list-item flex-between" style="align-items: flex-start; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; margin-bottom:5px;"><div style="display:flex; gap:10px; align-items:flex-start;"><input type="checkbox" class="check-produk" value="${p.id}" style="width:auto; margin-top:4px;" onchange="cekStatusPilihSemua()"><div><b>${p.nama}</b><br><span class="text-small">Modal: Rp ${formatRupiah(p.modal)} | Jual: Rp ${formatRupiah(p.harga)}</span></div></div><div style="display:flex; flex-direction:column; gap:5px;"><button type="button" class="btn-outline" style="width:auto; padding:4px 10px; margin:0; font-size:11px;" onclick="editProduk('${p.id}')">Edit</button><button type="button" class="btn-red" style="width:auto; padding:4px 10px; margin:0; font-size:11px;" onclick="hapusProduk('${p.id}')">Hapus</button></div></div>`).join('');
+                // Perhatikan penambahan amankanTeks(p.nama)
+                html += prods.map(p => `<div class="list-item flex-between" style="align-items: flex-start; background:#fff; padding:10px; border-radius:6px; border:1px solid #ddd; margin-bottom:5px;"><div style="display:flex; gap:10px; align-items:flex-start;"><input type="checkbox" class="check-produk" value="${p.id}" style="width:auto; margin-top:4px;" onchange="cekStatusPilihSemua()"><div><b>${amankanTeks(p.nama)}</b><br><span class="text-small">Modal: Rp ${formatRupiah(p.modal)} | Jual: Rp ${formatRupiah(p.harga)}</span></div></div><div style="display:flex; flex-direction:column; gap:5px;"><button type="button" class="btn-outline" style="width:auto; padding:4px 10px; margin:0; font-size:11px;" onclick="editProduk('${p.id}')">Edit</button><button type="button" class="btn-red" style="width:auto; padding:4px 10px; margin:0; font-size:11px;" onclick="hapusProduk('${p.id}')">Hapus</button></div></div>`).join('');
                 html += `</div>`;
             }
         });
@@ -2625,9 +2623,14 @@
             if(!nama) return alert("Isi nama produk!");
             if(idEdit !== "") { 
                 let p = db.produk.find(x => String(x.id) === String(idEdit)); 
-                if(p) { p.nama=nama; p.kategoriId=katId; p.modal=m; p.harga=j; p.hargaReseller=hr; p.hargaAgen=ha; p.dompetModal=dModal; p.dompetMasuk=dMasuk; } 
+                if(p) { 
+                    p.nama=nama; p.kategoriId=katId; p.modal=m; p.harga=j; p.hargaReseller=hr; p.hargaAgen=ha; p.dompetModal=dModal; p.dompetMasuk=dMasuk; 
+                    syncToCloud("edit_produk", p);
+                } 
             } else { 
-                db.produk.push({ id: Date.now(), nama: nama, kategoriId: katId, modal: m, harga: j, hargaReseller: hr, hargaAgen: ha, dompetModal: dModal, dompetMasuk: dMasuk, jenis: 'Digital' }); 
+                let pBaru = { id: Date.now(), nama: nama, kategoriId: katId, modal: m, harga: j, hargaReseller: hr, hargaAgen: ha, dompetModal: dModal, dompetMasuk: dMasuk, jenis: 'Digital' };
+                db.produk.push(pBaru); 
+                syncToCloud("tambah_produk", pBaru);
             } 
             batalEditProduk(); simpanData(); 
         } catch(err) { alert("Error: " + err.message); }
@@ -2666,12 +2669,21 @@
         document.getElementById('btnSubmitProduk').classList.remove('btn-green'); 
         document.getElementById('btnBatalEdit').style.display = "none"; 
     }
-    function hapusProduk(id) { if(confirm("Hapus produk ini?")) { db.produk = db.produk.filter(p => String(p.id) !== String(id)); simpanData(); } }
+    function hapusProduk(id) { if(confirm("Hapus produk ini?")) { db.produk = db.produk.filter(p => String(p.id) !== String(id)); syncToCloud("delete_produk", { id: id }); simpanData(); } }
     function togglePilihSemuaProduk() { let chk = document.getElementById('checkSemuaProduk').checked; document.querySelectorAll('.check-produk').forEach(cb => cb.checked = chk); }
     function cekStatusPilihSemua() { let cb = document.querySelectorAll('.check-produk'); if(document.getElementById('checkSemuaProduk')) document.getElementById('checkSemuaProduk').checked = (cb.length > 0 && document.querySelectorAll('.check-produk:not(:checked)').length === 0); }
     function hapusProdukTerpilih() { let arr = Array.from(document.querySelectorAll('.check-produk:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Pilih minimal 1!"); if(confirm(`Hapus ${arr.length} produk?`)) { db.produk = db.produk.filter(p => !arr.includes(String(p.id))); if(document.getElementById('checkSemuaProduk')) document.getElementById('checkSemuaProduk').checked = false; simpanData(); } }
 
-    function bukaPencarian(tipe) { modePencarian = tipe; document.getElementById('modal-pencarian').classList.add('active'); document.getElementById('judulPencarian').innerText = (tipe === 'produk') ? 'Pencarian Produk' : 'Pencarian Pelanggan'; let input = document.getElementById('inputPencarian'); input.value = ''; filterPencarian(); setTimeout(() => input.focus(), 100); }
+    function bukaPencarian(tipe) { 
+        modePencarian = tipe; 
+        document.getElementById('modal-pencarian').classList.add('active'); 
+        // Menggunakan startsWith agar mengenali 'produk' maupun 'produk-edit'
+        document.getElementById('judulPencarian').innerText = (tipe.startsWith('produk')) ? 'Pencarian Produk' : 'Pencarian Pelanggan'; 
+        let input = document.getElementById('inputPencarian'); 
+        input.value = ''; 
+        filterPencarian(); 
+        setTimeout(() => input.focus(), 100); 
+    }
     function tutupPencarian() { document.getElementById('modal-pencarian').classList.remove('active'); }
     function filterPencarian() {
         let kw = document.getElementById('inputPencarian').value.toLowerCase(); let html = '';
@@ -2769,6 +2781,9 @@
             document.getElementById('editKasbonNama').value = nama; document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-trans') {
             document.getElementById('editTransPelangganNama').value = nama; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${nama}</b>`; 
+        // Penanganan baru untuk menangkap mode pelanggan-tabungan
+        } else if (modePencarian === 'pelanggan-tabungan') {
+            document.getElementById('tabunganPelangganId').value = i; document.getElementById('labelTabunganPelanggan').innerHTML = `<b>${nama}</b>`;
         }
         tutupPencarian(); 
 
@@ -2972,13 +2987,18 @@ function renderDaftarTransaksiBeranda() {
             
             if(idEdit !== "") { 
                 let p = db.pelanggan.find(x => String(x.id) === String(idEdit)); 
-                if(p) { p.nama = nama; p.info = infoArr; p.level = level; } 
+                if(p) { 
+                    p.nama = nama; p.info = infoArr; p.level = level; 
+                    syncToCloud("edit_pelanggan", p);
+                } 
             } else { 
-                db.pelanggan.push({ id: Date.now(), nama: nama, info: infoArr, level: level }); 
+                let pelBaru = { id: Date.now(), nama: nama, info: infoArr, level: level };
+                db.pelanggan.push(pelBaru); 
+                syncToCloud("tambah_pelanggan", pelBaru);
             } 
             simpanData(); 
             batalEditPelanggan(); 
-        } catch(e) { alert("Error: " + e.message); } 
+       } catch(e) { alert("Error: " + e.message); } 
     }
     function editPelangganList(id) {
         let p = db.pelanggan.find(x => String(x.id) === String(id));
@@ -3009,6 +3029,7 @@ function renderDaftarTransaksiBeranda() {
     function hapusPelanggan(id) {
         if(confirm("Yakin ingin menghapus kontak pelanggan ini?")) {
             db.pelanggan = db.pelanggan.filter(p => String(p.id) !== String(id));
+            syncToCloud("delete_pelanggan", { id: id });
             simpanData();
             renderDaftarPelanggan();
         }
@@ -3970,7 +3991,7 @@ function salinBackupJSON() {
         let file = fileInput.files[0];
         
         if(!file) {
-            return alert("Pilih file backup .json nya dulu ya!");
+            return alert("Pilih file backup .json nya dulu ya Bos!");
         }
         
         let reader = new FileReader();
@@ -3979,17 +4000,23 @@ function salinBackupJSON() {
                 let isiData = e.target.result;
                 let tesParse = JSON.parse(isiData); 
                 
-                if(tesParse.dompet === undefined && tesParse.produk === undefined) {
-                    return alert("❌ Format file tidak dikenali! Pastikan ini file backup dari aplikasi Sistem UMKM Pro.");
+                // Validasi apakah ini file cadangan UMKM Pro atau bukan
+                if(typeof tesParse !== 'object' || tesParse === null) {
+                    throw new Error("Format file rusak atau kosong");
                 }
                 
-                if(confirm("⚠️ PERINGATAN!\n\nSeluruh data saat ini akan TERTEMPA (dihapus dan diganti) dengan data dari file backup ini.\n\nYakin ingin melanjutkan?")) {
-                    localStorage.setItem('sistemUMKMPro', isiData);
-                    alert("✅ Data berhasil dipulihkan! Aplikasi akan dimuat ulang untuk menyegarkan sistem.");
-                    location.reload(); 
+                if(confirm("⚠️ PERINGATAN PENTING!\n\nSeluruh data transaksi, produk, dompet, dan kasbon saat ini di browser akan DIHAPUS dan DIGANTI TOTAL dengan data dari file backup ini.\n\nBos yakin ingin melanjutkan pulihkan data?")) {
+                    // Update state database di memory aplikasi secara langsung sebelum reload
+                    db = { ...db, ...tesParse };
+                    
+                    // Kunci data ke localStorage
+                    localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
+                    
+                    alert("🎉 MANTAP! Data berhasil dipulihkan dari cadangan. Aplikasi akan memuat ulang halaman sekarang.");
+                    window.location.reload(); 
                 }
             } catch(err) {
-                alert("❌ Gagal membaca file! Pastikan kamu memilih file berakhiran .json yang benar.");
+                alert("❌ GAGAL MEMULIHKAN! Pastikan Bos memilih file berakhiran '.json' resmi hasil download cadangan aplikasi ini sebelumnya.");
             }
         };
         reader.readAsText(file);
@@ -4078,54 +4105,106 @@ function togglePilihSemuaKasbon() {
     });
     
 function bukaModalGantiKunciManual() {
+    // Otomatis isi kolom dengan data akun lama biar bos tidak lupa akunnya saat ini
+    document.getElementById('inputUserBaru').value = db.username || '';
+    document.getElementById('inputPassBaru').value = db.password || '';
     document.getElementById('modal-ganti-kunci-manual').classList.add('active');
 }
 
+
 function eksekusiGantiKunciManual() {
-    let kunciBaru = document.getElementById('inputKunciManual').value.trim();
-    if(kunciBaru === "") return alert("Kunci tidak boleh kosong!");
+    let userBaru = document.getElementById('inputUserBaru').value.trim();
+    let passBaru = document.getElementById('inputPassBaru').value.trim();
     
-    if(confirm("⚠️ Yakin ingin mengganti kunci ke: " + kunciBaru + "?\n\nPastikan lu ingat kuncinya, karena kunci lama gak bakal bisa dipake lagi!")) {
-        db.appKey = kunciBaru;
+    if(userBaru === "" || passBaru === "") return alert("Username dan Password tidak boleh kosong bos!");
+    if(userBaru.length < 4 || passBaru.length < 4) return alert("Keamanan itu penting! Minimal 4 karakter ya.");
+    
+    if(confirm("⚠️ Yakin ingin mengganti akun login menjadi:\n\nUser: " + userBaru + "\nPass: " + passBaru + "\n\nPastikan dicatat biar gak lupa!")) {
+        db.username = userBaru;
+        db.password = passBaru;
         simpanData();
         
-        let blob = new Blob([JSON.stringify({ kunciAksesUMKM: kunciBaru })], {type: "application/json"});
-        let url = URL.createObjectURL(blob);
-        let a = document.createElement('a');
-        a.href = url;
-        a.download = `Kunci-Manual-${Date.now()}.json`;
-        a.click();
-        
         document.getElementById('modal-ganti-kunci-manual').classList.remove('active');
-        alert("✅ Kunci manual berhasil diupdate & file JSON kunci baru sudah didownload!");
+        alert("✅ Mantap! Akun login berhasil diperbarui.");
     }
 }
 
+
+// ==========================================
+// MESIN BACKUP KUNCI KE CLOUD (DUMMY/SEDERHANA)
+// ==========================================
 function backupKunciKeCloud() {
-    if(!confirm("Yakin ingin mengamankan kunci aplikasi ke Google Sheets? (Akan disimpan di brankas tersembunyi)")) return;
-    fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "saveKey", key: db.appKey })
-    }).then(() => alert("✅ Kunci berhasil diamankan di Brankas Sheets!"));
+    if(!db.username || !db.password) return alert("Belum ada kunci akun yang tersimpan di sistem!");
+    
+    // Karena butuh backend khusus, untuk sementara kita simpan ke file backup terpisah
+    let dataKunci = { user: db.username, pass: db.password };
+    let blob = new Blob([JSON.stringify(dataKunci)], {type: "application/json"});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = `Kunci_Rahasia_${Date.now()}.json`;
+    a.click();
+    alert("✅ Kunci login berhasil diekspor menjadi file JSON! Simpan file ini baik-baik.");
 }
 
 function ambilKunciDariCloud() {
-    if(!confirm("Yakin ingin memulihkan kunci dari Google Sheets?")) return;
-    fetch(API_URL + "?sheet=System_Config")
-    .then(res => res.json())
-    .then(res => {
-        if(res && res.length > 0) {
-            let keyBaru = res[0].Value;
-            if(keyBaru) {
-                db.appKey = keyBaru;
-                simpanData();
-                alert("🔑 Kunci dipulihkan! Aplikasi akan dimuat ulang.");
-                location.reload();
-            } else { alert("Brankas cloud kosong!"); }
-        } else { alert("Gagal menarik data brankas!"); }
-    }).catch(err => alert("Error ambil kunci: " + err.message));
+    alert("Untuk memulihkan kunci, silakan buka file Kunci_Rahasia.json yang pernah di-download, salin isinya, dan gunakan saat login.");
 }
+
+    // ==========================================
+    // MESIN DETEKSI JADWAL BACKUP WAJIB BERKALA
+    // ==========================================
+    function simpanSetelanHariBackup(val) {
+        let hari = parseInt(val) || 5;
+        if(hari < 1) hari = 1;
+        db.intervalBackup = hari;
+        localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
+    }
+
+    function cekJadwalBackupBerkala() {
+        // Jika belum login, jangan kunci dulu biar layar login tidak tertutup
+        if (!sessionStorage.getItem('isLoggedInUMKM') || !db.username) return;
+
+        let tglTerakhir = new Date(db.terakhirBackup || ambilTanggal());
+        let tglSekarang = new Date(ambilTanggal());
+        
+        // Hitung selisih jarak hari
+        let selisihWaktu = tglSekarang.getTime() - tglTerakhir.getTime();
+        let selisihHari = Math.floor(selisihWaktu / (1000 * 3600 * 24));
+        
+        let batasHari = db.intervalBackup || 5;
+
+        if(selisihHari >= batasHari) {
+            document.getElementById('layar-backup-wajib').style.display = 'flex';
+        } else {
+            document.getElementById('layar-backup-wajib').style.display = 'none';
+        }
+    }
+
+    function eksekusiBackupWajibOtomatis() {
+        let fullData = localStorage.getItem('sistemUMKMPro');
+        if(!fullData) return alert("Belum ada data untuk di-backup!");
+
+        // Eksekusi download file master JSON utuh
+        let blob = new Blob([fullData], {type: "application/json"});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        let d = new Date();
+        a.download = `Backup_Wajib_UMKM_${d.toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Reset tanggal backup terakhir ke hari ini
+        db.terakhirBackup = ambilTanggal();
+        simpanData();
+
+        // Singkirkan layar pembatas
+        document.getElementById('layar-backup-wajib').style.display = 'none';
+        alert("✅ Backup sukses terunduh! Layar aplikasi kembali terbuka. Selamat berdagang kembali Bos!");
+    }
 
 
 </script>
