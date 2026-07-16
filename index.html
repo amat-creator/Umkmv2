@@ -1605,9 +1605,7 @@
                 };
                 db.transaksi.push(tr);
                 
-                // KODE BARU: Mengirim data transaksi baru ke Google Sheets
-                syncToCloud("tambah_transaksi", tr);
-                
+                // Sinkronisasi ke cloud sudah dimatikan untuk mode Offline
                 if(stat !== 'Lunas') tambahUtangOtomatis(tr);
 
                 if(dModalId !== 'none') { let dm = db.dompet.find(x => String(x.id) === String(dModalId)); if(dm) dm.saldo -= modalFinal; }
