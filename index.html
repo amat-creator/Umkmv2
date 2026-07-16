@@ -1231,18 +1231,26 @@
         if(adaPerubahan) { simpanData(); }
     }
 
-    function simpanData() { 
-        db.transaksi.sort((a, b) => { if(a.tanggal === b.tanggal) return a.id - b.id; return a.tanggal > b.tanggal ? 1 : -1; });
-        
-        let jsonString = JSON.stringify(db);
+function simpanData(renderFungsiKhusus = null) { 
+    db.transaksi.sort((a, b) => { if(a.tanggal === b.tanggal) return a.id - b.id; return a.tanggal > b.tanggal ? 1 : -1; });
+    let jsonString = JSON.stringify(db);
+    
+    try {
         localStorage.setItem('sistemUMKMPro', jsonString); 
-        updateSemuaTampilan(); 
+        
+        if (typeof renderFungsiKhusus === 'function') {
+            renderFungsiKhusus();
+        } else {
+            updateSemuaTampilan(); 
+        }
+    } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+            alert("⚠️ PERINGATAN: Memori browser penuh! Segera Backup Data (Excel/JSON) dan hapus Riwayat Transaksi lama.");
+        } else {
+            alert("Gagal menyimpan data: " + e.message);
+        }
     }
-
-    // WAJIB: Memastikan semua komponen ter-render saat aplikasi mulai
-    document.addEventListener('DOMContentLoaded', () => {
-        updateSemuaTampilan();
-    });
+}
     
     function formatTanggalIndo(tglStr) {
         if(!tglStr) return "";
@@ -2256,14 +2264,14 @@
     
     function hapusDompetItem(id) { if(confirm("Hapus dompet ini beserta isinya?")) { db.dompet = db.dompet.filter(d => String(d.id) !== String(id)); simpanData(); } }
     
-    function bukaModalEditSaldo(id) {
-        let d = db.dompet.find(x => String(x.id) === String(id)); 
-        if(!d) return;
-        document.getElementById('editSaldoDompetId').value = id;
-        document.getElementById('labelEditSaldoDompet').innerText = d.nama + " (Saat ini: Rp " + formatRupiah(d.saldo) + ")";
-        document.getElementById('jenisEditSaldo').value = 'tambah';
-        document.getElementById('editSaldoNominal').value = '';
-        document.getElementById('modal-edit-saldo').classList.add('active');
+    function kembaliKeMenu() { 
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-struk-cetak','sub-rapor-pelanggan','sub-catatan'];
+        allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
+        
+        document.getElementById('main-menu-grid').style.display = 'grid'; 
+        document.getElementById('judulHalaman').innerText = 'Menu Lainnya'; 
+        idDompetAktif = null;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
     function eksekusiEditSaldoPintar(e) {
@@ -2284,6 +2292,18 @@
         document.getElementById('modal-edit-saldo').classList.remove('active');
         alert("Saldo " + d.nama + " berhasil disesuaikan!");
     }
+
+    function bukaModalEditSaldo(id) {
+        let d = db.dompet.find(x => String(x.id) === String(id)); 
+        if(!d) return;
+        document.getElementById('editSaldoDompetId').value = id;
+        document.getElementById('labelEditSaldoDompet').innerText = d.nama + " (Saat ini: Rp " + formatRupiah(d.saldo) + ")";
+        document.getElementById('jenisEditSaldo').value = 'tambah';
+        document.getElementById('editSaldoNominal').value = '';
+        document.getElementById('modal-edit-saldo').classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
 
     function bukaModalBungaBank(id) {
         let d = db.dompet.find(x => String(x.id) === String(id)); 
@@ -2311,11 +2331,27 @@
         alert("Sip! Bunga " + persen + "% per hari aktif untuk " + d.nama);
     }
 
+    function bukaEditInfoKasbon(id) {
+        let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return;
+        document.getElementById('editKasbonId').value = id;
+        document.getElementById('editKasbonNama').value = u.nama;
+        if(document.getElementById('labelEditKasbonPelanggan')) document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${u.nama}</b>`;
+        
+        let dLama = u.dompetId || 'none';
+        document.getElementById('editKasbonDompetLama').value = dLama;
+        document.getElementById('editKasbonDompet').value = dLama;
+        
+        document.getElementById('modal-edit-kasbon').classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function bukaModalMutasi() {
         if(db.dompet.length < 2) return alert("Minimal harus punya 2 dompet untuk mutasi!");
         document.getElementById('mutasiNominal').value = '';
         document.getElementById('modal-mutasi').classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
     
     function eksekusiMutasi(e) {
         e.preventDefault();
@@ -2515,7 +2551,7 @@
         let kw = document.getElementById('inputPencarian').value.toLowerCase(); let html = '';
         if (modePencarian.startsWith('produk')) {
             let data = db.produk.map((p, i) => ({...p, idAsli: p.id})).filter(p => p.nama.toLowerCase().includes(kw));
-            if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'")}', ${p.modal}, ${p.harga}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
+            if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
             else html = `<div class="text-small text-center" style="padding:20px;">Pencarian tidak ditemukan.</div>`;
         } else if (modePencarian.startsWith('pelanggan')) {
             let data = db.pelanggan.map((p, i) => ({...p, idAsli: p.id})).filter(p => { if(p.nama.toLowerCase().includes(kw)) return true; let foundInInfo = false; (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().includes(kw) || inf.value.toLowerCase().includes(kw)) foundInInfo = true; }); return foundInInfo; });
@@ -2645,7 +2681,7 @@
     function hapusTransaksi(id) { if(confirm("Yakin menghapus?")) { hapusDariUtangOtomatis(id); db.transaksi = db.transaksi.filter(t => String(t.id) !== String(id)); simpanData(); } }
 
     let tempStatusLama = "";
-    function bukaEditTransaksi(id) { let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return; tempStatusLama = t.status; document.getElementById('editTransId').value = t.id; document.getElementById('editTransTgl').value = t.tanggal; document.getElementById('editTransPelangganNama').value = t.pembeli || 'Umum'; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${t.pembeli || 'Umum'}</b>`; document.getElementById('editTransProduk').value = t.namaProduk; document.getElementById('editTransModal').value = formatRupiah(t.modal); document.getElementById('editTransTotal').value = formatRupiah(t.total); document.getElementById('editTransStatus').value = t.status; if(t.dompetModal) document.getElementById('editTransDompetModal').value = t.dompetModal; if(t.dompetMasuk) document.getElementById('editTransDompetMasuk').value = t.dompetMasuk; document.getElementById('modal-edit-transaksi').classList.add('active'); }
+    function bukaEditTransaksi(id) { let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return; tempStatusLama = t.status; document.getElementById('editTransId').value = t.id; document.getElementById('editTransTgl').value = t.tanggal; document.getElementById('editTransPelangganNama').value = t.pembeli || 'Umum'; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${t.pembeli || 'Umum'}</b>`; document.getElementById('editTransProduk').value = t.namaProduk; document.getElementById('editTransModal').value = formatRupiah(t.modal); document.getElementById('editTransTotal').value = formatRupiah(t.total); document.getElementById('editTransStatus').value = t.status; if(t.dompetModal) document.getElementById('editTransDompetModal').value = t.dompetModal; if(t.dompetMasuk) document.getElementById('editTransDompetMasuk').value = t.dompetMasuk; document.getElementById('modal-edit-transaksi').classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     function tutupEditTransaksi() { document.getElementById('modal-edit-transaksi').classList.remove('active'); }
 function renderDaftarTransaksiBeranda() {
     let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
@@ -2736,7 +2772,7 @@ function renderDaftarTransaksiBeranda() {
 
     function simpanTemplateWA() { db.templateWA.pelanggan = document.getElementById('tplPelanggan').value; db.templateWA.tagihan = document.getElementById('tplTagihan').value; db.templateWA.bos = document.getElementById('tplBos').value; simpanData(); alert("Disimpan!"); }
     function resetTemplateWA() { if(confirm("Reset ke awal?")) { db.templateWA = { pelanggan: "Halo kak *[Nama]*,\nTerima kasih sudah order pada [Tgl].\n\n*Rincian Pesanan:*\n[Produk]\n\n*Total Tagihan: Rp [Total]*\nSemoga harinya menyenangkan! 🙏", tagihan: "Halo kak *[Nama]*,\nIzin mengingatkan untuk tagihan kasbonnya ya.\n\n*📝 Rincian Belanja:*\n[Produk]\n-----------------------------------\n*Total Tagihan Awal : Rp [Total]*\n\n*💳 Riwayat Pembayaran:*\n[RiwayatCicilan]\n*(Total Sudah Dibayar : Rp [TotalDibayar])*\n-----------------------------------\n🚨 *SISA TAGIHAN : Rp [Sisa]*\n\nMohon bantuannya untuk pelunasan ya kak, terima kasih! 🙏", bos: "Laporan Masuk Bos! 🚀\nTanggal: [Tgl]\nPelanggan: [Nama]\n\n*Rincian Terjual:*\n[Produk]\n\nModal: Rp [Modal]\nTotal Jual: Rp [Total]\n*Untung Bersih: Rp [Untung]*" }; document.getElementById('tplPelanggan').value = db.templateWA.pelanggan; document.getElementById('tplTagihan').value = db.templateWA.tagihan; document.getElementById('tplBos').value = db.templateWA.bos; simpanData(); } }
-    function tampilkanPilihanWA(psn) { tempPesanWA = encodeURIComponent(psn); document.getElementById('modal-pilih-wa').classList.add('active'); }
+    function tampilkanPilihanWA(psn) { tempPesanWA = encodeURIComponent(psn); document.getElementById('modal-pilih-wa').classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     function tutupModalWA() { document.getElementById('modal-pilih-wa').classList.remove('active'); }
     function eksekusiKirimWA(tp) { tutupModalWA(); let url = tp==='biasa'?`intent://send?text=${tempPesanWA}#Intent;scheme=whatsapp;package=com.whatsapp;end`:tp==='bisnis'?`intent://send?text=${tempPesanWA}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`:`https://api.whatsapp.com/send?text=${tempPesanWA}`; window.location.href = url; }
     function kirimWABorongan(js) { let arr = Array.from(document.querySelectorAll('.check-transaksi-beranda:checked')).map(cb => String(cb.value)); if (!arr.length) return alert("Centang dulu!"); prosesKirimWA(js, arr); }
@@ -3031,14 +3067,15 @@ function renderDaftarTransaksiBeranda() {
     function tambahItemAlokasi() { let n = prompt("Nama pos:"); if(n&&n.trim()!=="") { db.alokasi.push({ id: Date.now(), nama: n.trim(), persen: 0 }); simpanData(); } }
     function hapusItemAlokasi(id) { if(confirm("Hapus pos ini?")) { db.alokasi = db.alokasi.filter(a => String(a.id) !== String(id)); simpanData(); } }
     function ubahPersenAlokasi(id, val) { 
-        let a = db.alokasi.find(x => String(x.id) === String(id)); 
-        if(a) { 
-            let parsed = parseInt(val);
-            a.persen = isNaN(parsed) ? 0 : parsed; 
-            localStorage.setItem('sistemUMKMPro', JSON.stringify(db)); 
-            hitungBagiHasil(); 
-        } 
-    }
+    let a = db.alokasi.find(x => String(x.id) === String(id)); 
+    if(a) { 
+        let parsed = parseFloat(val); 
+        a.persen = isNaN(parsed) ? 0 : parsed; 
+        localStorage.setItem('sistemUMKMPro', JSON.stringify(db)); 
+        hitungBagiHasil(); 
+    } 
+}
+
     function toggleFilterAlokasi() { db.filterAlokasi = document.getElementById('periodeAlokasi').value; simpanData(); document.getElementById('wadahFilterCustomAlokasi').style.display = (db.filterAlokasi === 'custom') ? 'block' : 'none'; updateLabaAlokasi(); }
     function updateLabaAlokasi() {
         let p = document.getElementById('periodeAlokasi').value;
@@ -3417,6 +3454,7 @@ function renderDaftarTransaksiBeranda() {
         document.getElementById('editKasbonDompet').value = dLama;
         
         document.getElementById('modal-edit-kasbon').classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function tutupModalEditKasbon() { 
