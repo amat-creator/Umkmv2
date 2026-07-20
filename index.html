@@ -499,9 +499,10 @@
                 <input type="text" id="namaProduk" placeholder="Nama Produk / Jasa" required>
                 <label class="text-small">Pilih Kategori / Folder:</label>
                 <select id="produkKategoriId" style="background:#f0f8ff; font-weight:bold;"></select>
-                <div class="grid-2" style="margin-top: 10px;">
-                    <div><label class="text-small">Harga Modal (Rp):</label><input type="text" inputmode="numeric" id="hargaModal" placeholder="0" oninput="formatInputRupiah(event)" required></div>
-                    <div><label class="text-small">Harga Jual (Rp):</label><input type="text" inputmode="numeric" id="hargaJual" placeholder="0" oninput="formatInputRupiah(event)" required></div>
+                <div class="grid-3" style="margin-top: 10px;">
+                    <div><label class="text-small">Modal:</label><input type="text" inputmode="numeric" id="hargaModal" placeholder="0" oninput="formatInputRupiah(event)" required></div>
+                    <div><label class="text-small">Jual Normal:</label><input type="text" inputmode="numeric" id="hargaJual" placeholder="0" oninput="formatInputRupiah(event)" required></div>
+                    <div><label class="text-small">Jual Reseller:</label><input type="text" inputmode="numeric" id="hargaReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
                 </div>
                 <div style="background: #eef2f5; padding: 10px; border-radius: 8px; border: 1px solid #d1e3f8; margin-bottom: 10px;">
                     <label class="text-small text-red" style="font-weight:bold;">💼 Default Modal Dari:</label>
@@ -965,6 +966,10 @@
             <form onsubmit="eksekusiSimpanPelanggan(event)" style="margin-top: 10px;">
                 <input type="hidden" id="editFormPelId" value="">
                 <input type="text" id="formPelNama" placeholder="Nama Pelanggan" required>
+                <select id="formPelTipe" style="background:#f0f8ff; font-weight:bold; margin-bottom:10px;">
+                    <option value="Biasa">👤 Pelanggan Biasa (Harga Normal)</option>
+                    <option value="Reseller">🤝 Reseller (Dapat Harga Khusus)</option>
+                </select>
                 <div style="margin-bottom:10px;">
                     <b class="text-small text-blue">Data Info / Nomor:</b>
                     <div id="wadahInfoPelanggan"></div>
@@ -2484,6 +2489,8 @@ function simpanData(renderFungsiKhusus = null) {
             let katId = document.getElementById('produkKategoriId').value; 
             let m = getAngkaMurni(document.getElementById('hargaModal').value); 
             let j = getAngkaMurni(document.getElementById('hargaJual').value); 
+            let hr = document.getElementById('hargaReseller') ? getAngkaMurni(document.getElementById('hargaReseller').value) : j;
+            if (hr === 0) hr = j; // Default ikut harga normal jika dikosongkan
             let dModal = document.getElementById('produkDompetModal').value;
             let dMasuk = document.getElementById('produkDompetMasuk').value;
             let idEdit = document.getElementById('editProdukId').value; 
@@ -2491,9 +2498,9 @@ function simpanData(renderFungsiKhusus = null) {
             if(!nama) return alert("Isi nama produk!");
             if(idEdit !== "") { 
                 let p = db.produk.find(x => String(x.id) === String(idEdit)); 
-                if(p) { p.nama=nama; p.kategoriId=katId; p.modal=m; p.harga=j; p.dompetModal=dModal; p.dompetMasuk=dMasuk; } 
+                if(p) { p.nama=nama; p.kategoriId=katId; p.modal=m; p.harga=j; p.hargaReseller=hr; p.dompetModal=dModal; p.dompetMasuk=dMasuk; } 
             } else { 
-                db.produk.push({ id: Date.now(), nama: nama, kategoriId: katId, modal: m, harga: j, dompetModal: dModal, dompetMasuk: dMasuk, jenis: 'Digital' }); 
+                db.produk.push({ id: Date.now(), nama: nama, kategoriId: katId, modal: m, harga: j, hargaReseller: hr, dompetModal: dModal, dompetMasuk: dMasuk, jenis: 'Digital' }); 
             } 
             batalEditProduk(); simpanData(); 
         } catch(err) { alert("Error: " + err.message); }
@@ -2506,6 +2513,7 @@ function simpanData(renderFungsiKhusus = null) {
             document.getElementById('produkKategoriId').value = p.kategoriId || 'umum'; 
             document.getElementById('hargaModal').value = formatRupiah(p.modal); 
             document.getElementById('hargaJual').value = formatRupiah(p.harga); 
+            if(document.getElementById('hargaReseller')) document.getElementById('hargaReseller').value = p.hargaReseller ? formatRupiah(p.hargaReseller) : formatRupiah(p.harga);
             if(p.dompetModal) document.getElementById('produkDompetModal').value = p.dompetModal;
             if(p.dompetMasuk) document.getElementById('produkDompetMasuk').value = p.dompetMasuk;
             document.getElementById('judulFormProduk').innerText = "Edit Produk"; 
@@ -2521,6 +2529,7 @@ function simpanData(renderFungsiKhusus = null) {
         document.getElementById('produkKategoriId').value = 'umum'; 
         document.getElementById('hargaModal').value = ''; 
         document.getElementById('hargaJual').value = ''; 
+        if(document.getElementById('hargaReseller')) document.getElementById('hargaReseller').value = '';
         document.getElementById('produkDompetModal').value = 'none';
         document.getElementById('produkDompetMasuk').value = 'none';
         document.getElementById('judulFormProduk').innerText = "Tambah Produk Baru"; 
@@ -2539,7 +2548,7 @@ function simpanData(renderFungsiKhusus = null) {
         let kw = document.getElementById('inputPencarian').value.toLowerCase(); let html = '';
         if (modePencarian.startsWith('produk')) {
             let data = db.produk.map((p, i) => ({...p, idAsli: p.id})).filter(p => p.nama.toLowerCase().includes(kw));
-            if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
+            if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, ${p.hargaReseller || p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
             else html = `<div class="text-small text-center" style="padding:20px;">Pencarian tidak ditemukan.</div>`;
         } else if (modePencarian.startsWith('pelanggan')) {
             let data = db.pelanggan.map((p, i) => ({...p, idAsli: p.id})).filter(p => { if(p.nama.toLowerCase().includes(kw)) return true; let foundInInfo = false; (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().includes(kw) || inf.value.toLowerCase().includes(kw)) foundInInfo = true; }); return foundInInfo; });
@@ -2552,9 +2561,19 @@ function simpanData(renderFungsiKhusus = null) {
         document.getElementById('listHasilPencarian').innerHTML = html;
     }
     
-    function pilihProduk(i, nama, m, h, dModal, dMasuk) { 
+    function pilihProduk(i, nama, m, h, hReseller, dModal, dMasuk) { 
+        let pelId = document.getElementById('kasirPelangganId') ? document.getElementById('kasirPelangganId').value : '';
+        let hargaFinal = h;
+        // Logic Kasir Pintar: Cek jika pelanggan adalah Reseller
+        if(pelId) {
+            let pel = db.pelanggan.find(x => String(x.id) === String(pelId));
+            if(pel && pel.tipe === 'Reseller') hargaFinal = hReseller;
+        }
+
         if (modePencarian === 'produk-edit') {
             document.getElementById('editTransProduk').value = nama; 
+            document.getElementById('editTransModal').value = formatRupiah(m); 
+            document.getElementById('editTransTotal').value = formatRupiah(hargaFinal); 
             document.getElementById('editTransModal').value = formatRupiah(m); 
             document.getElementById('editTransTotal').value = formatRupiah(h); 
             if(dModal && dModal !== 'none') document.getElementById('editTransDompetModal').value = dModal;
@@ -2811,12 +2830,14 @@ function renderDaftarTransaksiBeranda() {
                 if(l || v) infoArr.push({ label: l || 'Info', value: v }); 
             }); 
             
+            let tipePel = document.getElementById('formPelTipe') ? document.getElementById('formPelTipe').value : 'Biasa';
             if(idEdit !== "") { 
                 let p = db.pelanggan.find(x => String(x.id) === String(idEdit)); 
                 if(p) { 
                     let namaLama = p.nama; // Simpan nama lama sebelum ditimpa
                     p.nama = nama; 
                     p.info = infoArr; 
+                    p.tipe = tipePel;
                     
                     // Sinkronisasi: Ubah nama di database transaksi agar Rapor Pelanggan tetap menyatu
                     if (namaLama !== nama) {
@@ -2833,7 +2854,7 @@ function renderDaftarTransaksiBeranda() {
                     }
                 } 
             } else { 
-                db.pelanggan.push({ id: Date.now(), nama: nama, info: infoArr }); 
+                db.pelanggan.push({ id: Date.now(), nama: nama, info: infoArr, tipe: tipePel }); 
             } 
             simpanData(); 
             batalEditPelanggan(); // Fungsi ini sempat gaib, sekarang aman!
@@ -3666,13 +3687,16 @@ function renderDaftarTransaksiBeranda() {
             return b.jual - a.jual;
         });
 
-        let html = rekap.map((r, index) => {
-            let icon = "👤";
+        // Fungsi Penarik Data Rapor HTML
+        let renderList = (arr, indexOffset) => arr.map((r, idx) => {
+            let actualIndex = indexOffset + idx;
+            let dataPel = db.pelanggan.find(p => p.nama === r.nama);
+            let icon = (dataPel && dataPel.tipe === 'Reseller') ? "🤝" : "👤";
+            
             if(sortMode === 'jual_desc' && r.jual > 0) {
-                if(index === 0) icon = "🥇"; else if(index === 1) icon = "🥈"; else if(index === 2) icon = "🥉";
+                if(idx === 0) icon = "🥇"; else if(idx === 1) icon = "🥈"; else if(idx === 2) icon = "🥉";
             }
             
-            // Tampilan khusus jika tidak ada transaksi tapi punya kasbon
             let styleBg = r.qty === 0 ? "background: #fffafa; border-color:#ffcdd2;" : "background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-color:var(--primary);";
             let teksUtang = (r.adaUtang && r.qty === 0) ? `<span style="font-size:10px; color:#dc3545; font-weight:bold;">⚠️ Punya Kasbon</span>` : '';
 
@@ -3685,7 +3709,7 @@ function renderDaftarTransaksiBeranda() {
 
             return `
             <div class="list-item" style="border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:10px; ${styleBg}">
-                <div class="flex-between" style="border-bottom:1px dashed #ccc; padding-bottom:8px; margin-bottom:8px; cursor:pointer;" onclick="document.getElementById('histori-rapor-${index}').classList.toggle('active')">
+                <div class="flex-between" style="border-bottom:1px dashed #ccc; padding-bottom:8px; margin-bottom:8px; cursor:pointer;" onclick="document.getElementById('histori-rapor-${actualIndex}').classList.toggle('active')">
                     <div>
                         <b style="font-size:15px; color: ${r.qty > 0 ? 'var(--primary)' : '#555'};">${icon} ${r.nama}</b><br>
                         ${teksUtang}
@@ -3694,7 +3718,7 @@ function renderDaftarTransaksiBeranda() {
                         <span class="badge-info" style="margin:0; background:${r.qty > 0 ? '#e8f4fd' : '#f8d7da'}; color:${r.qty > 0 ? '#333' : '#721c24'};">🛒 ${r.qty}x Transaksi ⬇️</span>
                     </div>
                 </div>
-                <div id="histori-rapor-${index}" class="accordion-content" style="margin-bottom:10px; max-height:150px; overflow-y:auto;">
+                <div id="histori-rapor-${actualIndex}" class="accordion-content" style="margin-bottom:10px; max-height:150px; overflow-y:auto;">
                     ${rincianHtml}
                 </div>
                 <div class="grid-3" style="text-align:center; gap:5px;">
@@ -3714,7 +3738,21 @@ function renderDaftarTransaksiBeranda() {
             </div>`;
         }).join('');
 
-        document.getElementById('listRaporPelanggan').innerHTML = html || '<div class="text-small text-center" style="padding:15px; color:gray;">Tidak ada pelanggan dengan transaksi atau kasbon.</div>';
+        // Pemisahan Klasemen
+        let rekapBiasa = rekap.filter(r => { let p = db.pelanggan.find(x => x.nama === r.nama); return !p || p.tipe !== 'Reseller'; });
+        let rekapReseller = rekap.filter(r => { let p = db.pelanggan.find(x => x.nama === r.nama); return p && p.tipe === 'Reseller'; });
+        
+        let finalHtml = "";
+        if(rekapBiasa.length > 0) {
+            finalHtml += `<h5 style="margin: 10px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #ddd; color:var(--primary);">🏆 Top Pelanggan Biasa</h5>`;
+            finalHtml += renderList(rekapBiasa, 0);
+        }
+        if(rekapReseller.length > 0) {
+            finalHtml += `<h5 style="margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #ffc107; color: #856404;">🤝 Top Mitra Reseller</h5>`;
+            finalHtml += renderList(rekapReseller, 1000); // 1000 agar ID accordion tidak bentrok
+        }
+
+        document.getElementById('listRaporPelanggan').innerHTML = finalHtml || '<div class="text-small text-center" style="padding:15px; color:gray;">Tidak ada pelanggan dengan transaksi atau kasbon.</div>';
     }
     
     // ==========================================
