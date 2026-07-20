@@ -499,10 +499,19 @@
                 <input type="text" id="namaProduk" placeholder="Nama Produk / Jasa" required>
                 <label class="text-small">Pilih Kategori / Folder:</label>
                 <select id="produkKategoriId" style="background:#f0f8ff; font-weight:bold;"></select>
-                <div class="grid-3" style="margin-top: 10px;">
-                    <div><label class="text-small">Modal:</label><input type="text" inputmode="numeric" id="hargaModal" placeholder="0" oninput="formatInputRupiah(event)" required></div>
-                    <div><label class="text-small">Jual Normal:</label><input type="text" inputmode="numeric" id="hargaJual" placeholder="0" oninput="formatInputRupiah(event)" required></div>
-                    <div><label class="text-small">Jual Reseller:</label><input type="text" inputmode="numeric" id="hargaReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
+                <div style="background: #eef2f5; padding: 10px; border-radius: 8px; border: 1px solid #d1e3f8; margin-top: 10px;">
+                    <b class="text-small text-blue">👤 Jalur Utama (Kamu / Order Kuota):</b>
+                    <div class="grid-2" style="margin-top: 5px;">
+                        <div><label class="text-small">Modal (Order Kuota):</label><input type="text" inputmode="numeric" id="hargaModal" placeholder="0" oninput="formatInputRupiah(event)" required></div>
+                        <div><label class="text-small">Jual Normal:</label><input type="text" inputmode="numeric" id="hargaJual" placeholder="0" oninput="formatInputRupiah(event)" required></div>
+                    </div>
+                </div>
+                <div style="background: #fff3cd; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; margin-top: 10px;">
+                    <b class="text-small" style="color: #856404;">🤝 Jalur Mitra Reseller (Buka Olshop):</b>
+                    <div class="grid-2" style="margin-top: 5px;">
+                        <div><label class="text-small">Modal (Buka Olshop):</label><input type="text" inputmode="numeric" id="modalReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
+                        <div><label class="text-small">Jual Reseller:</label><input type="text" inputmode="numeric" id="hargaReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
+                    </div>
                 </div>
                 <div style="background: #eef2f5; padding: 10px; border-radius: 8px; border: 1px solid #d1e3f8; margin-bottom: 10px;">
                     <label class="text-small text-red" style="font-weight:bold;">💼 Default Modal Dari:</label>
@@ -2489,8 +2498,10 @@ function simpanData(renderFungsiKhusus = null) {
             let katId = document.getElementById('produkKategoriId').value; 
             let m = getAngkaMurni(document.getElementById('hargaModal').value); 
             let j = getAngkaMurni(document.getElementById('hargaJual').value); 
+            let mr = document.getElementById('modalReseller') ? getAngkaMurni(document.getElementById('modalReseller').value) : m;
             let hr = document.getElementById('hargaReseller') ? getAngkaMurni(document.getElementById('hargaReseller').value) : j;
-            if (hr === 0) hr = j; // Default ikut harga normal jika dikosongkan
+            if (mr === 0) mr = m; 
+            if (hr === 0) hr = j; 
             let dModal = document.getElementById('produkDompetModal').value;
             let dMasuk = document.getElementById('produkDompetMasuk').value;
             let idEdit = document.getElementById('editProdukId').value; 
@@ -2498,9 +2509,9 @@ function simpanData(renderFungsiKhusus = null) {
             if(!nama) return alert("Isi nama produk!");
             if(idEdit !== "") { 
                 let p = db.produk.find(x => String(x.id) === String(idEdit)); 
-                if(p) { p.nama=nama; p.kategoriId=katId; p.modal=m; p.harga=j; p.hargaReseller=hr; p.dompetModal=dModal; p.dompetMasuk=dMasuk; } 
+                if(p) { p.nama=nama; p.kategoriId=katId; p.modal=m; p.harga=j; p.modalReseller=mr; p.hargaReseller=hr; p.dompetModal=dModal; p.dompetMasuk=dMasuk; } 
             } else { 
-                db.produk.push({ id: Date.now(), nama: nama, kategoriId: katId, modal: m, harga: j, hargaReseller: hr, dompetModal: dModal, dompetMasuk: dMasuk, jenis: 'Digital' }); 
+                db.produk.push({ id: Date.now(), nama: nama, kategoriId: katId, modal: m, harga: j, modalReseller: mr, hargaReseller: hr, dompetModal: dModal, dompetMasuk: dMasuk, jenis: 'Digital' }); 
             } 
             batalEditProduk(); simpanData(); 
         } catch(err) { alert("Error: " + err.message); }
@@ -2561,26 +2572,30 @@ function simpanData(renderFungsiKhusus = null) {
         document.getElementById('listHasilPencarian').innerHTML = html;
     }
     
-        function pilihProduk(i, nama, m, h, hReseller, dModal, dMasuk) { 
+        function pilihProduk(i, nama, m, h, mReseller, hReseller, dModal, dMasuk) { 
         let pelId = document.getElementById('kasirPelangganId') ? document.getElementById('kasirPelangganId').value : '';
+        let modalFinal = m;
         let hargaFinal = h;
 
-        // Logic Kasir Pintar: Cek jika pelanggan adalah Reseller
+        // Logic Kasir Pintar: Jika pembeli adalah Reseller, ambil jalur Buka Olshop
         if(pelId) {
             let pel = db.pelanggan.find(x => String(x.id) === String(pelId));
-            if(pel && pel.tipe === 'Reseller') hargaFinal = hReseller;
+            if(pel && pel.tipe === 'Reseller') {
+                modalFinal = mReseller !== undefined ? mReseller : m;
+                hargaFinal = hReseller !== undefined ? hReseller : h;
+            }
         }
 
         if (modePencarian === 'produk-edit') {
             document.getElementById('editTransProduk').value = nama; 
-            document.getElementById('editTransModal').value = formatRupiah(m); 
+            document.getElementById('editTransModal').value = formatRupiah(modalFinal); 
             document.getElementById('editTransTotal').value = formatRupiah(hargaFinal); 
             if(dModal && dModal !== 'none') document.getElementById('editTransDompetModal').value = dModal;
             if(dMasuk && dMasuk !== 'none') document.getElementById('editTransDompetMasuk').value = dMasuk;
         } else {
             document.getElementById('kasirNamaProduk').value = nama; 
-            document.getElementById('kasirHargaModal').value = formatRupiah(m); 
-            document.getElementById('kasirHargaJual').value = formatRupiah(hargaFinal); // Nah, ini yang kemarin kelewatan!
+            document.getElementById('kasirHargaModal').value = formatRupiah(modalFinal); 
+            document.getElementById('kasirHargaJual').value = formatRupiah(hargaFinal); 
             if(dModal && dModal !== 'none') document.getElementById('kasirDompetModal').value = dModal;
             if(dMasuk && dMasuk !== 'none') document.getElementById('kasirDompetMasuk').value = dMasuk;
         }
