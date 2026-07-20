@@ -2561,9 +2561,10 @@ function simpanData(renderFungsiKhusus = null) {
         document.getElementById('listHasilPencarian').innerHTML = html;
     }
     
-    function pilihProduk(i, nama, m, h, hReseller, dModal, dMasuk) { 
+        function pilihProduk(i, nama, m, h, hReseller, dModal, dMasuk) { 
         let pelId = document.getElementById('kasirPelangganId') ? document.getElementById('kasirPelangganId').value : '';
         let hargaFinal = h;
+
         // Logic Kasir Pintar: Cek jika pelanggan adalah Reseller
         if(pelId) {
             let pel = db.pelanggan.find(x => String(x.id) === String(pelId));
@@ -2574,19 +2575,18 @@ function simpanData(renderFungsiKhusus = null) {
             document.getElementById('editTransProduk').value = nama; 
             document.getElementById('editTransModal').value = formatRupiah(m); 
             document.getElementById('editTransTotal').value = formatRupiah(hargaFinal); 
-            document.getElementById('editTransModal').value = formatRupiah(m); 
-            document.getElementById('editTransTotal').value = formatRupiah(h); 
             if(dModal && dModal !== 'none') document.getElementById('editTransDompetModal').value = dModal;
             if(dMasuk && dMasuk !== 'none') document.getElementById('editTransDompetMasuk').value = dMasuk;
         } else {
             document.getElementById('kasirNamaProduk').value = nama; 
             document.getElementById('kasirHargaModal').value = formatRupiah(m); 
-            document.getElementById('kasirHargaJual').value = formatRupiah(h); 
+            document.getElementById('kasirHargaJual').value = formatRupiah(hargaFinal); // Nah, ini yang kemarin kelewatan!
             if(dModal && dModal !== 'none') document.getElementById('kasirDompetModal').value = dModal;
             if(dMasuk && dMasuk !== 'none') document.getElementById('kasirDompetMasuk').value = dMasuk;
         }
         tutupPencarian(); 
     }
+
     function pilihPelanggan(i, nama) { 
         if (modePencarian === 'pelanggan-kasir') {
             document.getElementById('kasirPelangganId').value = i; document.getElementById('labelKasirPelanggan').innerHTML = `<b>${nama}</b>`; 
