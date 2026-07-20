@@ -508,10 +508,12 @@
                 </div>
                 <div style="background: #fff3cd; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; margin-top: 10px;">
                     <b class="text-small" style="color: #856404;">🤝 Jalur Mitra Reseller (Buka Olshop):</b>
-                    <div class="grid-2" style="margin-top: 5px;">
+                    <div class="grid-2" style="margin-top: 5px; margin-bottom: 5px;">
                         <div><label class="text-small">Modal (Buka Olshop):</label><input type="text" inputmode="numeric" id="modalReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
                         <div><label class="text-small">Jual Reseller:</label><input type="text" inputmode="numeric" id="hargaReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
                     </div>
+                    <label class="text-small text-green" style="font-weight:bold;">📥 Uang Reseller Masuk Ke:</label>
+                    <select id="produkDompetMasukReseller" style="background:#e8f5e9; border-color:#28a745; font-weight:bold; margin-bottom: 0;"></select>
                 </div>
                 <div style="background: #eef2f5; padding: 10px; border-radius: 8px; border: 1px solid #d1e3f8; margin-bottom: 10px;">
                     <label class="text-small text-red" style="font-weight:bold;">💼 Default Modal Dari:</label>
@@ -2504,14 +2506,15 @@ function simpanData(renderFungsiKhusus = null) {
             if (hr === 0) hr = j; 
             let dModal = document.getElementById('produkDompetModal').value;
             let dMasuk = document.getElementById('produkDompetMasuk').value;
+            let dMasukRes = document.getElementById('produkDompetMasukReseller') ? document.getElementById('produkDompetMasukReseller').value : 'none';
             let idEdit = document.getElementById('editProdukId').value; 
             
             if(!nama) return alert("Isi nama produk!");
             if(idEdit !== "") { 
                 let p = db.produk.find(x => String(x.id) === String(idEdit)); 
-                if(p) { p.nama=nama; p.kategoriId=katId; p.modal=m; p.harga=j; p.modalReseller=mr; p.hargaReseller=hr; p.dompetModal=dModal; p.dompetMasuk=dMasuk; } 
+                if(p) { p.nama=nama; p.kategoriId=katId; p.modal=m; p.harga=j; p.modalReseller=mr; p.hargaReseller=hr; p.dompetModal=dModal; p.dompetMasuk=dMasuk; p.dompetMasukReseller=dMasukRes; } 
             } else { 
-                db.produk.push({ id: Date.now(), nama: nama, kategoriId: katId, modal: m, harga: j, modalReseller: mr, hargaReseller: hr, dompetModal: dModal, dompetMasuk: dMasuk, jenis: 'Digital' }); 
+                db.produk.push({ id: Date.now(), nama: nama, kategoriId: katId, modal: m, harga: j, modalReseller: mr, hargaReseller: hr, dompetModal: dModal, dompetMasuk: dMasuk, dompetMasukReseller: dMasukRes, jenis: 'Digital' }); 
             } 
             batalEditProduk(); simpanData(); 
         } catch(err) { alert("Error: " + err.message); }
@@ -2527,6 +2530,7 @@ function simpanData(renderFungsiKhusus = null) {
             if(document.getElementById('hargaReseller')) document.getElementById('hargaReseller').value = p.hargaReseller ? formatRupiah(p.hargaReseller) : formatRupiah(p.harga);
             if(p.dompetModal) document.getElementById('produkDompetModal').value = p.dompetModal;
             if(p.dompetMasuk) document.getElementById('produkDompetMasuk').value = p.dompetMasuk;
+            if(p.dompetMasukReseller && document.getElementById('produkDompetMasukReseller')) document.getElementById('produkDompetMasukReseller').value = p.dompetMasukReseller;
             document.getElementById('judulFormProduk').innerText = "Edit Produk"; 
             document.getElementById('btnSubmitProduk').innerText = "Simpan Perubahan"; 
             document.getElementById('btnSubmitProduk').classList.add('btn-green'); 
@@ -2543,6 +2547,7 @@ function simpanData(renderFungsiKhusus = null) {
         if(document.getElementById('hargaReseller')) document.getElementById('hargaReseller').value = '';
         document.getElementById('produkDompetModal').value = 'none';
         document.getElementById('produkDompetMasuk').value = 'none';
+        if(document.getElementById('produkDompetMasukReseller')) document.getElementById('produkDompetMasukReseller').value = 'none';
         document.getElementById('judulFormProduk').innerText = "Tambah Produk Baru"; 
         document.getElementById('btnSubmitProduk').innerText = "Tambah Produk"; 
         document.getElementById('btnSubmitProduk').classList.remove('btn-green'); 
@@ -2559,9 +2564,10 @@ function simpanData(renderFungsiKhusus = null) {
         let kw = document.getElementById('inputPencarian').value.toLowerCase(); let html = '';
         if (modePencarian.startsWith('produk')) {
             let data = db.produk.map((p, i) => ({...p, idAsli: p.id})).filter(p => p.nama.toLowerCase().includes(kw));
-            if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, ${p.hargaReseller || p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
+            if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, ${p.hargaReseller || p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}', '${p.dompetMasukReseller || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
             else html = `<div class="text-small text-center" style="padding:20px;">Pencarian tidak ditemukan.</div>`;
-        } else if (modePencarian.startsWith('pelanggan')) {
+        }
+ else if (modePencarian.startsWith('pelanggan')) {
             let data = db.pelanggan.map((p, i) => ({...p, idAsli: p.id})).filter(p => { if(p.nama.toLowerCase().includes(kw)) return true; let foundInInfo = false; (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().includes(kw) || inf.value.toLowerCase().includes(kw)) foundInInfo = true; }); return foundInInfo; });
             if("umum pelanggan baru".includes(kw) || kw === "") html += `<div class="search-item" onclick="pilihPelanggan('', 'Umum / Pelanggan Baru')"><b>Umum / Pelanggan Baru</b></div>`;
             html += data.map(p => {
@@ -2572,10 +2578,11 @@ function simpanData(renderFungsiKhusus = null) {
         document.getElementById('listHasilPencarian').innerHTML = html;
     }
     
-        function pilihProduk(i, nama, m, h, mReseller, hReseller, dModal, dMasuk) { 
+        function pilihProduk(i, nama, m, h, mReseller, hReseller, dModal, dMasuk, dMasukRes) { 
         let pelId = document.getElementById('kasirPelangganId') ? document.getElementById('kasirPelangganId').value : '';
         let modalFinal = m;
         let hargaFinal = h;
+        let dompetMasukFinal = dMasuk; // Default dompet biasa
 
         // Logic Kasir Pintar: Jika pembeli adalah Reseller, ambil jalur Buka Olshop
         if(pelId) {
@@ -2583,6 +2590,8 @@ function simpanData(renderFungsiKhusus = null) {
             if(pel && pel.tipe === 'Reseller') {
                 modalFinal = mReseller !== undefined ? mReseller : m;
                 hargaFinal = hReseller !== undefined ? hReseller : h;
+                // Ambil dompet reseller jika ada
+                if(dMasukRes && dMasukRes !== 'none') dompetMasukFinal = dMasukRes;
             }
         }
 
@@ -2591,13 +2600,13 @@ function simpanData(renderFungsiKhusus = null) {
             document.getElementById('editTransModal').value = formatRupiah(modalFinal); 
             document.getElementById('editTransTotal').value = formatRupiah(hargaFinal); 
             if(dModal && dModal !== 'none') document.getElementById('editTransDompetModal').value = dModal;
-            if(dMasuk && dMasuk !== 'none') document.getElementById('editTransDompetMasuk').value = dMasuk;
+            if(dompetMasukFinal && dompetMasukFinal !== 'none') document.getElementById('editTransDompetMasuk').value = dompetMasukFinal;
         } else {
             document.getElementById('kasirNamaProduk').value = nama; 
             document.getElementById('kasirHargaModal').value = formatRupiah(modalFinal); 
             document.getElementById('kasirHargaJual').value = formatRupiah(hargaFinal); 
             if(dModal && dModal !== 'none') document.getElementById('kasirDompetModal').value = dModal;
-            if(dMasuk && dMasuk !== 'none') document.getElementById('kasirDompetMasuk').value = dMasuk;
+            if(dompetMasukFinal && dompetMasukFinal !== 'none') document.getElementById('kasirDompetMasuk').value = dompetMasukFinal;
         }
         tutupPencarian(); 
     }
@@ -3246,7 +3255,7 @@ function renderDaftarTransaksiBeranda() {
         let simpanPilihan = (id) => document.getElementById(id) ? document.getElementById(id).value : null;
         let pMutasiDari = simpanPilihan('mutasiDari'), pMutasiKe = simpanPilihan('mutasiKe'), pUtang = simpanPilihan('utangDompetId'), pEditKasbon = simpanPilihan('editKasbonDompet'), pPengeluaran = simpanPilihan('pengeluaranDompetId');
         let pKasirAdmin = simpanPilihan('kasirDompetAdmin');
-        let pKasirModal = simpanPilihan('kasirDompetModal'), pKasirMasuk = simpanPilihan('kasirDompetMasuk'), pProdModal = simpanPilihan('produkDompetModal'), pProdMasuk = simpanPilihan('produkDompetMasuk');
+        let pKasirModal = simpanPilihan('kasirDompetModal'), pKasirMasuk = simpanPilihan('kasirDompetMasuk'), pProdModal = simpanPilihan('produkDompetModal'), pProdMasuk = simpanPilihan('produkDompetMasuk'), pProdMasukRes = simpanPilihan('produkDompetMasukReseller');
 
         if(document.getElementById('mutasiDari')) { document.getElementById('mutasiDari').innerHTML = opsiDompet; if(pMutasiDari) document.getElementById('mutasiDari').value = pMutasiDari; }
         if(document.getElementById('mutasiKe')) { document.getElementById('mutasiKe').innerHTML = opsiDompet; if(pMutasiKe) document.getElementById('mutasiKe').value = pMutasiKe; }
@@ -3265,6 +3274,7 @@ function renderDaftarTransaksiBeranda() {
         if(document.getElementById('tabunganDompetId')) document.getElementById('tabunganDompetId').innerHTML = opsiDompet; // Dropdown tabungan
         if(document.getElementById('produkDompetModal')) { document.getElementById('produkDompetModal').innerHTML = opsiDompetUtang; if(pProdModal) document.getElementById('produkDompetModal').value = pProdModal; }
         if(document.getElementById('produkDompetMasuk')) { document.getElementById('produkDompetMasuk').innerHTML = opsiDompetUtang; if(pProdMasuk) document.getElementById('produkDompetMasuk').value = pProdMasuk; }
+        if(document.getElementById('produkDompetMasukReseller')) { document.getElementById('produkDompetMasukReseller').innerHTML = opsiDompetUtang; if(pProdMasukRes) document.getElementById('produkDompetMasukReseller').value = pProdMasukRes; }
         
         try { renderDaftarTransaksiBeranda(); } catch(e) {}
         
