@@ -2570,7 +2570,7 @@ function simpanData(renderFungsiKhusus = null) {
         let kw = document.getElementById('inputPencarian').value.toLowerCase(); let html = '';
         if (modePencarian.startsWith('produk')) {
             let data = db.produk.map((p, i) => ({...p, idAsli: p.id})).filter(p => p.nama.toLowerCase().includes(kw));
-            if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, ${p.hargaReseller || p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}', '${p.dompetModalReseller || 'none'}', '${p.dompetMasukReseller || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
+            if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, ${p.modalReseller || p.modal || 0}, ${p.hargaReseller || p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}', '${p.dompetModalReseller || 'none'}', '${p.dompetMasukReseller || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
             else html = `<div class="text-small text-center" style="padding:20px;">Pencarian tidak ditemukan.</div>`;
         }
  else if (modePencarian.startsWith('pelanggan')) {
@@ -2621,7 +2621,9 @@ function simpanData(renderFungsiKhusus = null) {
 
     function pilihPelanggan(i, nama) { 
         if (modePencarian === 'pelanggan-kasir') {
-            document.getElementById('kasirPelangganId').value = i; document.getElementById('labelKasirPelanggan').innerHTML = `<b>${nama}</b>`; 
+            let isReseller = false;
+            if(i) { let pData = db.pelanggan.find(x => String(x.id) === String(i)); if(pData && pData.tipe === 'Reseller') isReseller = true; }
+            document.getElementById('kasirPelangganId').value = i; document.getElementById('labelKasirPelanggan').innerHTML = `<b>${nama} ${isReseller ? '⭐' : ''}</b>`; 
             
             // INJECT HTML UNTUK SPLIT PAYMENT TABUNGAN
             let wadahDep = document.getElementById('wadahDepositKasir');
@@ -2954,7 +2956,7 @@ function renderDaftarTransaksiBeranda() {
                 <div class="flex-between" style="margin-bottom:8px; border-bottom:2px solid var(--primary); padding-bottom:5px;">
                     <div style="display:flex; align-items:center;">
                         <input type="checkbox" class="check-pelanggan" value="${p.id}" style="width:auto; margin:0 8px 0 0;" onchange="cekStatusPilihSemuaPelanggan()">
-                        <b style="font-size:15px;">👤 ${p.nama}</b>
+                        <b style="font-size:15px;">${p.tipe === 'Reseller' ? '🤝' : '👤'} ${p.nama}</b>
                     </div>
                     <div style="display:flex; gap:5px;">
                         <button type="button" class="btn-outline" style="padding:2px 8px; font-size:10px; width:auto; margin:0;" onclick="editPelangganList('${p.id}')">Edit</button>
