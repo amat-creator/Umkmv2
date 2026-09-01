@@ -500,16 +500,16 @@
                 <label class="text-small">Pilih Kategori / Folder:</label>
                 <select id="produkKategoriId" style="background:#f0f8ff; font-weight:bold;"></select>
                 <div style="background: #eef2f5; padding: 10px; border-radius: 8px; border: 1px solid #d1e3f8; margin-top: 10px;">
-                    <b class="text-small text-blue">👤 Jalur Utama (Kamu / Order Kuota):</b>
+                    <b class="text-small text-blue">👤 Jalur Utama (Kamu / amat):</b>
                     <div class="grid-2" style="margin-top: 5px;">
-                        <div><label class="text-small">Modal (Order Kuota):</label><input type="text" inputmode="numeric" id="hargaModal" placeholder="0" oninput="formatInputRupiah(event)" required></div>
+                        <div><label class="text-small">Modal (amat):</label><input type="text" inputmode="numeric" id="hargaModal" placeholder="0" oninput="formatInputRupiah(event)" required></div>
                         <div><label class="text-small">Jual Normal:</label><input type="text" inputmode="numeric" id="hargaJual" placeholder="0" oninput="formatInputRupiah(event)" required></div>
                     </div>
                 </div>
                 <div style="background: #fff3cd; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; margin-top: 10px;">
-                    <b class="text-small" style="color: #856404;">🤝 Jalur Mitra Reseller (Buka Olshop):</b>
+                    <b class="text-small" style="color: #856404;">🤝 Jalur Mitra Reseller (amat):</b>
                     <div class="grid-2" style="margin-top: 5px; margin-bottom: 5px;">
-                        <div><label class="text-small">Modal (Buka Olshop):</label><input type="text" inputmode="numeric" id="modalReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
+                        <div><label class="text-small">Modal (amat):</label><input type="text" inputmode="numeric" id="modalReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
                         <div><label class="text-small">Jual Reseller:</label><input type="text" inputmode="numeric" id="hargaReseller" placeholder="Opsional" oninput="formatInputRupiah(event)"></div>
                     </div>
                     <label class="text-small text-red" style="font-weight:bold;">📤 Modal Reseller Diambil Dari:</label>
@@ -2643,7 +2643,7 @@ function simpanData(renderFungsiKhusus = null) {
         let dompetModalFinal = dModal; // Default dompet modal biasa
         let dompetMasukFinal = dMasuk; // Default dompet masuk biasa
 
-        // Logic Kasir Pintar: Jika pembeli adalah Reseller, ambil jalur Buka Olshop
+        // Logic Kasir Pintar: Jika pembeli adalah Reseller, ambil jalur amat
         if(pelId) {
             let pel = db.pelanggan.find(x => String(x.id) === String(pelId));
             if(pel && pel.tipe === 'Reseller') {
