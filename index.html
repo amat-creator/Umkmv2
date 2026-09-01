@@ -191,32 +191,6 @@
         </div>
     </div>
 
-    <div id="modal-edit-massal-trans" class="modal-popup">
-        <div class="popup-content">
-            <h4 style="margin-bottom: 10px; color: var(--primary);">✏️ Edit Massal Transaksi</h4>
-            <p class="text-small" style="margin-bottom: 15px;">Ubah status atau alihkan dompet transaksi yang dicentang secara serentak.</p>
-            
-            <label class="text-small" style="text-align:left; display:block;">Ubah Status:</label>
-            <select id="massStatus" style="font-weight:bold; background:#f8f9fa;">
-                <option value="tetap">-- Jangan Diubah (Tetap) --</option>
-                <option value="Lunas">Lunas</option>
-                <option value="Piutang">Ngasbon / Piutang</option>
-            </select>
-
-            <label class="text-small text-red" style="text-align:left; display:block; font-weight:bold;">💼 Ubah Dompet Ambil Modal:</label>
-            <select id="massDompetModal" style="background:#ffebee; border-color:#dc3545; font-weight:bold;"></select>
-            
-            <label class="text-small text-green" style="text-align:left; display:block; font-weight:bold;">📥 Ubah Dompet Uang Masuk:</label>
-            <select id="massDompetMasuk" style="background:#e8f5e9; border-color:#28a745; font-weight:bold; margin-bottom:15px;"></select>
-
-            <div class="grid-2">
-                <button type="button" class="btn-green" onclick="eksekusiEditMassalTransaksi()">💾 Simpan Perubahan</button>
-                <button type="button" class="btn-red" onclick="document.getElementById('modal-edit-massal-trans').classList.remove('active')">Batal</button>
-            </div>
-        </div>
-    </div>
-
-
     <div id="modal-edit-rincian" class="modal-popup">
         <div class="popup-content">
             <h4 style="margin-bottom: 10px;">✏️ Edit Rincian Barang</h4>
@@ -502,7 +476,6 @@
                 <div style="display:flex; gap:5px; flex-wrap:wrap;">
                     <button type="button" class="btn-wa" style="border-color:#28a745; color:#28a745;" onclick="kirimWABorongan('pelanggan')">📱 WA Pembeli</button>
                     <button type="button" class="btn-wa" style="border-color:#007bff; color:#007bff;" onclick="kirimWABorongan('bos')">📱 WA Bos</button>
-                    <button type="button" class="btn-warning" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px; border:none; background:#ffc107;" onclick="bukaModalEditMassalTransaksi()">✏️ Edit Massal</button>
                     <button type="button" class="btn-wa" style="border-color:#dc3545; color:#dc3545;" onclick="downloadPDFRiwayat('beranda')">📄 PDF</button>
                     <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusTransaksiTerpilih()">🗑 Hapus</button>
                 </div>
@@ -892,10 +865,7 @@
                 <label style="display: flex; align-items: center; font-size: 13px; font-weight: bold; cursor: pointer;">
                     <input type="checkbox" id="checkSemuaDompet" onchange="togglePilihSemuaDompet()" style="width: auto; margin: 0 10px 0 0;"> Pilih Semua
                 </label>
-                <div style="display:flex; gap:5px;">
-                    <button type="button" class="btn-warning" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px; border:none;" onclick="sapuBersihDompet()">🧹 Sapu Bersih</button>
-                    <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusDompetTerpilih()">🗑 Hapus</button>
-                </div>
+                <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusDompetTerpilih()">🗑 Hapus Massal</button>
             </div>
             <div id="listDompet"></div>
             <hr style="margin:20px 0; border:0; border-top:1px dashed #ccc;">
@@ -1010,7 +980,6 @@
             <form onsubmit="eksekusiSimpanPelanggan(event)" style="margin-top: 10px;">
                 <input type="hidden" id="editFormPelId" value="">
                 <input type="text" id="formPelNama" placeholder="Nama Pelanggan" required>
-                <input type="text" id="formPelKeluarga" placeholder="Grup Keluarga (Cth: Keluarga Pak Budi) - Opsional">
                 <select id="formPelTipe" style="background:#f0f8ff; font-weight:bold; margin-bottom:10px;">
                     <option value="Biasa">👤 Pelanggan Biasa (Harga Normal)</option>
                     <option value="Reseller">🤝 Reseller (Dapat Harga Khusus)</option>
@@ -2493,12 +2462,41 @@ function simpanData(renderFungsiKhusus = null) {
                     
                     <button type="button" class="btn-warning" style="width:auto; padding:8px; margin:0; font-size:13px; border:none; background:#ffc107;" onmousedown="event.preventDefault()" onclick="resetNilaiPecahan(${idx})">🧹</button>
                 </div>
+                
+                <div style="display:flex; align-items:center; gap:5px; margin-top: 5px;">
+                    <input type="text" id="input-adjust-${idx}" placeholder="Hitung cepat (Rp)" oninput="formatInputRupiah(event)" style="margin-bottom:0; padding:6px; width:115px; font-size:11px;">
+                    <button type="button" class="btn-green" style="width:auto; padding:6px 12px; margin:0; font-size:11px;" onclick="adjustPecahan(${idx}, 'tambah')">➕</button>
+                    <button type="button" class="btn-red" style="width:auto; padding:6px 12px; margin:0; font-size:11px;" onclick="adjustPecahan(${idx}, 'kurang')">➖</button>
+                </div>
+
                 <div class="text-bantuan" id="bantuan-pecahan-${idx}" style="font-size:10px; color:#888; margin-top:3px;">Terbaca: Rp ${formatRupiah(p.nilai)}</div>
             </div>
             <button type="button" class="btn-red" style="width:auto; padding:10px 12px; margin-left:5px; font-size:12px; border-radius:6px;" onclick="hapusBarisPecahan(${idx})">X</button>
         </div>`).join(''); 
         
         hitungOtomatisPecahan();
+    }
+
+    function adjustPecahan(idx, operasi) {
+        let adjustInput = document.getElementById('input-adjust-' + idx);
+        let mainInput = document.getElementById('input-pecahan-' + idx);
+        if (!adjustInput || !mainInput) return;
+        
+        let valAdjust = getAngkaMurni(adjustInput.value);
+        if (valAdjust === 0) return;
+        
+        let valMain = getAngkaMurni(mainInput.value);
+        if (operasi === 'tambah') {
+            valMain += valAdjust;
+        } else if (operasi === 'kurang') {
+            valMain -= valAdjust;
+            if (valMain < 0) valMain = 0;
+        }
+        
+        mainInput.value = formatRupiah(valMain);
+        updateNilaiPecahan(idx, valMain);
+        adjustInput.value = '';
+        mainInput.focus();
     }
     
     function tambahNolTigaPecahan(idx) {
@@ -2909,7 +2907,6 @@ function renderDaftarTransaksiBeranda() {
         try { 
             let idEdit = document.getElementById('editFormPelId').value; 
             let nama = document.getElementById('formPelNama').value.trim(); 
-            let keluarga = document.getElementById('formPelKeluarga').value.trim(); 
             if(!nama) return alert("Nama pelanggan harus diisi!");
             let baris = document.querySelectorAll('#wadahInfoPelanggan .info-row'); 
             let infoArr = []; 
@@ -2923,12 +2920,10 @@ function renderDaftarTransaksiBeranda() {
             if(idEdit !== "") { 
                 let p = db.pelanggan.find(x => String(x.id) === String(idEdit)); 
                 if(p) { 
-                    let namaLama = p.nama; 
+                    let namaLama = p.nama; // Simpan nama lama sebelum ditimpa
                     p.nama = nama; 
-                    p.keluarga = keluarga; 
                     p.info = infoArr; 
                     p.tipe = tipePel;
-
                     
                     // Sinkronisasi: Ubah nama di database transaksi agar Rapor Pelanggan tetap menyatu
                     if (namaLama !== nama) {
@@ -2958,7 +2953,6 @@ function renderDaftarTransaksiBeranda() {
         if(!p) return;
         document.getElementById('editFormPelId').value = p.id;
         document.getElementById('formPelNama').value = p.nama;
-        document.getElementById('formPelKeluarga').value = p.keluarga || '';
         document.getElementById('wadahInfoPelanggan').innerHTML = '';
         (p.info || []).forEach(inf => tambahBarisInfo(inf.label, inf.value));
         
@@ -2968,16 +2962,14 @@ function renderDaftarTransaksiBeranda() {
     }
     
     // FUNGSI INI JUGA SEMPAT HILANG (Buat bersihin form)
-        function batalEditPelanggan() {
+    function batalEditPelanggan() {
         document.getElementById('editFormPelId').value = '';
         document.getElementById('formPelNama').value = '';
-        document.getElementById('formPelKeluarga').value = '';
         document.getElementById('wadahInfoPelanggan').innerHTML = '';
         document.getElementById('judulFormPelanggan').innerText = "Tambah Pelanggan Baru";
         document.getElementById('btnSubmitPelanggan').innerText = "💾 Simpan Kontak";
         document.getElementById('btnBatalEditPelanggan').style.display = "none";
     }
-
 
     // FUNGSI INI JUGA SEMPAT HILANG (Buat hapus kontak satuan)
     function hapusPelanggan(id) {
@@ -3518,15 +3510,29 @@ function renderDaftarTransaksiBeranda() {
             }
         });
 
-        // 3. Ambil dari Cicilan Utang/Piutang
+        // 3. Ambil dari Cicilan & Catatan Awal Utang/Piutang
         db.utang.forEach(u => {
+            // A. Catat pencairan awal Kasbon Manual (yang tidak masuk lewat Kasir / tidak ada transId)
+            if (u.rincianBarang) {
+                u.rincianBarang.forEach(r => {
+                    // Jika transId kosong, berarti ini utang manual yang memotong saldo langsung
+                    if (!r.transId && r.tanggal >= tglMulai && r.tanggal <= tglAkhir) {
+                        let tipeDanaAwal = u.jenis === 'Piutang' ? 'OUT' : 'IN';
+                        let ketDanaAwal = u.jenis === 'Piutang' ? "Ngasbon: " + u.nama : "Titipan/Nabung: " + u.nama;
+                        aliranDana.push({ tgl: r.tanggal, ket: ketDanaAwal, tipe: tipeDanaAwal, nominal: r.nominal, dId: u.dompetId });
+                        if (tipeDanaAwal === 'IN') totalIn += Number(r.nominal); else totalOut += Number(r.nominal);
+                    }
+                });
+            }
+
+            // B. Catat cicilan pembayarannya
             if (u.cicilan) {
                 u.cicilan.forEach(c => {
                     if (c.tanggal >= tglMulai && c.tanggal <= tglAkhir) {
                         let tipeDana = u.jenis === 'Piutang' ? 'IN' : 'OUT';
                         let ketDana = u.jenis === 'Piutang' ? "Terima Cicilan dr " + u.nama : "Bayar Utang ke " + u.nama;
                         aliranDana.push({ tgl: c.tanggal, ket: ketDana, tipe: tipeDana, nominal: c.nominal, dId: u.dompetId });
-                        if (tipeDana === 'IN') totalIn += c.nominal; else totalOut += c.nominal;
+                        if (tipeDana === 'IN') totalIn += Number(c.nominal); else totalOut += Number(c.nominal);
                     }
                 });
             }
@@ -4097,83 +4103,6 @@ function togglePilihSemuaKasbon() {
             // Jika tidak ada pop-up, biarkan keluar dari aplikasi dengan normal
         }
     });
-    
-    // --- 1. FITUR SAPU BERSIH DOMPET ---
-    function sapuBersihDompet() {
-        if(db.dompet.length === 0) return alert("Belum ada dompet.");
-        if(confirm("⚠️ PERINGATAN KERAS!\n\nApakah kamu yakin ingin MENGHAPUS SEMUA DOMPET sekaligus?\n(Pastikan saldo sudah dicadangkan jika diperlukan).")) {
-            db.dompet = [];
-            simpanData();
-            alert("🧹 Berhasil! Semua dompet telah disapu bersih.");
-        }
-    }
-
-    // --- 2. POP-UP & EKSEKUSI EDIT MASSAL TRANSAKSI ---
-    function bukaModalEditMassalTransaksi() {
-        let arr = Array.from(document.querySelectorAll('.check-transaksi-beranda:checked')).map(cb => String(cb.value));
-        if(arr.length === 0) return alert("Centang minimal 1 baris transaksi di tabel riwayat terlebih dahulu!");
-        
-        // Refresh dropdown dompet di dalam modal massal
-        let opsiDompet = db.dompet.map(d => `<option value="${d.id}">${d.nama} (Rp ${formatRupiah(d.saldo)})</option>`).join('');
-        let opsiDompetUtang = `<option value="tetap">-- Jangan Diubah (Tetap) --</option><option value="none">-- Tanpa Dompet --</option>` + opsiDompet;
-        
-        document.getElementById('massDompetModal').innerHTML = opsiDompetUtang;
-        document.getElementById('massDompetMasuk').innerHTML = opsiDompetUtang;
-        document.getElementById('massStatus').value = 'tetap';
-        
-        document.getElementById('modal-edit-massal-trans').classList.add('active');
-    }
-
-    function eksekusiEditMassalTransaksi() {
-        let arr = Array.from(document.querySelectorAll('.check-transaksi-beranda:checked')).map(cb => String(cb.value));
-        let statusBaru = document.getElementById('massStatus').value;
-        let dModalBaru = document.getElementById('massDompetModal').value;
-        let dMasukBaru = document.getElementById('massDompetMasuk').value;
-
-        arr.forEach(id => {
-            let t = db.transaksi.find(x => String(x.id) === String(id));
-            if(!t) return;
-
-            // 1. REFUND SALDO LAMA TERLEBIH DAHULU (PENGAMAN)
-            if(t.dompetModal && t.dompetModal !== 'none') {
-                let dm = db.dompet.find(x => String(x.id) === String(t.dompetModal));
-                if(dm) dm.saldo += t.modal;
-            }
-            if(t.status === 'Lunas' && t.dompetMasuk && t.dompetMasuk !== 'none') {
-                let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk));
-                if(dk) dk.saldo -= t.total;
-            }
-
-            // 2. TERAPKAN PERUBAHAN DOMPET
-            if(dModalBaru !== 'tetap') t.dompetModal = dModalBaru;
-            if(dMasukBaru !== 'tetap') t.dompetMasuk = dMasukBaru;
-            if(statusBaru !== 'tetap') {
-                // Atasi perubahan status Lunas <-> Piutang
-                if(t.status === 'Lunas' && statusBaru === 'Piutang') {
-                    t.status = 'Piutang';
-                    tambahUtangOtomatis(t);
-                } else if(t.status === 'Piutang' && statusBaru === 'Lunas') {
-                    t.status = 'Lunas';
-                    hapusDariUtangOtomatis(t.id);
-                }
-            }
-
-            // 3. POTONG ULANG KE DOMPET BARU
-            if(t.dompetModal && t.dompetModal !== 'none') {
-                let dm = db.dompet.find(x => String(x.id) === String(t.dompetModal));
-                if(dm) dm.saldo -= t.modal;
-            }
-            if(t.status === 'Lunas' && t.dompetMasuk && t.dompetMasuk !== 'none') {
-                let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk));
-                if(dk) dk.saldo += t.total;
-            }
-        });
-
-        document.getElementById('modal-edit-massal-trans').classList.remove('active');
-        document.getElementById('checkSemuaTransaksi').checked = false;
-        simpanData();
-        alert(`✅ Berhasil memperbarui ${arr.length} transaksi secara massal dan saldo dompet telah disesuaikan otomatis!`);
-    }
     
 </script>
 </body>
