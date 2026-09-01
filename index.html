@@ -609,6 +609,7 @@
             <div class="menu-btn" onclick="bukaHalaman('utang', null, 'Kasbon (Utang & Piutang)')"><span>📒</span>Kasbon</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-dompet')"><span>👛</span>Dompet</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-kategori')"><span>🗂️</span>Kategori Prod.</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-analisa-kategori')"><span>📊</span>Laporan Folder</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-pelanggan')"><span>👥</span>Pelanggan</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-alokasi')"><span>📊</span>Bagi Hasil</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-portal')"><span>⚖️</span>Simulasi Kas</div> 
@@ -814,6 +815,31 @@
                 <button type="submit" class="btn-green" style="width:auto; margin-bottom:0; padding: 10px 15px;">➕</button>
             </form>
             <div id="listKategoriMaster"></div>
+        </div>
+
+        <div id="sub-analisa-kategori" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>📊 Laporan Omset per Folder</h4>
+            <p class="text-small" style="margin-bottom: 10px;">Lihat kategori mana yang paling laris dan menguntungkan.</p>
+            
+            <div style="background: #f0f8ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #cce5ff;">
+                <select id="periodeKategori" onchange="toggleFilterAnalisaKategori()" style="font-weight:bold; margin-bottom:0;">
+                    <option value="bulanIni">Bulan Ini</option>
+                    <option value="mingguan">7 Hari Terakhir</option>
+                    <option value="hariIni">Hari Ini</option>
+                    <option value="semua">Semua Waktu</option>
+                    <option value="custom">⚙️ Custom (Tanggal)</option>
+                </select>
+                <div id="wadahFilterCustomKategori" style="display: none; margin-top: 10px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                    <div class="grid-2">
+                        <div><label class="text-small">Dari:</label><input type="date" id="tglMulaiKategori" style="margin-bottom: 0;"></div>
+                        <div><label class="text-small">Sampai:</label><input type="date" id="tglAkhirKategori" style="margin-bottom: 0;"></div>
+                    </div>
+                    <button type="button" class="btn-outline" style="padding: 8px; margin-top: 10px; margin-bottom: 0;" onclick="renderAnalisaKategori()">Cari Data</button>
+                </div>
+            </div>
+
+            <div id="listAnalisaKategori"></div>
         </div>
 
         <div id="sub-portal" class="card" style="display:none;">
@@ -1324,13 +1350,14 @@ function simpanData(renderFungsiKhusus = null) {
     function bukaSubHalaman(sub) { 
         document.getElementById('main-menu-grid').style.display = 'none';
         
-        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-struk-cetak','sub-rapor-pelanggan','sub-catatan'];
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-analisa-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-struk-cetak','sub-rapor-pelanggan','sub-catatan'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
 
         document.getElementById(sub).style.display = 'block'; 
         
         let jd = "Menu Lainnya"; 
         if(sub==='sub-rapor-pelanggan') { jd="Rapor Pelanggan"; renderRaporPelanggan(); }
+        if(sub==='sub-analisa-kategori') { jd="Laporan Folder"; renderAnalisaKategori(); }
         if(sub==='sub-pengeluaran') { jd="Pengeluaran"; document.getElementById('pengeluaranTgl').value = ambilTanggal(); }
         if(sub==='sub-pelanggan') jd="Data Pelanggan"; 
         if(sub==='sub-dompet') jd="Dompet Manual"; 
@@ -1362,6 +1389,7 @@ function simpanData(renderFungsiKhusus = null) {
         let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-struk-cetak','sub-rapor-pelanggan'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
         
+        if(document.getElementById('sub-analisa-kategori')) document.getElementById('sub-analisa-kategori').style.display = 'none';
         document.getElementById('main-menu-grid').style.display = 'grid'; 
         document.getElementById('judulHalaman').innerText = 'Menu Lainnya'; 
         idDompetAktif = null;
@@ -2312,6 +2340,7 @@ function simpanData(renderFungsiKhusus = null) {
         let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-struk-cetak','sub-rapor-pelanggan','sub-catatan'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
         
+        if(document.getElementById('sub-analisa-kategori')) document.getElementById('sub-analisa-kategori').style.display = 'none';
         document.getElementById('main-menu-grid').style.display = 'grid'; 
         document.getElementById('judulHalaman').innerText = 'Menu Lainnya'; 
         idDompetAktif = null;
@@ -2419,19 +2448,21 @@ function simpanData(renderFungsiKhusus = null) {
     function kembaliKeDompetUtama() { document.getElementById('sub-dompet-detail').style.display = 'none'; document.getElementById('sub-dompet').style.display = 'block'; idDompetAktif = null; }
 
     function geserPosisiDompet(index) {
-        let opsi = prompt("Pindahkan posisi dompet ini ke mana?\n\nKetik '1' untuk geser ke ATAS ⬆️\nKetik '2' untuk geser ke BAWAH ⬇️");
-        if (opsi === '1' && index > 0) {
-            let temp = db.dompet[index - 1];
-            db.dompet[index - 1] = db.dompet[index];
-            db.dompet[index] = temp;
+        let total = db.dompet.length;
+        let opsi = prompt(`Pindahkan dompet ini ke urutan nomor berapa?\n\nKetik angka 1 sampai ${total}:`, index + 1);
+        if (opsi !== null && opsi.trim() !== "") {
+            let target = parseInt(opsi) - 1;
+            if (isNaN(target) || target < 0 || target >= total) {
+                alert(`Nomor tidak valid! Harap masukkan angka antara 1 sampai ${total}.`);
+                return;
+            }
+            if (target === index) return; // Tidak ada perubahan
+            
+            // Pindahkan item
+            let dipindah = db.dompet.splice(index, 1)[0];
+            db.dompet.splice(target, 0, dipindah);
+            
             simpanData();
-        } else if (opsi === '2' && index < db.dompet.length - 1) {
-            let temp = db.dompet[index + 1];
-            db.dompet[index + 1] = db.dompet[index];
-            db.dompet[index] = temp;
-            simpanData();
-        } else if (opsi === '1' || opsi === '2') {
-            alert("Dompet sudah berada di posisi paling ujung!");
         }
     }
 
@@ -2464,7 +2495,7 @@ function simpanData(renderFungsiKhusus = null) {
                 </div>
                 
                 <div style="display:flex; align-items:center; gap:5px; margin-top: 5px;">
-                    <input type="text" id="input-adjust-${idx}" placeholder="Hitung cepat (Rp)" oninput="formatInputRupiah(event)" style="margin-bottom:0; padding:6px; width:115px; font-size:11px;">
+                    <input type="text" id="input-adjust-${idx}" inputmode="numeric" placeholder="Hitung cepat (Rp)" oninput="formatInputRupiah(event)" style="margin-bottom:0; padding:6px; width:115px; font-size:11px;">
                     <button type="button" class="btn-green" style="width:auto; padding:6px 12px; margin:0; font-size:11px;" onclick="adjustPecahan(${idx}, 'tambah')">➕</button>
                     <button type="button" class="btn-red" style="width:auto; padding:6px 12px; margin:0; font-size:11px;" onclick="adjustPecahan(${idx}, 'kurang')">➖</button>
                 </div>
@@ -2495,7 +2526,7 @@ function simpanData(renderFungsiKhusus = null) {
         
         mainInput.value = formatRupiah(valMain);
         updateNilaiPecahan(idx, valMain);
-        adjustInput.value = '';
+        // adjustInput.value = ''; // (Baris ini dihapus agar nilai standby)
         mainInput.focus();
     }
     
@@ -3740,6 +3771,86 @@ function renderDaftarTransaksiBeranda() {
     function toggleFilterRapor() {
         document.getElementById('wadahFilterCustomRapor').style.display = (document.getElementById('periodeRapor').value === 'custom') ? 'block' : 'none';
         renderRaporPelanggan();
+    }
+
+    function toggleFilterAnalisaKategori() {
+        document.getElementById('wadahFilterCustomKategori').style.display = (document.getElementById('periodeKategori').value === 'custom') ? 'block' : 'none';
+        renderAnalisaKategori();
+    }
+
+    function renderAnalisaKategori() {
+        let p = document.getElementById('periodeKategori').value;
+        let tH = ambilTanggal(), bI = tH.substring(0, 7);
+        let dt = new Date(); dt.setDate(dt.getDate()-7); 
+        let tM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        
+        let customMulai = document.getElementById('tglMulaiKategori').value;
+        let customAkhir = document.getElementById('tglAkhirKategori').value;
+
+        // Siapkan struktur untuk menampung hitungan per folder
+        let rekap = {};
+        db.kategoriProduk.forEach(k => {
+            rekap[k.id] = { nama: k.nama, qty: 0, omset: 0, untung: 0 };
+        });
+        rekap['umum'] = rekap['umum'] || { nama: 'Tanpa Kategori (Umum)', qty: 0, omset: 0, untung: 0 };
+
+        db.transaksi.forEach(t => {
+            if(t.status === 'Lunas') { 
+                let ok = false;
+                if(p === 'semua') ok = true;
+                else if(p === 'bulanIni') ok = t.tanggal.startsWith(bI);
+                else if(p === 'hariIni') ok = t.tanggal === tH;
+                else if(p === 'mingguan') ok = (t.tanggal >= tM && t.tanggal <= tH);
+                else if(p === 'custom') { if(customMulai && customAkhir) ok = (t.tanggal >= customMulai && t.tanggal <= customAkhir); }
+
+                if(ok) {
+                    let prod = db.produk.find(pr => pr.nama === t.namaProduk);
+                    let katId = prod ? (prod.kategoriId || 'umum') : 'umum';
+                    if(!rekap[katId]) katId = 'umum';
+                    
+                    rekap[katId].qty += (t.jumlah || 1);
+                    rekap[katId].omset += t.total;
+                    rekap[katId].untung += t.untung;
+                }
+            }
+        });
+
+        // Ubah objek ke array dan urutkan dari omset terbesar
+        let arrRekap = Object.values(rekap).filter(r => r.qty > 0).sort((a, b) => b.omset - a.omset);
+
+        if(arrRekap.length === 0) {
+            document.getElementById('listAnalisaKategori').innerHTML = '<div class="text-small text-center" style="padding:15px; color:gray;">Belum ada penjualan di periode ini.</div>';
+            return;
+        }
+
+        let htmlFinal = arrRekap.map((r, idx) => {
+            let icon = "📁";
+            if(idx === 0) icon = "🥇"; else if (idx === 1) icon = "🥈"; else if (idx === 2) icon = "🥉";
+            
+            return `
+            <div class="list-item" style="border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:10px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-color:var(--primary);">
+                <div class="flex-between" style="border-bottom:1px dashed #ccc; padding-bottom:8px; margin-bottom:8px;">
+                    <div>
+                        <b style="font-size:15px; color: var(--primary);">${icon} ${r.nama}</b>
+                    </div>
+                    <div style="text-align:right;">
+                        <span class="badge-info" style="margin:0; background:#e8f4fd; color:#333;">🛒 ${r.qty}x Terjual</span>
+                    </div>
+                </div>
+                <div class="grid-2" style="text-align:center; gap:5px;">
+                    <div style="background:#eef2f5; padding:8px; border-radius:5px;">
+                        <div style="font-size:11px; color:#666;">Total Omset</div>
+                        <b class="text-blue" style="font-size:13px;">Rp ${formatRupiah(r.omset)}</b>
+                    </div>
+                    <div style="background:#e8f5e9; padding:8px; border-radius:5px;">
+                        <div style="font-size:11px; color:#666;">Keuntungan</div>
+                        <b class="text-green" style="font-size:13px;">Rp ${formatRupiah(r.untung)}</b>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        document.getElementById('listAnalisaKategori').innerHTML = htmlFinal;
     }
 
     function renderRaporPelanggan() {
