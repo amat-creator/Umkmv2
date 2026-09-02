@@ -4215,6 +4215,49 @@ function togglePilihSemuaKasbon() {
         }
     });
     
+// --- MULAI FITUR SIMPAN PECAHAN UANG OTOMATIS ---
+function simpanSemuaInputAngka() {
+    const semuaInput = document.querySelectorAll('input[type="number"]');
+    const dataInput = {};
+    semuaInput.forEach(input => {
+        if (input.id) {
+            dataInput[input.id] = input.value;
+        }
+    });
+    localStorage.setItem('dataPecahanTersimpan', JSON.stringify(dataInput));
+}
+
+function muatSemuaInputAngka() {
+    const dataTersimpan = localStorage.getItem('dataPecahanTersimpan');
+    if (dataTersimpan) {
+        const dataInput = JSON.parse(dataTersimpan);
+        for (const id in dataInput) {
+            const elemen = document.getElementById(id);
+            if (elemen) {
+                elemen.value = dataInput[id];
+            }
+        }
+        // Memancing aplikasi agar otomatis menghitung total tanpa perlu diketik ulang
+        const inputPertama = document.querySelector('input[type="number"]');
+        if (inputPertama) {
+            inputPertama.dispatchEvent(new Event('input', { bubbles: true }));
+            inputPertama.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    muatSemuaInputAngka();
+    
+    // Menyimpan data secara otomatis setiap kali Anda mengetik angka
+    document.body.addEventListener('input', (e) => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+            simpanSemuaInputAngka();
+        }
+    });
+});
+// --- AKHIR FITUR SIMPAN PECAHAN UANG OTOMATIS ---
+
 </script>
 </body>
 </html>
