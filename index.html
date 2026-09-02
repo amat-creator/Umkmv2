@@ -2550,9 +2550,9 @@ function simpanData(renderFungsiKhusus = null) {
         inputEl.focus(); // Tarik paksa keyboard agar tetap tampil di layar
     }
 
-    function tambahPecahan() { let namaP = prompt("Masukkan jenis pecahan:"); if(namaP && namaP.trim() !== "") { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.push({ nama: namaP.trim(), nilai: 0 }); renderPecahanDompet(); } }
-    function hapusBarisPecahan(idx) { if(confirm("Hapus baris pecahan ini?")) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.splice(idx, 1); renderPecahanDompet(); } }
-    function updateNilaiPecahan(idx, val) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); let angka = getAngkaMurni(val); d.pecahan[idx].nilai = angka; document.getElementById('bantuan-pecahan-'+idx).innerText = "Terbaca: Rp " + formatRupiah(angka); hitungOtomatisPecahan(); }
+    function tambahPecahan() { let namaP = prompt("Masukkan jenis pecahan:"); if(namaP && namaP.trim() !== "") { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.push({ nama: namaP.trim(), nilai: 0 }); simpanData(() => {}); renderPecahanDompet(); } }
+    function hapusBarisPecahan(idx) { if(confirm("Hapus baris pecahan ini?")) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.splice(idx, 1); simpanData(() => {}); renderPecahanDompet(); } }
+    function updateNilaiPecahan(idx, val) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); let angka = getAngkaMurni(val); d.pecahan[idx].nilai = angka; document.getElementById('bantuan-pecahan-'+idx).innerText = "Terbaca: Rp " + formatRupiah(angka); hitungOtomatisPecahan(); simpanData(() => {}); }
     function hitungOtomatisPecahan() {
         let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); let totalFisik = d.pecahan.reduce((sum, p) => sum + p.nilai, 0); document.getElementById('jd-saldo-fisik').innerText = formatRupiah(totalFisik);
         let selisih = totalFisik - d.saldo; let elSelisih = document.getElementById('jd-status-selisih');
@@ -4215,48 +4215,6 @@ function togglePilihSemuaKasbon() {
         }
     });
     
-// --- MULAI FITUR SIMPAN PECAHAN UANG OTOMATIS ---
-function simpanSemuaInputAngka() {
-    const semuaInput = document.querySelectorAll('input[type="number"]');
-    const dataInput = {};
-    semuaInput.forEach(input => {
-        if (input.id) {
-            dataInput[input.id] = input.value;
-        }
-    });
-    localStorage.setItem('dataPecahanTersimpan', JSON.stringify(dataInput));
-}
-
-function muatSemuaInputAngka() {
-    const dataTersimpan = localStorage.getItem('dataPecahanTersimpan');
-    if (dataTersimpan) {
-        const dataInput = JSON.parse(dataTersimpan);
-        for (const id in dataInput) {
-            const elemen = document.getElementById(id);
-            if (elemen) {
-                elemen.value = dataInput[id];
-            }
-        }
-        // Memancing aplikasi agar otomatis menghitung total tanpa perlu diketik ulang
-        const inputPertama = document.querySelector('input[type="number"]');
-        if (inputPertama) {
-            inputPertama.dispatchEvent(new Event('input', { bubbles: true }));
-            inputPertama.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    muatSemuaInputAngka();
-    
-    // Menyimpan data secara otomatis setiap kali Anda mengetik angka
-    document.body.addEventListener('input', (e) => {
-        if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
-            simpanSemuaInputAngka();
-        }
-    });
-});
-// --- AKHIR FITUR SIMPAN PECAHAN UANG OTOMATIS ---
 
 </script>
 </body>
