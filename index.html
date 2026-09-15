@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Manajemen UMKM Pro</title>
+    <!-- Kode gasan Icon dan PWA Manifest -->
+    <link rel="icon" type="image/png" href="icon-toko.png">
+    <link rel="apple-touch-icon" href="icon-toko.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#007bff">
+    <link rel="manifest" href="manifest.json">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -4216,5 +4224,19 @@ function togglePilihSemuaKasbon() {
     });
     
 </script>
+    <!-- Kode gasan memanggil Service Worker PWA -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .then((registration) => {
+              console.log('Service Worker berhasil didaftarkan!');
+            })
+            .catch((error) => {
+              console.log('Service Worker gagal didaftarkan: ', error);
+            });
+        });
+      }
+    </script>
 </body>
 </html>
