@@ -68,8 +68,18 @@
         .menu-btn { background: white; padding: 15px 5px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 11px; font-weight: bold;}
         .menu-btn span { display: block; font-size: 24px; margin-bottom: 5px; }
         
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+            ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+    /* Tambahan agar semua card jadi full screen rata pinggir */
+    .card {
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
+    }
+</style>
 
         .search-select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; font-size: 14px; color: #333; }
         
