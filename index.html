@@ -489,13 +489,7 @@
                 </div>
             </div>
             
-            <p class="text-small" style="color:var(--primary); text-align:right; margin-bottom: 0;"><i>*Geser tabel ke kiri ⬅️</i></p>
-            <div class="table-responsive">
-                <table class="table-excel">
-                    <thead><tr><th class="text-center" style="width: 30px;">✔</th><th>Pelanggan & Status</th><th>Produk (Qty)</th><th class="text-right">Modal</th><th class="text-right text-blue">Jual</th><th class="text-right text-orange">Diskon</th><th class="text-right text-green">Untung</th><th class="text-center">Aksi</th></tr></thead>
-                    <tbody id="listTransaksiBerandaTabel"></tbody>
-                </table>
-            </div>
+            <div id="listTransaksiBerandaTabel" style="margin-top: 10px;"></div>
         </div>
     </div>
 
@@ -1054,13 +1048,7 @@
                     <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusTransaksiTerpilihRiwayat()">🗑 Hapus</button>
                 </div>
             </div>
-            <p class="text-small" style="color:var(--primary); text-align:right; margin-bottom: 0;"><i>*Geser tabel ke kiri ⬅️</i></p>
-            <div class="table-responsive">
-                <table class="table-excel">
-                    <thead><tr><th class="text-center" style="width: 30px;">✔</th><th>Pelanggan & Status</th><th>Produk (Qty)</th><th class="text-right">Modal</th><th class="text-right text-blue">Jual</th><th class="text-right text-orange">Diskon</th><th class="text-right text-green">Untung</th><th class="text-center">Aksi</th></tr></thead>
-                    <tbody id="listRiwayatFullTabel"></tbody>
-                </table>
-            </div>
+            <div id="listRiwayatFullTabel" style="margin-top: 10px;"></div>
         </div>
 
         <div id="sub-catatan" class="card" style="display:none;">
@@ -2865,22 +2853,25 @@ function renderDaftarTransaksiBeranda() {
         let totalUntung = items.reduce((s, x) => s + (x.untung || 0), 0);
         let totalStruk = items.length;
 
-        htmlTabel += `<tr style="background:#e8f4fd; font-size:11px; font-weight:bold; border-top:3px solid var(--primary);">
-            <td colspan="2" class="text-blue" style="padding:8px 10px;">📊 📅 ${formatTanggalIndo(tgl)}</td>
-            <td style="color:#555;">Qty: ${totalQty} (${totalStruk} Struk)</td>
-            <td class="text-right text-red">M: Rp ${formatRupiah(totalModal)}</td>
-            <td class="text-right text-blue">O: Rp ${formatRupiah(totalJual)}</td>
-            <td class="text-right text-orange">D: Rp ${formatRupiah(totalDiskon)}</td>
-            <td class="text-right text-green">U: Rp ${formatRupiah(totalUntung)}</td>
-            <td></td>
-        </tr>`;
+        htmlTabel += `<div style="background:#e8f4fd; padding:10px; border-radius:8px; margin: 15px 0 10px 0; border: 1px solid #b8daff; border-left: 4px solid var(--primary);">
+            <div class="flex-between" style="margin-bottom: 8px;">
+                <span class="text-blue" style="font-weight:bold; font-size:12px;">📊 📅 ${formatTanggalIndo(tgl)}</span>
+                <span style="color:#555; font-size:11px; font-weight:bold;">${totalStruk} Struk (Qty: ${totalQty})</span>
+            </div>
+            <div class="grid-2" style="font-size:11px; text-align:center; gap:5px;">
+                <div style="background:#ffebee; padding:4px; border-radius:4px; font-weight:bold;" class="text-red">Modal: Rp ${formatRupiah(totalModal)}</div>
+                <div style="background:#eef2f5; padding:4px; border-radius:4px; font-weight:bold;" class="text-blue">Jual: Rp ${formatRupiah(totalJual)}</div>
+                <div style="background:#fff3cd; padding:4px; border-radius:4px; font-weight:bold;" class="text-orange">Diskon: Rp ${formatRupiah(totalDiskon)}</div>
+                <div style="background:#e8f5e9; padding:4px; border-radius:4px; font-weight:bold;" class="text-green">Untung: Rp ${formatRupiah(totalUntung)}</div>
+            </div>
+        </div>`;
         
         items.forEach(t => {
             htmlTabel += renderItemTransaksi(t, 'beranda');
         });
     });
 
-    document.getElementById('listTransaksiBerandaTabel').innerHTML = htmlTabel || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
+    document.getElementById('listTransaksiBerandaTabel').innerHTML = htmlTabel || '<div class="text-center text-small" style="padding:20px; color:gray;">Kosong, belum ada transaksi.</div>';
 }
     function renderItemTransaksi(t, st) {
         let sc = st==='beranda'?'check-transaksi-beranda':'check-transaksi-riwayat';
@@ -2891,14 +2882,42 @@ function renderDaftarTransaksiBeranda() {
         let nmDompetMasuk = 'Tanpa Dompet';
         if(t.dompetMasuk && t.dompetMasuk !== 'none') { let d = db.dompet.find(x => String(x.id) === String(t.dompetMasuk)); if(d) nmDompetMasuk = d.nama; }
 
-        return `<tr><td class="text-center"><input type="checkbox" class="${sc}" value="${t.id}" style="margin:0;"></td>
-        <td><b>${t.pembeli}</b><br><span style="font-size:10px;">${t.status==='Lunas'?'<span class="text-green">Lunas</span>':'<span class="text-red">Ngasbon</span>'}</span></td>
-        <td>${t.namaProduk} (x${t.jumlah})</td>
-        <td class="text-right">Rp ${formatRupiah(t.modal)}<br><span style="font-size:9px; color:#dc3545; display:block;">Keluar: ${nmDompetModal}</span></td>
-        <td class="text-right text-blue" style="font-weight:bold;">Rp ${formatRupiah(t.total)}<br><span style="font-size:9px; color:#28a745; display:block; font-weight:normal;">Masuk: ${nmDompetMasuk}</span></td>
-        <td class="text-right text-orange" style="font-weight:bold;">Rp ${formatRupiah(t.diskon || 0)}</td>
-        <td class="text-right text-green" style="font-weight:bold;">Rp ${formatRupiah(t.untung)}</td>
-        <td class="text-center"><button type="button" class="btn-outline" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="bukaEditTransaksi('${t.id}')">E</button><button type="button" class="btn-red" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="hapusTransaksi('${t.id}')">X</button><button type="button" class="btn-warning" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px; border:none;" onclick="bukaStruk('${t.id}')">🧾</button></td></tr>`;
+        return `
+        <div class="list-item" style="background:#fff; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:10px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+            <div class="flex-between" style="border-bottom:1px dashed #eee; padding-bottom:8px; margin-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" class="${sc}" value="${t.id}" style="margin:0;">
+                    <div>
+                        <b style="font-size:14px; color:#333;">${t.pembeli}</b>
+                        <span style="font-size:10px; margin-left:5px; padding:3px 6px; border-radius:6px; font-weight:bold; ${t.status==='Lunas'?'background:#d4edda; color:#155724;':'background:#f8d7da; color:#721c24;'}">${t.status}</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <button type="button" class="btn-outline" style="padding:5px 10px; font-size:11px; width:auto; margin:0;" onclick="bukaEditTransaksi('${t.id}')">✏️</button>
+                    <button type="button" class="btn-warning" style="padding:5px 10px; font-size:11px; width:auto; margin:0; border:none;" onclick="bukaStruk('${t.id}')">🧾</button>
+                    <button type="button" class="btn-red" style="padding:5px 10px; font-size:11px; width:auto; margin:0;" onclick="hapusTransaksi('${t.id}')">❌</button>
+                </div>
+            </div>
+            
+            <div style="font-size:13px; margin-bottom:10px; color:#444;">
+                🛒 <b>${t.namaProduk}</b> <span class="text-small">(x${t.jumlah})</span>
+            </div>
+            
+            <div class="grid-2" style="font-size:11px; background:#f8f9fa; padding:10px; border-radius:8px; gap:8px;">
+                <div>
+                    <span style="color:#dc3545; font-weight:bold; font-size:12px;">Modal: Rp ${formatRupiah(t.modal)}</span><br>
+                    <span style="color:#888; font-size:10px;">Dari: ${nmDompetModal}</span>
+                </div>
+                <div style="text-align:right;">
+                    <span style="color:#007bff; font-weight:bold; font-size:13px;">Jual: Rp ${formatRupiah(t.total)}</span><br>
+                    <span style="color:#888; font-size:10px;">Ke: ${nmDompetMasuk}</span>
+                </div>
+            </div>
+            <div class="flex-between" style="font-size:12px; margin-top:8px; padding:0 5px;">
+                <span class="text-orange" style="font-weight:bold;">Diskon: Rp ${formatRupiah(t.diskon || 0)}</span>
+                <span class="text-green" style="font-weight:bold; font-size:13px;">Untung: Rp ${formatRupiah(t.untung)}</span>
+            </div>
+        </div>`;
     }
 
     function simpanTemplateWA() { db.templateWA.pelanggan = document.getElementById('tplPelanggan').value; db.templateWA.tagihan = document.getElementById('tplTagihan').value; db.templateWA.bos = document.getElementById('tplBos').value; simpanData(); alert("Disimpan!"); }
@@ -3387,10 +3406,10 @@ function renderDaftarTransaksiBeranda() {
         
         let htmlRiwayatFull = ""; let lastDateFull = "";
         db.transaksi.slice().reverse().forEach(t => {
-            if (t.tanggal !== lastDateFull) { htmlRiwayatFull += `<tr><td colspan="7" style="background:#eef2f5; font-weight:bold; text-align:center; padding:10px 5px; color:#555; border-top: 2px solid #ccc;">📅 ${formatTanggalIndo(t.tanggal)}</td></tr>`; lastDateFull = t.tanggal; }
+            if (t.tanggal !== lastDateFull) { htmlRiwayatFull += `<div style="background:#eef2f5; font-weight:bold; text-align:center; padding:8px; border-radius:6px; color:#555; margin:15px 0 10px 0; border: 1px solid #ccc;">📅 ${formatTanggalIndo(t.tanggal)}</div>`; lastDateFull = t.tanggal; }
             htmlRiwayatFull += renderItemTransaksi(t, 'riwayat');
         });
-        document.getElementById('listRiwayatFullTabel').innerHTML = htmlRiwayatFull || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
+        document.getElementById('listRiwayatFullTabel').innerHTML = htmlRiwayatFull || '<div class="text-center text-small" style="padding:20px; color:gray;">Kosong, belum ada histori penuh.</div>';
         
         try { renderDaftarProduk(); } catch(e) {}
         try { renderDaftarPelanggan(); } catch(e) {}
@@ -4224,19 +4243,6 @@ function togglePilihSemuaKasbon() {
     });
     
 </script>
-    <!-- Kode gasan memanggil Service Worker PWA -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js')
-            .then((registration) => {
-              console.log('Service Worker berhasil didaftarkan!');
-            })
-            .catch((error) => {
-              console.log('Service Worker gagal didaftarkan: ', error);
-            });
-        });
-      }
-    </script>
+
 </body>
 </html>
