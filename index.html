@@ -124,16 +124,6 @@
         .kertas-struk { background: white; color: black; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 13px; width: 100%; border: 1px solid #ccc; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); margin-top: 20px; box-sizing: border-box; }
         .struk-divider { border-top: 1px dashed #000; margin: 8px 0; }
         .kotak-token { border: 1.5px dashed #000; padding: 8px; margin: 10px 0; text-align: center; font-weight: bold; font-size: 14px; background: #fafafa; }
-    /* --- Gaya Full Screen Gasan Sabarataan Halaman --- */
-    .card, div[style*="margin: 15px"], div[style*="margin:15px"] {
-        margin: 0 !important;
-        border-radius: 0 !important;
-        border-left: none !important;
-        border-right: none !important;
-        border-bottom: none !important;
-        box-shadow: none !important;
-        min-height: 100vh;
-    }
 </style>
 </head>
 <body>
@@ -3050,7 +3040,8 @@ function renderDaftarTransaksiBeranda() {
                 <div style="background:#e8f5e9; padding:5px; border-radius:5px;"><div style="font-size:9px; color:#666;">Untung Bersih</div><b class="text-green" style="font-size:11px;">Rp ${formatRupiah(tUntung)}</b></div>
             </div>`;
 
-            return `<div class="card" style="padding:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+            return `<div class="card" style="margin: 0 !important; border-radius: 0 !important; border: none !important; box-shadow: none !important; padding: 15px; min-height: 100vh;">
+
                 <div class="flex-between" style="margin-bottom:8px; border-bottom:2px solid var(--primary); padding-bottom:5px;">
                     <div style="display:flex; align-items:center;">
                         <input type="checkbox" class="check-pelanggan" value="${p.id}" style="width:auto; margin:0 8px 0 0;" onchange="cekStatusPilihSemuaPelanggan()">
