@@ -16,9 +16,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-
-<!-- OCR untuk membaca teks dari screenshot -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     
     <style>
         :root { --primary: #007bff; --bg-color: #f4f7f6; }
@@ -625,7 +622,6 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-tema')"><span>🎨</span>Tema</div> 
             <div class="menu-btn" onclick="bukaSubHalaman('sub-mutasi')"><span>📑</span>Mutasi Kas</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-manual')"><span>🧾</span>Struk Manual</div>
-            <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-scan')"><span>📷</span>Scan & Edit Struk</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-cetak')"><span>🖨️</span>Struk Cetak</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-analisa-kategori')"><span>📊</span>Laporan Folder</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
@@ -735,71 +731,7 @@
             <button type="button" class="btn-green" onclick="terapkanTemaBebas()" style="font-size: 15px; padding: 12px;">💾 Simpan Tema & Wallpaper</button>
         </div>
 
-        <!-- SCAN SCREENSHOT & EDIT STRUK -->
-<div id="sub-struk-scan" class="card" style="display:none;">
-    <button type="button"
-            class="btn-outline btn-back"
-            onclick="kembaliKeMenu()">
-        ⬅ Kembali
-    </button>
-
-    <h4 style="margin-bottom:10px;">📷 Scan & Edit Struk</h4>
-
-    <p class="text-small" style="margin-bottom:15px;">
-        Upload screenshot struk. Sistem akan mencoba membaca teksnya,
-        lalu kamu bisa mengedit sebelum dibuat menjadi struk.
-    </p>
-
-    <input
-        type="file"
-        id="inputScanStruk"
-        accept="image/*"
-        onchange="bacaScreenshotStruk(event)"
-    >
-
-    <div id="statusOCR"
-         class="text-small"
-         style="display:none; margin-bottom:10px;">
-    </div>
-
-    <label class="text-small">
-        Teks Hasil Pembacaan:
-    </label>
-
-    <textarea
-        id="hasilOCRStruk"
-        rows="12"
-        placeholder="Hasil teks dari screenshot akan muncul di sini..."
-        style="font-family:monospace; white-space:pre-wrap;"
-    ></textarea>
-
-    <button
-        type="button"
-        class="btn-blue"
-        onclick="buatStrukDariOCR()">
-        🧾 Buat Struk
-    </button>
-
-    <div id="previewOCRStruk"
-         style="display:none; margin-top:15px;">
-        <div class="struk-divider"></div>
-
-        <div
-            id="hasilPreviewOCR"
-            class="kertas-struk"
-            style="font-family:'Courier New',monospace; white-space:pre-wrap;"
-        ></div>
-
-        <button
-            type="button"
-            class="btn-green"
-            onclick="downloadStrukOCR()">
-            ⬇️ Simpan Struk JPG
-        </button>
-    </div>
-</div>
-
-<div id="sub-struk-manual" class="card" style="display:none;">
+        <div id="sub-struk-manual" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4 style="margin-bottom: 15px;">🧾 Bikin Struk Manual</h4>
             <input type="text" id="strukManualNamaToko" value="AMAT BAJUALAN" oninput="updatePreviewStruk()" placeholder="Nama Toko" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
@@ -1421,27 +1353,7 @@ function simpanData(renderFungsiKhusus = null) {
     function bukaSubHalaman(sub) { 
         document.getElementById('main-menu-grid').style.display = 'none';
         
-        let allSub = [
-    'sub-pengeluaran',
-    'sub-kategori',
-    'sub-analisa-kategori',
-    'sub-grafik',
-    'sub-pelanggan',
-    'sub-alokasi',
-    'sub-dompet',
-    'sub-portal',
-    'sub-wa',
-    'sub-backup',
-    'sub-tema',
-    'sub-dompet-detail',
-    'sub-riwayat',
-    'sub-mutasi',
-    'sub-struk-manual',
-    'sub-struk-scan',
-    'sub-struk-cetak',
-    'sub-rapor-pelanggan',
-    'sub-catatan'
-];
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-analisa-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-struk-cetak','sub-rapor-pelanggan','sub-catatan'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
 
         document.getElementById(sub).style.display = 'block'; 
@@ -3801,105 +3713,9 @@ function renderDaftarTransaksiBeranda() {
         }
     }
 // ==========================================
-// SCAN SCREENSHOT & EDIT STRUK
-// ==========================================
-
-async function bacaScreenshotStruk(event) {
-    const file = event.target.files[0];
-
-    if (!file) return;
-
-    const status = document.getElementById('statusOCR');
-    const hasil = document.getElementById('hasilOCRStruk');
-
-    status.style.display = 'block';
-    status.innerText = '⏳ Sedang membaca screenshot...';
-
-    hasil.value = '';
-
-    try {
-        const result = await Tesseract.recognize(
-            file,
-            'eng',
-            {
-                logger: function(info) {
-                    if (info.status === 'recognizing text') {
-                        status.innerText =
-                            '🔍 Membaca teks... ' +
-                            Math.round(info.progress * 100) +
-                            '%';
-                    }
-                }
-            }
-        );
-
-        hasil.value = result.data.text.trim();
-
-        status.innerText =
-            '✅ Selesai. Teks sekarang bisa kamu edit.';
-
-    } catch (error) {
-        console.error(error);
-
-        status.innerText =
-            '❌ Gagal membaca screenshot. Coba gunakan gambar yang lebih jelas.';
-    }
-}
-
-
-function buatStrukDariOCR() {
-
-    const teks =
-        document.getElementById('hasilOCRStruk').value.trim();
-
-    if (!teks) {
-        alert('Teks struk masih kosong.');
-        return;
-    }
-
-    const preview =
-        document.getElementById('hasilPreviewOCR');
-
-    preview.textContent = teks;
-
-    document.getElementById('previewOCRStruk')
-        .style.display = 'block';
-
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-    });
-}
-
-
-function downloadStrukOCR() {
-
-    const area =
-        document.getElementById('hasilPreviewOCR');
-
-    html2canvas(area, {
-        backgroundColor: '#ffffff',
-        scale: 2
-    }).then(canvas => {
-
-        const link =
-            document.createElement('a');
-
-        link.download =
-            `Struk-Scan-${Date.now()}.png`;
-
-        link.href =
-            canvas.toDataURL('image/png');
-
-        link.click();
-    });
-}
-
-
-// ==========================================
-// MESIN STRUK MANUAL
-// ==========================================
-function tambahBarisBarang() {
+    // MESIN STRUK MANUAL
+    // ==========================================
+    function tambahBarisBarang() {
         let wadah = document.getElementById('wadahBarangManual');
         let div = document.createElement('div');
         div.className = 'grid-3 item-barang-manual';
