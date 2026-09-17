@@ -776,12 +776,23 @@
                     <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleAdmin" onchange="simpanConfigStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Biaya Admin</label>
                     <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleTotal" onchange="simpanConfigStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Total</label>
                 </div>
+                
+                <div style="margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
+                    <label class="text-small text-blue" style="display:block; margin-bottom:5px;"><b>Perataan Teks (Alignment) Header Struk:</b></label>
+                    <select id="selectAlignHeader" onchange="simpanConfigStruk()" style="font-weight:bold; margin-bottom:0; background:#fff;">
+                        <option value="left">Rata Kiri (Left)</option>
+                        <option value="center">Rata Tengah (Center)</option>
+                        <option value="right">Rata Kanan (Right)</option>
+                    </select>
+                </div>
             </div>
 
             <!-- AREA PREVIEW KERTAS STRUK -->
             <div id="areaStrukManual" class="kertas-struk">
-                <div class="text-center"><b id="prevNamaToko" style="font-size:16px;">amat Bajualan</b></div>
-                <div class="text-center" style="font-size:11px; margin-bottom:10px;">Terima Kasih Sudah Belanja</div>
+                <div id="areaPrevHeaderContainer" style="text-align: center;">
+                    <div><b id="prevNamaToko" style="font-size:16px;">amat Bajualan</b></div>
+                    <div style="font-size:11px; margin-bottom:10px;">Terima Kasih Sudah Belanja</div>
+                </div>
                 <div class="struk-divider"></div>
                 
                 <div id="areaPrevHeaderTglPlg">
@@ -1174,7 +1185,7 @@
         dompet: [], produk: [], pelanggan: [], transaksi: [], utang: [], alokasi: [], 
         kategoriProduk: [], pengeluaran: [], simulasi: { piutang: false, utang: false, terapkanKeHeader: false }, 
         templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''},
-        strukToggle: { tanggal: true, pelanggan: true, barang: true, admin: true, total: true }
+        strukToggle: { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center' }
     };
     
     let filterSaatIni = 'semua';
@@ -3850,6 +3861,13 @@ function renderDaftarTransaksiBeranda() {
         if (areaTotalContainer) {
             areaTotalContainer.style.display = showTotal ? "block" : "none";
         }
+
+        // Terapkan Perataan Teks (Alignment) Header
+        let alignH = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
+        let areaHeaderContainer = document.getElementById('areaPrevHeaderContainer');
+        if (areaHeaderContainer) {
+            areaHeaderContainer.style.textAlign = alignH;
+        }
     }
 
     function simpanConfigStruk() {
@@ -3859,17 +3877,19 @@ function renderDaftarTransaksiBeranda() {
         db.strukToggle.barang = document.getElementById('cbToggleBarang').checked;
         db.strukToggle.admin = document.getElementById('cbToggleAdmin').checked;
         db.strukToggle.total = document.getElementById('cbToggleTotal').checked;
+        db.strukToggle.alignHeader = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
         simpanData();
         updatePreviewStruk();
     }
 
     function loadConfigStruk() {
-        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true };
+        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center' };
         if(document.getElementById('cbToggleTanggal')) document.getElementById('cbToggleTanggal').checked = db.strukToggle.tanggal;
         if(document.getElementById('cbTogglePelanggan')) document.getElementById('cbTogglePelanggan').checked = db.strukToggle.pelanggan;
         if(document.getElementById('cbToggleBarang')) document.getElementById('cbToggleBarang').checked = db.strukToggle.barang;
         if(document.getElementById('cbToggleAdmin')) document.getElementById('cbToggleAdmin').checked = db.strukToggle.admin;
         if(document.getElementById('cbToggleTotal')) document.getElementById('cbToggleTotal').checked = db.strukToggle.total;
+        if(document.getElementById('selectAlignHeader')) document.getElementById('selectAlignHeader').value = db.strukToggle.alignHeader || 'center';
     }
 
     function downloadStrukManual() {
