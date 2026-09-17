@@ -763,7 +763,7 @@
                     </div>
                 </div>
                 <b class="text-small">Catatan / Token (Opsional):</b>
-                <textarea id="strukManualCatatan" rows="3" placeholder="Contoh:\nTOKEN PLN:\n1234 5678 9012 3456" oninput="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit;"></textarea>
+                <textarea id="strukManualCatatan" placeholder="Contoh:\nTOKEN PLN:\n1234 5678 9012 3456" oninput="updatePreviewStruk(); this.style.height = ''; this.style.height = this.scrollHeight + 'px';" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit; min-height: 120px; overflow-y: hidden;"></textarea>
             </div>
 
             <!-- KONTEN PENGATURAN TAMPILAN -->
