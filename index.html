@@ -3900,6 +3900,17 @@ function downloadStrukOCR() {
 // MESIN STRUK MANUAL
 // ==========================================
 function tambahBarisBarang() {
+        let wadah = document.getElementById('wadahBarangManual');
+        let div = document.createElement('div');
+        div.className = 'grid-3 item-barang-manual';
+        div.style.gap = '5px'; div.style.marginBottom = '10px';
+        div.innerHTML = `
+            <input type="text" class="input-nama-barang" placeholder="Barang" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+            <input type="number" class="input-qty-barang" value="1" min="1" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+            <input type="number" class="input-harga-barang" placeholder="Harga" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+        `;
+        wadah.appendChild(div);
+    }
 
     function updatePreviewStruk() {
         if(!document.getElementById('strukManualNamaToko')) return; // Jaga-jaga biar gak error
