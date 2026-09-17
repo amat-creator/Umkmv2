@@ -734,42 +734,75 @@
         <div id="sub-struk-manual" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
             <h4 style="margin-bottom: 15px;">🧾 Bikin Struk Manual</h4>
-            <input type="text" id="strukManualNamaToko" value="AMAT BAJUALAN" oninput="updatePreviewStruk()" placeholder="Nama Toko" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
-            <input type="date" id="strukManualTanggal" onchange="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
-            <input type="text" id="strukManualPelanggan" placeholder="Nama Pelanggan (Opsional)" oninput="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
-            <hr style="margin: 15px 0;">
-            <b class="text-small">Daftar Tagihan / Barang:</b>
-            <div id="wadahBarangManual">
-                <div class="grid-3 item-barang-manual" style="gap:5px; margin-bottom:10px;">
-                    <input type="text" class="input-nama-barang" placeholder="Barang" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
-                    <input type="number" class="input-qty-barang" value="1" min="1" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
-                    <input type="number" class="input-harga-barang" placeholder="Harga" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
-                </div>
-            </div>
-            <button type="button" class="btn-outline" style="background:transparent; color:#007bff; border:1px solid #007bff; width:100%; padding:10px; border-radius:8px; margin-bottom:10px;" onclick="tambahBarisBarang()">➕ Tambah Baris</button>
-            <div style="background:#eef2f5; padding:10px; border-radius:8px; margin-bottom:10px;">
-                <div class="flex-between">
-                    <b class="text-small">Biaya Admin (Rp):</b>
-                    <input type="number" id="strukManualAdmin" placeholder="0" oninput="updatePreviewStruk()" style="width:50%; margin-bottom:0; padding:8px; border:1px solid #ddd; border-radius:8px;">
-                </div>
-            </div>
-            <b class="text-small">Catatan / Token (Opsional):</b>
-            <textarea id="strukManualCatatan" rows="3" placeholder="Contoh:\nTOKEN PLN:\n1234 5678 9012 3456" oninput="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit;"></textarea>
 
+            <!-- TABS UNTUK STRUK MANUAL -->
+            <div class="tabs" style="margin-bottom: 15px;">
+                <div id="tab-sm-isi" class="tab-btn active" onclick="switchTabStrukManual('isi')">📝 Isi Data</div>
+                <div id="tab-sm-pengaturan" class="tab-btn" onclick="switchTabStrukManual('pengaturan')">⚙️ Pengaturan</div>
+            </div>
+
+            <!-- KONTEN ISI DATA -->
+            <div id="sm-konten-isi">
+                <input type="text" id="strukManualNamaToko" value="amat Bajualan" oninput="updatePreviewStruk()" placeholder="Nama Toko" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+                <input type="date" id="strukManualTanggal" onchange="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+                <input type="text" id="strukManualPelanggan" placeholder="Nama Pelanggan (Opsional)" oninput="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+                <hr style="margin: 15px 0;">
+                <b class="text-small">Daftar Tagihan / Barang:</b>
+                <div id="wadahBarangManual">
+                    <div class="grid-3 item-barang-manual" style="gap:5px; margin-bottom:10px;">
+                        <input type="text" class="input-nama-barang" placeholder="Barang" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                        <input type="number" class="input-qty-barang" value="1" min="1" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                        <input type="number" class="input-harga-barang" placeholder="Harga" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                </div>
+                <button type="button" class="btn-outline" style="background:transparent; color:#007bff; border:1px solid #007bff; width:100%; padding:10px; border-radius:8px; margin-bottom:10px;" onclick="tambahBarisBarang()">➕ Tambah Baris</button>
+                <div style="background:#eef2f5; padding:10px; border-radius:8px; margin-bottom:10px;">
+                    <div class="flex-between">
+                        <b class="text-small">Biaya Admin (Rp):</b>
+                        <input type="number" id="strukManualAdmin" placeholder="0" oninput="updatePreviewStruk()" style="width:50%; margin-bottom:0; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                </div>
+                <b class="text-small">Catatan / Token (Opsional):</b>
+                <textarea id="strukManualCatatan" rows="3" placeholder="Contoh:\nTOKEN PLN:\n1234 5678 9012 3456" oninput="updatePreviewStruk()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit;"></textarea>
+            </div>
+
+            <!-- KONTEN PENGATURAN TAMPILAN -->
+            <div id="sm-konten-pengaturan" style="display:none; background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
+                <b class="text-small text-blue">Atur Tampilan Struk (Centang untuk menampilkan):</b>
+                <div style="margin-top:10px;">
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleTanggal" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Tanggal</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbTogglePelanggan" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Nama Pelanggan</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleBarang" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Daftar Tagihan & Barang</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleAdmin" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Biaya Admin</label>
+                </div>
+            </div>
+
+            <!-- AREA PREVIEW KERTAS STRUK -->
             <div id="areaStrukManual" class="kertas-struk">
-                <div class="text-center"><b id="prevNamaToko" style="font-size:16px;">AMAT BAJUALAN</b></div>
+                <div class="text-center"><b id="prevNamaToko" style="font-size:16px;">amat Bajualan</b></div>
                 <div class="text-center" style="font-size:11px; margin-bottom:10px;">Terima Kasih Sudah Belanja</div>
                 <div class="struk-divider"></div>
-                <div>Tgl: <span id="prevTanggal">...</span><span id="wadahPelanggan"></span></div>
-                <div class="struk-divider"></div>
-                <div id="prevDaftarBarang"><div>- x0<br><div class="text-right">Rp 0</div></div></div>
+                
+                <div id="areaPrevHeaderTglPlg">
+                    <div id="areaPrevTanggalSpan">Tgl: <span id="prevTanggal">...</span></div>
+                    <div id="areaPrevPelangganSpan"><span id="wadahPelanggan"></span></div>
+                </div>
+                <div class="struk-divider" id="dividerHeader"></div>
+                
+                <div id="areaPrevDaftarBarangUtama">
+                    <div id="prevDaftarBarang"><div>- x0<br><div class="text-right">Rp 0</div></div></div>
+                </div>
+                
                 <div id="areaPrevAdmin" style="display:none;"><div class="struk-divider"></div><div class="flex-between"><span>Biaya Admin</span><span id="prevAdminText">Rp 0</span></div></div>
-                <div class="struk-divider"></div>
+                
+                <div class="struk-divider" id="dividerTotal"></div>
                 <div class="flex-between"><b style="font-size:15px;">TOTAL</b><b id="prevTotal" style="font-size:15px;">Rp 0</b></div>
+                
                 <div id="areaPrevCatatan" style="display:none;"><div class="struk-divider"></div><div class="kotak-token" id="prevCatatanText"></div></div>
                 <div class="struk-divider"></div>
                 <div class="text-center" style="font-size:10px;">Powered by Sistem UMKM Pro<br><b>by Gemini & Developer Amat Bajualan 🚀</b></div>
             </div>
+            
             <button type="button" class="btn-green" style="margin-top:15px; width:100%; padding:12px; border-radius:8px; font-size:15px;" onclick="downloadStrukManual()">⬇️ Download Struk (JPG)</button>
         </div>
 
@@ -3728,13 +3761,26 @@ function renderDaftarTransaksiBeranda() {
         wadah.appendChild(div);
     }
 
+    function switchTabStrukManual(tab) {
+        document.getElementById('tab-sm-isi').classList.remove('active');
+        document.getElementById('tab-sm-pengaturan').classList.remove('active');
+        document.getElementById('sm-konten-isi').style.display = 'none';
+        document.getElementById('sm-konten-pengaturan').style.display = 'none';
+        
+        document.getElementById('tab-sm-' + tab).classList.add('active');
+        document.getElementById('sm-konten-' + tab).style.display = 'block';
+    }
+
     function updatePreviewStruk() {
         if(!document.getElementById('strukManualNamaToko')) return; // Jaga-jaga biar gak error
-        document.getElementById('prevNamaToko').innerText = document.getElementById('strukManualNamaToko').value || "NAMA TOKO";
+        
+        // Update Text Dasar
+        document.getElementById('prevNamaToko').innerText = document.getElementById('strukManualNamaToko').value || "amat Bajualan";
         document.getElementById('prevTanggal').innerText = document.getElementById('strukManualTanggal').value;
         let namaPlg = document.getElementById('strukManualPelanggan').value.trim();
-        document.getElementById('wadahPelanggan').innerHTML = namaPlg !== "" ? "<br>Plg: " + namaPlg : ""; 
+        document.getElementById('wadahPelanggan').innerHTML = namaPlg !== "" ? "Plg: " + namaPlg : ""; 
 
+        // Hitung Daftar Barang & Total
         let htmlBarang = ""; let subTotalBarang = 0;
         document.querySelectorAll('.item-barang-manual').forEach(baris => {
             let nama = baris.querySelector('.input-nama-barang').value || "-";
@@ -3748,14 +3794,45 @@ function renderDaftarTransaksiBeranda() {
         document.getElementById('prevDaftarBarang').innerHTML = htmlBarang || "<div>- x0<br><div class='text-right'>Rp 0</div></div>";
 
         let adminFee = parseInt(document.getElementById('strukManualAdmin').value) || 0;
-        let areaAdmin = document.getElementById('areaPrevAdmin');
-        if (adminFee > 0) { areaAdmin.style.display = "block"; document.getElementById('prevAdminText').innerText = "Rp " + adminFee.toLocaleString('id-ID'); } else { areaAdmin.style.display = "none"; }
-
-        document.getElementById('prevTotal').innerText = "Rp " + (subTotalBarang + adminFee).toLocaleString('id-ID');
+        document.getElementById('prevAdminText').innerText = "Rp " + adminFee.toLocaleString('id-ID');
+        
+        let totalAkhir = subTotalBarang + adminFee;
+        document.getElementById('prevTotal').innerText = "Rp " + totalAkhir.toLocaleString('id-ID');
 
         let catatan = document.getElementById('strukManualCatatan').value;
         let areaCatatan = document.getElementById('areaPrevCatatan');
         if (catatan.trim() !== "") { areaCatatan.style.display = "block"; document.getElementById('prevCatatanText').innerHTML = catatan.replace(/\n/g, '<br>'); } else { areaCatatan.style.display = "none"; }
+
+        // --- LOGIKA TOGGLE (AKTIF/NONAKTIF ELEMEN) ---
+        let showTgl = document.getElementById('cbToggleTanggal').checked;
+        let showPlg = document.getElementById('cbTogglePelanggan').checked;
+        let showBrg = document.getElementById('cbToggleBarang').checked;
+        let showAdmin = document.getElementById('cbToggleAdmin').checked;
+
+        // Toggle Tanggal & Pelanggan
+        document.getElementById('areaPrevTanggalSpan').style.display = showTgl ? "block" : "none";
+        document.getElementById('areaPrevPelangganSpan').style.display = (showPlg && namaPlg !== "") ? "block" : "none";
+        
+        // Sembunyikan garis pembatas atas jika tgl & plg mati
+        if(!showTgl && (!showPlg || namaPlg === "")) {
+            document.getElementById('dividerHeader').style.display = "none";
+        } else {
+            document.getElementById('dividerHeader').style.display = "block";
+        }
+
+        // Toggle Daftar Tagihan/Barang
+        document.getElementById('areaPrevDaftarBarangUtama').style.display = showBrg ? "block" : "none";
+
+        // Toggle Biaya Admin
+        let areaAdmin = document.getElementById('areaPrevAdmin');
+        if (showAdmin && adminFee > 0) { areaAdmin.style.display = "block"; } else { areaAdmin.style.display = "none"; }
+
+        // Sembunyikan garis atas total jika daftar barang & admin mati
+        if(!showBrg && (!showAdmin || adminFee <= 0)) {
+            document.getElementById('dividerTotal').style.display = "none";
+        } else {
+            document.getElementById('dividerTotal').style.display = "block";
+        }
     }
 
     function downloadStrukManual() {
