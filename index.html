@@ -778,11 +778,19 @@
                 </div>
                 
                 <div style="margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
-                    <label class="text-small text-blue" style="display:block; margin-bottom:5px;"><b>Perataan Teks (Alignment) Header Struk:</b></label>
-                    <select id="selectAlignHeader" onchange="simpanConfigStruk()" style="font-weight:bold; margin-bottom:0; background:#fff;">
-                        <option value="left">Rata Kiri (Left)</option>
-                        <option value="center">Rata Tengah (Center)</option>
-                        <option value="right">Rata Kanan (Right)</option>
+                    <label class="text-small text-blue" style="display:block; margin-bottom:5px;"><b>Posisi / Perataan Header Struk:</b></label>
+                    <select id="selectAlignHeader" onchange="simpanConfigStruk()" style="font-weight:bold; margin-bottom:10px; background:#fff;">
+                        <option value="center">Tengah (Center)</option>
+                        <option value="space-between">Kiri & Kanan (Flex)</option>
+                        <option value="left">Rata Kiri</option>
+                        <option value="right">Rata Kanan</option>
+                    </select>
+
+                    <label class="text-small text-blue" style="display:block; margin-bottom:5px;"><b>Posisi / Perataan Catatan / Token:</b></label>
+                    <select id="selectAlignCatatan" onchange="simpanConfigStruk()" style="font-weight:bold; margin-bottom:0; background:#fff;">
+                        <option value="left">Rata Kiri</option>
+                        <option value="center">Tengah (Center)</option>
+                        <option value="right">Rata Kanan</option>
                     </select>
                 </div>
             </div>
@@ -790,8 +798,10 @@
             <!-- AREA PREVIEW KERTAS STRUK -->
             <div id="areaStrukManual" class="kertas-struk">
                 <div id="areaPrevHeaderContainer" style="text-align: center;">
-                    <div><b id="prevNamaToko" style="font-size:16px;">amat Bajualan</b></div>
-                    <div style="font-size:11px; margin-bottom:10px;">Terima Kasih Sudah Belanja</div>
+                    <div id="headerContentInner" style="width: 100%;">
+                        <b id="prevNamaToko" style="font-size:16px; display:block;">amat Bajualan</b>
+                        <span style="font-size:11px;" id="prevInfoTokoSub">Terima Kasih Sudah Belanja</span>
+                    </div>
                 </div>
                 <div class="struk-divider"></div>
                 
@@ -1112,7 +1122,7 @@
             <form onsubmit="eksekusiSimpanCatatan(event)" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
                 <input type="hidden" id="editCatatanId" value="">
                 <input type="text" id="catatanJudul" placeholder="Judul Catatan..." required style="font-weight:bold; border-color:var(--primary);">
-                <textarea id="catatanIsi" rows="4" placeholder="Tulis isi catatan di sini..." required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit;"></textarea>
+                <textarea id="catatanIsi" placeholder="Tulis isi catatan di sini..." required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit; min-height: 120px; overflow-y: hidden;" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
                 <div class="grid-2">
                     <button type="submit" id="btnSimpanCatatan" class="btn-green" style="margin-bottom:0;">💾 Simpan Catatan</button>
                     <button type="button" id="btnBatalCatatan" class="btn-outline" style="display:none; margin-bottom:0;" onclick="batalEditCatatan()">Batal</button>
@@ -3862,15 +3872,41 @@ function renderDaftarTransaksiBeranda() {
             areaTotalContainer.style.display = showTotal ? "block" : "none";
         }
 
-        // Terapkan Perataan Teks (Alignment) Header & Kotak Token
+        // Terapkan Perataan Teks (Alignment) Header secara mandiri
         let alignH = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
         let areaHeaderContainer = document.getElementById('areaPrevHeaderContainer');
-        if (areaHeaderContainer) {
-            areaHeaderContainer.style.textAlign = alignH;
+        let headerInner = document.getElementById('headerContentInner');
+        
+        if (areaHeaderContainer && headerInner) {
+            if (alignH === 'space-between') {
+                areaHeaderContainer.style.display = 'flex';
+                areaHeaderContainer.style.justifyContent = 'space-between';
+                areaHeaderContainer.style.alignItems = 'flex-start';
+                areaHeaderContainer.style.textAlign = 'left';
+                headerInner.innerHTML = `
+                    <div style="text-align: left;">
+                        <b id="prevNamaToko" style="font-size:16px; display:block;">${document.getElementById('strukManualNamaToko').value || "amat Bajualan"}</b>
+                        <span style="font-size:11px;">Struk Transaksi</span>
+                    </div>
+                    <div style="text-align: right; font-size: 11px;">
+                        <span>${document.getElementById('strukManualTanggal').value || "-"}</span>
+                    </div>
+                `;
+            } else {
+                areaHeaderContainer.style.display = 'block';
+                areaHeaderContainer.style.textAlign = alignH;
+                headerInner.innerHTML = `
+                    <b id="prevNamaToko" style="font-size:16px; display:block;">${document.getElementById('strukManualNamaToko').value || "amat Bajualan"}</b>
+                    <span style="font-size:11px;" id="prevInfoTokoSub">Terima Kasih Sudah Belanja</span>
+                `;
+            }
         }
+
+        // Terapkan Perataan Teks (Alignment) Catatan / Token secara terpisah
+        let alignC = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
         let kotakToken = document.getElementById('prevCatatanText');
         if (kotakToken) {
-            kotakToken.style.textAlign = alignH;
+            kotakToken.style.textAlign = alignC;
         }
     }
 
@@ -3882,18 +3918,20 @@ function renderDaftarTransaksiBeranda() {
         db.strukToggle.admin = document.getElementById('cbToggleAdmin').checked;
         db.strukToggle.total = document.getElementById('cbToggleTotal').checked;
         db.strukToggle.alignHeader = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
+        db.strukToggle.alignCatatan = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
         simpanData();
         updatePreviewStruk();
     }
 
     function loadConfigStruk() {
-        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center' };
+        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center', alignCatatan: 'left' };
         if(document.getElementById('cbToggleTanggal')) document.getElementById('cbToggleTanggal').checked = db.strukToggle.tanggal;
         if(document.getElementById('cbTogglePelanggan')) document.getElementById('cbTogglePelanggan').checked = db.strukToggle.pelanggan;
         if(document.getElementById('cbToggleBarang')) document.getElementById('cbToggleBarang').checked = db.strukToggle.barang;
         if(document.getElementById('cbToggleAdmin')) document.getElementById('cbToggleAdmin').checked = db.strukToggle.admin;
         if(document.getElementById('cbToggleTotal')) document.getElementById('cbToggleTotal').checked = db.strukToggle.total;
         if(document.getElementById('selectAlignHeader')) document.getElementById('selectAlignHeader').value = db.strukToggle.alignHeader || 'center';
+        if(document.getElementById('selectAlignCatatan')) document.getElementById('selectAlignCatatan').value = db.strukToggle.alignCatatan || 'left';
     }
 
     function downloadStrukManual() {
@@ -4223,7 +4261,10 @@ function salinBackupJSON() {
         if(!c) return;
         document.getElementById('editCatatanId').value = c.id;
         document.getElementById('catatanJudul').value = c.judul;
-        document.getElementById('catatanIsi').value = c.isi;
+        let ta = document.getElementById('catatanIsi');
+        ta.value = c.isi;
+        ta.style.height = ''; 
+        ta.style.height = ta.scrollHeight + 'px';
         document.getElementById('btnSimpanCatatan').innerText = "💾 Simpan Perubahan";
         document.getElementById('btnBatalCatatan').style.display = "inline-block";
     }
@@ -4231,7 +4272,9 @@ function salinBackupJSON() {
     function batalEditCatatan() {
         document.getElementById('editCatatanId').value = "";
         document.getElementById('catatanJudul').value = "";
-        document.getElementById('catatanIsi').value = "";
+        let ta = document.getElementById('catatanIsi');
+        ta.value = "";
+        ta.style.height = '';
         document.getElementById('btnSimpanCatatan').innerText = "💾 Simpan Catatan";
         document.getElementById('btnBatalCatatan').style.display = "none";
     }
@@ -4359,4 +4402,4 @@ function togglePilihSemuaKasbon() {
 </script>
 
 </body>
-</html>
+</html>=
