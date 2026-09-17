@@ -778,18 +778,10 @@
                 </div>
                 
                 <div style="margin-top:15px; border-top:1px dashed #ccc; padding-top:10px;">
-                    <label class="text-small text-blue" style="display:block; margin-bottom:5px;"><b>Posisi / Perataan Header Struk:</b></label>
-                    <select id="selectAlignHeader" onchange="simpanConfigStruk()" style="font-weight:bold; margin-bottom:10px; background:#fff;">
+                    <label class="text-small text-blue" style="display:block; margin-bottom:5px;"><b>Posisi / Perataan Header & Catatan:</b></label>
+                    <select id="selectAlignHeader" onchange="simpanConfigStruk()" style="font-weight:bold; margin-bottom:0; background:#fff;">
                         <option value="center">Tengah (Center)</option>
-                        <option value="space-between">Kiri & Kanan (Flex)</option>
                         <option value="left">Rata Kiri</option>
-                        <option value="right">Rata Kanan</option>
-                    </select>
-
-                    <label class="text-small text-blue" style="display:block; margin-bottom:5px;"><b>Posisi / Perataan Catatan / Token:</b></label>
-                    <select id="selectAlignCatatan" onchange="simpanConfigStruk()" style="font-weight:bold; margin-bottom:0; background:#fff;">
-                        <option value="left">Rata Kiri</option>
-                        <option value="center">Tengah (Center)</option>
                         <option value="right">Rata Kanan</option>
                     </select>
                 </div>
@@ -3872,41 +3864,24 @@ function renderDaftarTransaksiBeranda() {
             areaTotalContainer.style.display = showTotal ? "block" : "none";
         }
 
-        // Terapkan Perataan Teks (Alignment) Header secara mandiri
+        // Terapkan Perataan Teks (Alignment) untuk Header & Catatan secara otomatis
         let alignH = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
         let areaHeaderContainer = document.getElementById('areaPrevHeaderContainer');
         let headerInner = document.getElementById('headerContentInner');
         
         if (areaHeaderContainer && headerInner) {
-            if (alignH === 'space-between') {
-                areaHeaderContainer.style.display = 'flex';
-                areaHeaderContainer.style.justifyContent = 'space-between';
-                areaHeaderContainer.style.alignItems = 'flex-start';
-                areaHeaderContainer.style.textAlign = 'left';
-                headerInner.innerHTML = `
-                    <div style="text-align: left;">
-                        <b id="prevNamaToko" style="font-size:16px; display:block;">${document.getElementById('strukManualNamaToko').value || "amat Bajualan"}</b>
-                        <span style="font-size:11px;">Struk Transaksi</span>
-                    </div>
-                    <div style="text-align: right; font-size: 11px;">
-                        <span>${document.getElementById('strukManualTanggal').value || "-"}</span>
-                    </div>
-                `;
-            } else {
-                areaHeaderContainer.style.display = 'block';
-                areaHeaderContainer.style.textAlign = alignH;
-                headerInner.innerHTML = `
-                    <b id="prevNamaToko" style="font-size:16px; display:block;">${document.getElementById('strukManualNamaToko').value || "amat Bajualan"}</b>
-                    <span style="font-size:11px;" id="prevInfoTokoSub">Terima Kasih Sudah Belanja</span>
-                `;
-            }
+            areaHeaderContainer.style.display = 'block';
+            areaHeaderContainer.style.textAlign = alignH;
+            headerInner.innerHTML = `
+                <b id="prevNamaToko" style="font-size:16px; display:block;">${document.getElementById('strukManualNamaToko').value || "amat Bajualan"}</b>
+                <span style="font-size:11px;" id="prevInfoTokoSub">Terima Kasih Sudah Belanja</span>
+            `;
         }
 
-        // Terapkan Perataan Teks (Alignment) Catatan / Token secara terpisah
-        let alignC = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
+        // Catatan / Token otomatis ikut perataan yang sama dengan Header
         let kotakToken = document.getElementById('prevCatatanText');
         if (kotakToken) {
-            kotakToken.style.textAlign = alignC;
+            kotakToken.style.textAlign = alignH;
         }
     }
 
@@ -3918,20 +3893,18 @@ function renderDaftarTransaksiBeranda() {
         db.strukToggle.admin = document.getElementById('cbToggleAdmin').checked;
         db.strukToggle.total = document.getElementById('cbToggleTotal').checked;
         db.strukToggle.alignHeader = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
-        db.strukToggle.alignCatatan = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
         simpanData();
         updatePreviewStruk();
     }
 
     function loadConfigStruk() {
-        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center', alignCatatan: 'left' };
+        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center' };
         if(document.getElementById('cbToggleTanggal')) document.getElementById('cbToggleTanggal').checked = db.strukToggle.tanggal;
         if(document.getElementById('cbTogglePelanggan')) document.getElementById('cbTogglePelanggan').checked = db.strukToggle.pelanggan;
         if(document.getElementById('cbToggleBarang')) document.getElementById('cbToggleBarang').checked = db.strukToggle.barang;
         if(document.getElementById('cbToggleAdmin')) document.getElementById('cbToggleAdmin').checked = db.strukToggle.admin;
         if(document.getElementById('cbToggleTotal')) document.getElementById('cbToggleTotal').checked = db.strukToggle.total;
         if(document.getElementById('selectAlignHeader')) document.getElementById('selectAlignHeader').value = db.strukToggle.alignHeader || 'center';
-        if(document.getElementById('selectAlignCatatan')) document.getElementById('selectAlignCatatan').value = db.strukToggle.alignCatatan || 'left';
     }
 
     function downloadStrukManual() {
