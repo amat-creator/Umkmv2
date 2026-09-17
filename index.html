@@ -624,6 +624,7 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-manual')"><span>🧾</span>Struk Manual</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-cetak')"><span>🖨️</span>Struk Cetak</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-analisa-kategori')"><span>📊</span>Laporan Folder</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-gambar')"><span>📷</span>Struk Gambar</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
         </div>
 
@@ -1123,6 +1124,38 @@
             <p class="text-small" style="margin-bottom:10px;">Pilih file backup (.json) yang pernah didownload untuk memulihkan data jika aplikasi tereset.</p>
             <input type="file" id="fileRestoreJSON" accept=".json" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
             <button type="button" class="btn-green" onclick="restoreBackupJSON()">🔄 Pulihkan Data dari File</button>
+        </div>
+
+        <div id="sub-struk-gambar" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4 style="margin-bottom: 10px;">📷 Edit & Cetak Struk Gambar</h4>
+            <p class="text-small" style="margin-bottom: 15px;">Upload foto struk/nota, ubah teksnya, lalu download hasilnya.</p>
+            
+            <label class="text-small text-blue"><b>1. Pilih Foto Struk:</b></label>
+            <input type="file" id="inputFotoStruk" accept="image/*" onchange="muatFotoStruk(event)" style="margin-bottom: 15px;">
+
+            <div id="areaEditorStrukGambar" style="display:none;">
+                <label class="text-small text-blue"><b>2. Ketik Teks Tambahan / Edit:</b></label>
+                <textarea id="teksStrukKustom" rows="3" placeholder="Tulis teks di sini (cth: LUNAS / Keterangan Toko)..." oninput="renderStrukCanvas()" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;"></textarea>
+                
+                <div class="grid-2" style="margin-bottom: 15px;">
+                    <div>
+                        <label class="text-small">Ukuran Huruf:</label>
+                        <input type="number" id="ukuranFontStruk" value="24" oninput="renderStrukCanvas()" style="margin-bottom:0;">
+                    </div>
+                    <div>
+                        <label class="text-small">Warna Teks:</label>
+                        <input type="color" id="warnaTeksStruk" value="#000000" onchange="renderStrukCanvas()" style="height:40px; margin-bottom:0;">
+                    </div>
+                </div>
+
+                <label class="text-small text-blue"><b>3. Hasil Pratinjau Gambar:</b></label>
+                <div style="text-align:center; background:#eee; padding:10px; border-radius:8px; overflow-x:auto; margin-bottom:15px;">
+                    <canvas id="canvasStrukEdit" style="max-width:100%; height:auto; border:1px solid #ccc; background:#fff;"></canvas>
+                </div>
+
+                <button type="button" class="btn-green" onclick="downloadHasilStrukGambar()">⬇️ Download Struk Gambar (PNG)</button>
+            </div>
         </div>
     </div>
 
@@ -3766,6 +3799,63 @@ function renderDaftarTransaksiBeranda() {
             link.href = canvas.toDataURL("image/png"); 
             link.click(); 
         });
+    }
+
+    // --- LOGIKA STRUK GAMBAR CANVAS ---
+    let imgStrukAsli = null;
+
+    function muatFotoStruk(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            imgStrukAsli = new Image();
+            imgStrukAsli.onload = function() {
+                document.getElementById('areaEditorStrukGambar').style.display = 'block';
+                renderStrukCanvas();
+            };
+            imgStrukAsli.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function renderStrukCanvas() {
+        if (!imgStrukAsli) return;
+
+        let canvas = document.getElementById('canvasStrukEdit');
+        let ctx = canvas.getContext('2d');
+
+        canvas.width = imgStrukAsli.width;
+        canvas.height = imgStrukAsli.height;
+
+        ctx.drawImage(imgStrukAsli, 0, 0);
+
+        let teks = document.getElementById('teksStrukKustom').value;
+        let ukuran = document.getElementById('ukuranFontStruk').value || 24;
+        let warna = document.getElementById('warnaTeksStruk').value || '#000000';
+
+        if (teks.trim() !== '') {
+            ctx.font = `bold ${ukuran}px sans-serif`;
+            ctx.fillStyle = warna;
+
+            let barisTeks = teks.split('\n');
+            let startY = canvas.height - (barisTeks.length * (parseInt(ukuran) + 10)) - 30;
+
+            barisTeks.forEach((line, index) => {
+                ctx.fillText(line, 30, startY + (index * (parseInt(ukuran) + 10)));
+            });
+        }
+    }
+
+    function downloadHasilStrukGambar() {
+        let canvas = document.getElementById('canvasStrukEdit');
+        if (!canvas) return;
+        
+        let link = document.createElement('a');
+        link.download = `Struk_Gambar_${Date.now()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
     }
     
 // ==========================================
