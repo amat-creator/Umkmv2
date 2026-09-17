@@ -735,32 +735,106 @@
             <button type="button" class="btn-green" onclick="terapkanTemaBebas()" style="font-size: 15px; padding: 12px;">💾 Simpan Tema & Wallpaper</button>
         </div>
 
-        <!-- SCAN SCREENSHOT & EDIT STRUK -->
+        <!-- EDITOR TEMPLATE STRUK PRIBADI -->
 <div id="sub-struk-scan" class="card" style="display:none;">
+
     <button type="button"
             class="btn-outline btn-back"
             onclick="kembaliKeMenu()">
         ⬅ Kembali
     </button>
 
-    <h4 style="margin-bottom:10px;">📷 Scan & Edit Struk</h4>
+    <h4>📝 Editor Template Struk</h4>
 
-    <p class="text-small" style="margin-bottom:15px;">
-        Upload screenshot struk. Sistem akan mencoba membaca teksnya,
-        lalu kamu bisa mengedit sebelum dibuat menjadi struk.
+    <p class="text-small">
+        Gunakan untuk membuat template/struk pribadi atau simulasi.
+        Hasil akan diberi tanda TEMPLATE/SIMULASI.
     </p>
 
-    <input
-        type="file"
-        id="inputScanStruk"
-        accept="image/*"
-        onchange="bacaScreenshotStruk(event)"
-    >
+    <!-- GAMBAR LATAR -->
+    <label>📷 Pilih gambar latar</label>
+    <input type="file"
+           id="editorGambar"
+           accept="image/*"
+           onchange="muatGambarEditor(event)">
 
-    <div id="statusOCR"
-         class="text-small"
-         style="display:none; margin-bottom:10px;">
+    <!-- TEKS -->
+    <label style="margin-top:15px;">✏️ Teks</label>
+
+    <textarea id="editorTeks"
+              rows="3"
+              placeholder="Contoh: AMAT BAJUALAN&#10;Pembayaran berhasil&#10;Rp25.000"></textarea>
+
+    <button type="button"
+            class="btn-blue"
+            onclick="tambahTeksEditor()">
+        ➕ Tambah Teks
+    </button>
+
+    <div id="kontrolTeksEditor"
+         style="display:none;margin-top:15px;">
+
+        <label>Ukuran Teks</label>
+        <input type="range"
+               id="ukuranTeksEditor"
+               min="10"
+               max="80"
+               value="28"
+               oninput="ubahUkuranTeksEditor()">
+
+        <label>Posisi Horizontal</label>
+        <input type="range"
+               id="posisiXEditor"
+               min="0"
+               max="100"
+               value="50"
+               oninput="ubahPosisiEditor()">
+
+        <label>Posisi Vertikal</label>
+        <input type="range"
+               id="posisiYEditor"
+               min="0"
+               max="100"
+               value="50"
+               oninput="ubahPosisiEditor()">
+
+        <button type="button"
+                class="btn-outline"
+                onclick="hapusTeksEditor()">
+            🗑️ Hapus Teks Terpilih
+        </button>
     </div>
+
+    <!-- AREA PREVIEW -->
+    <div id="editorCanvasWrapper"
+         style="
+         margin-top:20px;
+         width:100%;
+         overflow:hidden;
+         background:#eee;
+         border-radius:12px;
+         position:relative;
+         min-height:250px;
+         ">
+
+        <canvas id="editorCanvas"
+                style="
+                width:100%;
+                display:block;
+                touch-action:none;
+                ">
+        </canvas>
+
+    </div>
+
+    <button type="button"
+            class="btn-green"
+            style="margin-top:15px;"
+            onclick="simpanTemplateEditor()">
+        🧾 Simpan Template
+    </button>
+
+</div>
 
     <label class="text-small">
         Teks Hasil Pembacaan:
@@ -1418,7 +1492,34 @@ function simpanData(renderFungsiKhusus = null) {
         if(pg==='menu') kembaliKeMenu(); 
     }
     
-    function bukaSubHalaman(sub) { 
+    function bukaSubHalaman(id) {
+
+    allSub.forEach(function(sub) {
+
+        const el =
+            document.getElementById(sub);
+
+        if (el) {
+            el.style.display = 'none';
+        }
+    });
+
+    const target =
+        document.getElementById(id);
+
+    if (target) {
+        target.style.display = 'block';
+    }
+
+    if (id === 'sub-struk-scan') {
+
+        setTimeout(function() {
+
+            initEditorStruk();
+
+        }, 100);
+    }
+}
         document.getElementById('main-menu-grid').style.display = 'none';
         
         let allSub = [
@@ -3801,98 +3902,290 @@ function renderDaftarTransaksiBeranda() {
         }
     }
 // ==========================================
-// SCAN SCREENSHOT & EDIT STRUK
+// EDITOR TEMPLATE STRUK PRIBADI / SIMULASI
 // ==========================================
 
-async function bacaScreenshotStruk(event) {
+let editorCanvas = null;
+let editorCtx = null;
+let editorImage = null;
+let editorTexts = [];
+let editorSelected = null;
+
+function initEditorStruk() {
+
+    editorCanvas =
+        document.getElementById('editorCanvas');
+
+    editorCtx =
+        editorCanvas.getContext('2d');
+
+    gambarUlangEditor();
+}
+
+
+function muatGambarEditor(event) {
+
     const file = event.target.files[0];
 
     if (!file) return;
 
-    const status = document.getElementById('statusOCR');
-    const hasil = document.getElementById('hasilOCRStruk');
+    const reader = new FileReader();
 
-    status.style.display = 'block';
-    status.innerText = '⏳ Sedang membaca screenshot...';
+    reader.onload = function(e) {
 
-    hasil.value = '';
+        editorImage = new Image();
 
-    try {
-        const result = await Tesseract.recognize(
-            file,
-            'eng',
-            {
-                logger: function(info) {
-                    if (info.status === 'recognizing text') {
-                        status.innerText =
-                            '🔍 Membaca teks... ' +
-                            Math.round(info.progress * 100) +
-                            '%';
-                    }
-                }
-            }
-        );
+        editorImage.onload = function() {
 
-        hasil.value = result.data.text.trim();
+            editorCanvas.width =
+                editorImage.width;
 
-        status.innerText =
-            '✅ Selesai. Teks sekarang bisa kamu edit.';
+            editorCanvas.height =
+                editorImage.height;
 
-    } catch (error) {
-        console.error(error);
+            editorTexts = [];
 
-        status.innerText =
-            '❌ Gagal membaca screenshot. Coba gunakan gambar yang lebih jelas.';
-    }
+            gambarUlangEditor();
+        };
+
+        editorImage.src = e.target.result;
+    };
+
+    reader.readAsDataURL(file);
 }
 
 
-function buatStrukDariOCR() {
+function gambarUlangEditor() {
 
-    const teks =
-        document.getElementById('hasilOCRStruk').value.trim();
+    if (!editorCanvas || !editorCtx) return;
 
-    if (!teks) {
-        alert('Teks struk masih kosong.');
+    const ctx = editorCtx;
+
+    ctx.clearRect(
+        0,
+        0,
+        editorCanvas.width,
+        editorCanvas.height
+    );
+
+    // Background
+    if (editorImage) {
+
+        ctx.drawImage(
+            editorImage,
+            0,
+            0,
+            editorCanvas.width,
+            editorCanvas.height
+        );
+
+    } else {
+
+        ctx.fillStyle = '#ffffff';
+
+        ctx.fillRect(
+            0,
+            0,
+            editorCanvas.width || 600,
+            editorCanvas.height || 800
+        );
+    }
+
+    // Teks
+    editorTexts.forEach(function(item) {
+
+        ctx.font =
+            `${item.size}px Arial`;
+
+        ctx.fillStyle =
+            item.color || '#111111';
+
+        ctx.textAlign = 'center';
+
+        ctx.textBaseline = 'middle';
+
+        ctx.fillText(
+            item.text,
+            item.x,
+            item.y
+        );
+    });
+
+    // Tanda template
+    ctx.font = '16px Arial';
+
+    ctx.fillStyle = 'rgba(100,100,100,0.7)';
+
+    ctx.textAlign = 'right';
+
+    ctx.fillText(
+        'TEMPLATE / SIMULASI',
+        editorCanvas.width - 15,
+        editorCanvas.height - 15
+    );
+}
+
+
+function tambahTeksEditor() {
+
+    const input =
+        document.getElementById('editorTeks');
+
+    const text =
+        input.value.trim();
+
+    if (!text) {
+
+        alert('Masukkan teks terlebih dahulu.');
+
         return;
     }
 
-    const preview =
-        document.getElementById('hasilPreviewOCR');
+    if (!editorCanvas) {
 
-    preview.textContent = teks;
+        initEditorStruk();
+    }
 
-    document.getElementById('previewOCRStruk')
-        .style.display = 'block';
+    const item = {
 
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth'
-    });
+        text: text,
+
+        size: 28,
+
+        x: editorCanvas.width / 2,
+
+        y: editorCanvas.height / 2,
+
+        color: '#111111'
+    };
+
+    editorTexts.push(item);
+
+    editorSelected =
+        editorTexts.length - 1;
+
+    document.getElementById(
+        'kontrolTeksEditor'
+    ).style.display = 'block';
+
+    input.value = '';
+
+    tampilkanKontrolEditor();
+
+    gambarUlangEditor();
 }
 
 
-function downloadStrukOCR() {
+function tampilkanKontrolEditor() {
 
-    const area =
-        document.getElementById('hasilPreviewOCR');
+    if (editorSelected === null) return;
 
-    html2canvas(area, {
-        backgroundColor: '#ffffff',
-        scale: 2
-    }).then(canvas => {
+    const item =
+        editorTexts[editorSelected];
 
-        const link =
-            document.createElement('a');
+    document.getElementById(
+        'ukuranTeksEditor'
+    ).value = item.size;
 
-        link.download =
-            `Struk-Scan-${Date.now()}.png`;
+    document.getElementById(
+        'posisiXEditor'
+    ).value =
+        (item.x / editorCanvas.width) * 100;
 
-        link.href =
-            canvas.toDataURL('image/png');
+    document.getElementById(
+        'posisiYEditor'
+    ).value =
+        (item.y / editorCanvas.height) * 100;
+}
 
-        link.click();
-    });
+
+function ubahUkuranTeksEditor() {
+
+    if (editorSelected === null) return;
+
+    const item =
+        editorTexts[editorSelected];
+
+    item.size =
+        Number(
+            document.getElementById(
+                'ukuranTeksEditor'
+            ).value
+        );
+
+    gambarUlangEditor();
+}
+
+
+function ubahPosisiEditor() {
+
+    if (editorSelected === null) return;
+
+    const item =
+        editorTexts[editorSelected];
+
+    const x =
+        Number(
+            document.getElementById(
+                'posisiXEditor'
+            ).value
+        );
+
+    const y =
+        Number(
+            document.getElementById(
+                'posisiYEditor'
+            ).value
+        );
+
+    item.x =
+        editorCanvas.width * x / 100;
+
+    item.y =
+        editorCanvas.height * y / 100;
+
+    gambarUlangEditor();
+}
+
+
+function hapusTeksEditor() {
+
+    if (editorSelected === null) return;
+
+    editorTexts.splice(
+        editorSelected,
+        1
+    );
+
+    editorSelected = null;
+
+    document.getElementById(
+        'kontrolTeksEditor'
+    ).style.display = 'none';
+
+    gambarUlangEditor();
+}
+
+
+function simpanTemplateEditor() {
+
+    if (!editorCanvas) {
+
+        alert('Belum ada gambar.');
+
+        return;
+    }
+
+    const link =
+        document.createElement('a');
+
+    link.download =
+        `Template-Struk-${Date.now()}.png`;
+
+    link.href =
+        editorCanvas.toDataURL('image/png');
+
+    link.click();
 }
 
 
