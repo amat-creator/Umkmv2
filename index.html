@@ -774,6 +774,7 @@
                     <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbTogglePelanggan" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Nama Pelanggan</label>
                     <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleBarang" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Daftar Tagihan & Barang</label>
                     <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleAdmin" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Biaya Admin</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleTotal" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Total</label>
                 </div>
             </div>
 
@@ -795,8 +796,10 @@
                 
                 <div id="areaPrevAdmin" style="display:none;"><div class="struk-divider"></div><div class="flex-between"><span>Biaya Admin</span><span id="prevAdminText">Rp 0</span></div></div>
                 
-                <div class="struk-divider" id="dividerTotal"></div>
-                <div class="flex-between"><b style="font-size:15px;">TOTAL</b><b id="prevTotal" style="font-size:15px;">Rp 0</b></div>
+                <div id="areaPrevTotalContainer">
+                    <div class="struk-divider" id="dividerTotal"></div>
+                    <div class="flex-between"><b style="font-size:15px;">TOTAL</b><b id="prevTotal" style="font-size:15px;">Rp 0</b></div>
+                </div>
                 
                 <div id="areaPrevCatatan" style="display:none;"><div class="struk-divider"></div><div class="kotak-token" id="prevCatatanText"></div></div>
                 <div class="struk-divider"></div>
@@ -3808,6 +3811,7 @@ function renderDaftarTransaksiBeranda() {
         let showPlg = document.getElementById('cbTogglePelanggan').checked;
         let showBrg = document.getElementById('cbToggleBarang').checked;
         let showAdmin = document.getElementById('cbToggleAdmin').checked;
+        let showTotal = document.getElementById('cbToggleTotal') ? document.getElementById('cbToggleTotal').checked : true;
 
         // Toggle Tanggal & Pelanggan
         document.getElementById('areaPrevTanggalSpan').style.display = showTgl ? "block" : "none";
@@ -3832,6 +3836,12 @@ function renderDaftarTransaksiBeranda() {
             document.getElementById('dividerTotal').style.display = "none";
         } else {
             document.getElementById('dividerTotal').style.display = "block";
+        }
+
+        // Toggle Total
+        let areaTotalContainer = document.getElementById('areaPrevTotalContainer');
+        if (areaTotalContainer) {
+            areaTotalContainer.style.display = showTotal ? "block" : "none";
         }
     }
 
