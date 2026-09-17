@@ -770,11 +770,11 @@
             <div id="sm-konten-pengaturan" style="display:none; background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
                 <b class="text-small text-blue">Atur Tampilan Struk (Centang untuk menampilkan):</b>
                 <div style="margin-top:10px;">
-                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleTanggal" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Tanggal</label>
-                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbTogglePelanggan" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Nama Pelanggan</label>
-                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleBarang" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Daftar Tagihan & Barang</label>
-                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleAdmin" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Biaya Admin</label>
-                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleTotal" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Total</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleTanggal" onchange="simpanConfigStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Tanggal</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbTogglePelanggan" onchange="simpanConfigStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Nama Pelanggan</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleBarang" onchange="simpanConfigStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Daftar Tagihan & Barang</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleAdmin" onchange="simpanConfigStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Biaya Admin</label>
+                    <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleTotal" onchange="simpanConfigStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Total</label>
                 </div>
             </div>
 
@@ -1173,7 +1173,8 @@
     let db = { 
         dompet: [], produk: [], pelanggan: [], transaksi: [], utang: [], alokasi: [], 
         kategoriProduk: [], pengeluaran: [], simulasi: { piutang: false, utang: false, terapkanKeHeader: false }, 
-        templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''}
+        templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''},
+        strukToggle: { tanggal: true, pelanggan: true, barang: true, admin: true, total: true }
     };
     
     let filterSaatIni = 'semua';
@@ -1243,6 +1244,7 @@
         if(!db.wallpaperText) db.wallpaperText = '';
         if(!db.filterRiwayat) db.filterRiwayat = 'semua';
         if(!db.filterAlokasi) db.filterAlokasi = 'bulanIni';
+        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true };
 
         if(!db.templateWA) {
             db.templateWA = {
@@ -1418,7 +1420,12 @@ function simpanData(renderFungsiKhusus = null) {
             document.getElementById('setStrukPesan').value = db.strukCetak.pesanPenutup;
             document.getElementById('setStrukUkuran').value = db.strukCetak.ukuranFont;
         }
-        if(sub==='sub-struk-manual') { jd="Struk Manual"; document.getElementById('strukManualTanggal').value = ambilTanggal(); updatePreviewStruk(); }
+        if(sub==='sub-struk-manual') { 
+            jd="Struk Manual"; 
+            document.getElementById('strukManualTanggal').value = ambilTanggal(); 
+            loadConfigStruk();
+            updatePreviewStruk(); 
+        }
         if(sub==='sub-catatan') { jd="Catatan Bebas"; renderCatatanList(); }
         document.getElementById('judulHalaman').innerText = jd; 
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
@@ -3843,6 +3850,26 @@ function renderDaftarTransaksiBeranda() {
         if (areaTotalContainer) {
             areaTotalContainer.style.display = showTotal ? "block" : "none";
         }
+    }
+
+    function simpanConfigStruk() {
+        if(!db.strukToggle) db.strukToggle = {};
+        db.strukToggle.tanggal = document.getElementById('cbToggleTanggal').checked;
+        db.strukToggle.pelanggan = document.getElementById('cbTogglePelanggan').checked;
+        db.strukToggle.barang = document.getElementById('cbToggleBarang').checked;
+        db.strukToggle.admin = document.getElementById('cbToggleAdmin').checked;
+        db.strukToggle.total = document.getElementById('cbToggleTotal').checked;
+        simpanData();
+        updatePreviewStruk();
+    }
+
+    function loadConfigStruk() {
+        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true };
+        if(document.getElementById('cbToggleTanggal')) document.getElementById('cbToggleTanggal').checked = db.strukToggle.tanggal;
+        if(document.getElementById('cbTogglePelanggan')) document.getElementById('cbTogglePelanggan').checked = db.strukToggle.pelanggan;
+        if(document.getElementById('cbToggleBarang')) document.getElementById('cbToggleBarang').checked = db.strukToggle.barang;
+        if(document.getElementById('cbToggleAdmin')) document.getElementById('cbToggleAdmin').checked = db.strukToggle.admin;
+        if(document.getElementById('cbToggleTotal')) document.getElementById('cbToggleTotal').checked = db.strukToggle.total;
     }
 
     function downloadStrukManual() {
