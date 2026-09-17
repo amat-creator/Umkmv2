@@ -775,7 +775,6 @@
                     <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleBarang" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Daftar Tagihan & Barang</label>
                     <label style="display:flex; align-items:center; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="cbToggleAdmin" checked onchange="updatePreviewStruk()" style="width:auto; margin:0 10px 0 0;"> Tampilkan Biaya Admin</label>
                 </div>
-                <button type="button" class="btn-outline" style="margin-top:10px; width:100%; font-size:12px; padding:8px;" onclick="simpanFormatStrukManual()">💾 Simpan Format Ini</button>
             </div>
 
             <!-- AREA PREVIEW KERTAS STRUK -->
@@ -804,10 +803,7 @@
                 <div class="text-center" style="font-size:10px;">Powered by Sistem UMKM Pro<br><b>by Gemini & Developer Amat Bajualan 🚀</b></div>
             </div>
             
-            <div class="grid-2" style="margin-top: 15px;">
-                <button type="button" class="btn-green" style="margin-bottom:0; padding:12px; border-radius:8px; font-size:13px;" onclick="downloadStrukManual()">⬇️ Struk (JPG)</button>
-                <button type="button" class="btn-outline" style="margin-bottom:0; padding:12px; border-radius:8px; font-size:13px; border-color:var(--primary); color:var(--primary);" onclick="salinStrukManualTeks()">📋 Struk (Teks)</button>
-            </div>
+            <button type="button" class="btn-green" style="margin-top:15px; width:100%; padding:12px; border-radius:8px; font-size:15px;" onclick="downloadStrukManual()">⬇️ Download Struk (JPG)</button>
         </div>
 
         <div id="sub-mutasi" class="card" style="display:none;">
@@ -1419,85 +1415,7 @@ function simpanData(renderFungsiKhusus = null) {
             document.getElementById('setStrukPesan').value = db.strukCetak.pesanPenutup;
             document.getElementById('setStrukUkuran').value = db.strukCetak.ukuranFont;
         }
-    function downloadStrukManual() {
-        let area = document.getElementById('areaStrukManual');
-        html2canvas(area).then(canvas => { 
-            let link = document.createElement('a'); 
-            link.download = `Struk-${Date.now()}.png`; 
-            link.href = canvas.toDataURL("image/png"); 
-            link.click(); 
-        });
-    }
-
-    function simpanFormatStrukManual() {
-        if (!db.pengaturanStrukManual) db.pengaturanStrukManual = {};
-        db.pengaturanStrukManual.tgl = document.getElementById('cbToggleTanggal').checked;
-        db.pengaturanStrukManual.plg = document.getElementById('cbTogglePelanggan').checked;
-        db.pengaturanStrukManual.brg = document.getElementById('cbToggleBarang').checked;
-        db.pengaturanStrukManual.admin = document.getElementById('cbToggleAdmin').checked;
-        simpanData();
-        alert("✅ Format tampilan struk manual berhasil disimpan! Ke depannya otomatis pakai format ini.");
-    }
-
-    function salinStrukManualTeks() {
-        let teks = "";
-        let namaToko = document.getElementById('strukManualNamaToko').value || "amat Bajualan";
-        teks += `*${namaToko}*\nTerima Kasih Sudah Belanja\n`;
-        teks += "--------------------------------\n";
-
-        let showTgl = document.getElementById('cbToggleTanggal').checked;
-        let showPlg = document.getElementById('cbTogglePelanggan').checked;
-        let namaPlg = document.getElementById('strukManualPelanggan').value.trim();
-
-        if (showTgl || (showPlg && namaPlg !== "")) {
-            if (showTgl) teks += `Tgl: ${document.getElementById('strukManualTanggal').value}\n`;
-            if (showPlg && namaPlg !== "") teks += `Plg: ${namaPlg}\n`;
-            teks += "--------------------------------\n";
-        }
-
-        let showBrg = document.getElementById('cbToggleBarang').checked;
-        let subTotal = 0;
-        
-        if (showBrg) {
-            document.querySelectorAll('.item-barang-manual').forEach(baris => {
-                let nama = baris.querySelector('.input-nama-barang').value || "-";
-                let qty = parseInt(baris.querySelector('.input-qty-barang').value) || 0;
-                let harga = parseInt(baris.querySelector('.input-harga-barang').value) || 0;
-                let sub = qty * harga;
-                subTotal += sub;
-                
-                if (nama !== "-" || harga > 0) {
-                    teks += `${nama} x${qty}\nRp ${formatRupiah(sub)}\n`;
-                }
-            });
-        }
-
-        let showAdmin = document.getElementById('cbToggleAdmin').checked;
-        let adminFee = parseInt(document.getElementById('strukManualAdmin').value) || 0;
-
-        if (showAdmin && adminFee > 0) {
-            if (showBrg) teks += "--------------------------------\n";
-            teks += `Biaya Admin:\nRp ${formatRupiah(adminFee)}\n`;
-        }
-
-        if (showBrg || (showAdmin && adminFee > 0)) {
-            teks += "--------------------------------\n";
-        }
-
-        let totalAkhir = subTotal + adminFee;
-        teks += `*TOTAL : Rp ${formatRupiah(totalAkhir)}*\n`;
-
-        let catatan = document.getElementById('strukManualCatatan').value.trim();
-        if (catatan !== "") {
-            teks += "--------------------------------\n";
-            teks += `${catatan}\n`;
-        }
-
-        teks += "--------------------------------\n";
-        teks += "Powered by Sistem UMKM Pro";
-
-        salinTeks(teks, "✅ Struk (Teks) berhasil disalin!\nBisa langsung kamu tempel (Paste) di WhatsApp pembeli.");
-    }
+        if(sub==='sub-struk-manual') { jd="Struk Manual"; document.getElementById('strukManualTanggal').value = ambilTanggal(); updatePreviewStruk(); }
         if(sub==='sub-catatan') { jd="Catatan Bebas"; renderCatatanList(); }
         document.getElementById('judulHalaman').innerText = jd; 
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
@@ -3925,76 +3843,6 @@ function renderDaftarTransaksiBeranda() {
             link.href = canvas.toDataURL("image/png"); 
             link.click(); 
         });
-    }
-
-    function simpanFormatStrukManual() {
-        if (!db.pengaturanStrukManual) db.pengaturanStrukManual = {};
-        db.pengaturanStrukManual.tgl = document.getElementById('cbToggleTanggal').checked;
-        db.pengaturanStrukManual.plg = document.getElementById('cbTogglePelanggan').checked;
-        db.pengaturanStrukManual.brg = document.getElementById('cbToggleBarang').checked;
-        db.pengaturanStrukManual.admin = document.getElementById('cbToggleAdmin').checked;
-        simpanData();
-        alert("✅ Format tampilan struk manual berhasil disimpan! Ke depannya otomatis pakai format ini.");
-    }
-
-    function salinStrukManualTeks() {
-        let teks = "";
-        let namaToko = document.getElementById('strukManualNamaToko').value || "amat Bajualan";
-        teks += `*${namaToko}*\nTerima Kasih Sudah Belanja\n`;
-        teks += "--------------------------------\n";
-
-        let showTgl = document.getElementById('cbToggleTanggal').checked;
-        let showPlg = document.getElementById('cbTogglePelanggan').checked;
-        let namaPlg = document.getElementById('strukManualPelanggan').value.trim();
-
-        if (showTgl || (showPlg && namaPlg !== "")) {
-            if (showTgl) teks += `Tgl: ${document.getElementById('strukManualTanggal').value}\n`;
-            if (showPlg && namaPlg !== "") teks += `Plg: ${namaPlg}\n`;
-            teks += "--------------------------------\n";
-        }
-
-        let showBrg = document.getElementById('cbToggleBarang').checked;
-        let subTotal = 0;
-        
-        if (showBrg) {
-            document.querySelectorAll('.item-barang-manual').forEach(baris => {
-                let nama = baris.querySelector('.input-nama-barang').value || "-";
-                let qty = parseInt(baris.querySelector('.input-qty-barang').value) || 0;
-                let harga = parseInt(baris.querySelector('.input-harga-barang').value) || 0;
-                let sub = qty * harga;
-                subTotal += sub;
-                
-                if (nama !== "-" || harga > 0) {
-                    teks += `${nama} x${qty}\nRp ${formatRupiah(sub)}\n`;
-                }
-            });
-        }
-
-        let showAdmin = document.getElementById('cbToggleAdmin').checked;
-        let adminFee = parseInt(document.getElementById('strukManualAdmin').value) || 0;
-
-        if (showAdmin && adminFee > 0) {
-            if (showBrg) teks += "--------------------------------\n";
-            teks += `Biaya Admin:\nRp ${formatRupiah(adminFee)}\n`;
-        }
-
-        if (showBrg || (showAdmin && adminFee > 0)) {
-            teks += "--------------------------------\n";
-        }
-
-        let totalAkhir = subTotal + adminFee;
-        teks += `*TOTAL : Rp ${formatRupiah(totalAkhir)}*\n`;
-
-        let catatan = document.getElementById('strukManualCatatan').value.trim();
-        if (catatan !== "") {
-            teks += "--------------------------------\n";
-            teks += `${catatan}\n`;
-        }
-
-        teks += "--------------------------------\n";
-        teks += "Powered by Sistem UMKM Pro";
-
-        salinTeks(teks, "✅ Struk (Teks) berhasil disalin!\nBisa langsung kamu tempel (Paste) di WhatsApp pembeli.");
     }
     
 // ==========================================
