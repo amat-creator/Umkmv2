@@ -1,0 +1,247 @@
+        :root { --primary: #2563eb; --bg-color: #f8fafc; } /* Warna dasar Modern Blue */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: var(--bg-color); padding-bottom: 120px; transition: background 0.3s; overscroll-behavior-y: none; background-size: cover; background-position: center; background-attachment: fixed; }
+        body::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: -1; }
+        .app-container { max-width: 400px; margin: 0 auto; background: rgba(244, 247, 246, 0.85); min-height: 100vh; position: relative; overflow-x: hidden; }
+        
+        .header { background: var(--primary); color: white; padding: 20px; border-radius: 0 0 20px 20px; text-align: center; transition: background 0.3s; }
+        .saldo-badge { background: rgba(255,255,255,0.2); display: inline-block; padding: 5px 15px; border-radius: 20px; margin-top: 10px; font-weight: bold; }
+        .saldo-simulasi { background: #ffc107 !important; color: #333 !important; box-shadow: 0 0 10px rgba(255,193,7,0.5); }
+        
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: white; display: flex; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); border-radius: 15px 15px 0 0; z-index: 100; left: 50%; transform: translateX(-50%); }
+        .nav-item { flex: 1; text-align: center; color: #777; font-size: 11px; cursor: pointer; transition: color 0.3s; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { display: block; font-size: 20px; margin-bottom: 3px; }
+
+        .page { display: none; padding: 10px 4px; }
+        .page.active { display: block; }
+        .card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 12px 10px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid rgba(255, 255, 255, 0.4); margin-bottom: 12px; }
+        .theme-grid-aesthetic { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .theme-box { padding: 10px; border-radius: 8px; text-align: center; color: white; font-size: 11px; font-weight: bold; cursor: pointer; border: 2px solid transparent; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .theme-box.active { border-color: #000; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        input[type="color"] { padding: 0; border: none; height: 60px; cursor: pointer; width: 100%; border-radius: 8px; }
+        
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; font-size: 14px; transition: background 0.3s; }
+        button.btn-green { background: #28a745; }
+        button.btn-red { background: #dc3545; }
+        button.btn-warning { background: #ffc107; color: #333; }
+        button.btn-blue { background: #007bff; }
+        button.btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-back { width: auto; padding: 6px 15px; margin-bottom: 15px; font-size: 12px; display: inline-block; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .list-item { border-bottom: 1px solid #eee; padding: 10px 0; font-size: 13px; }
+        .list-item:last-child { border-bottom: none; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        
+        .text-green { color: #28a745; font-weight: bold; }
+        .text-blue { color: var(--primary); font-weight: bold; }
+        .text-red { color: #dc3545; font-weight: bold; }
+        .text-small { font-size: 11px; color: #888; }
+        
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .menu-btn { background: white; padding: 15px 5px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 11px; font-weight: bold;}
+        .menu-btn span { display: block; font-size: 24px; margin-bottom: 5px; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
+        .search-select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 10px; font-size: 14px; color: #333; }
+        
+        .modal-search { display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 400px; height: 100%; background: var(--bg-color); z-index: 1000; flex-direction: column; overscroll-behavior: contain; }
+        .modal-search.active { display: flex; }
+        .modal-header { background: white; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
+        .modal-header .btn-back { margin-bottom: 0; }
+        .modal-header h4 { margin: 0; flex: 1; }
+        .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+        .modal-body input { font-size: 16px; padding: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 10px; }
+        
+        .search-item { padding: 15px; border-radius: 8px; background: white; margin-bottom: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s; }
+        .search-item:active { background: #e9ecef; }
+        .search-item b { display: block; margin-bottom: 4px; }
+
+        .accordion-header { cursor: pointer; padding: 10px 0; }
+        .accordion-content { display: none; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-top: 5px; border: 1px solid #eee; }
+        .accordion-content.active { display: block; }
+        
+        .btn-wa { border: 1px solid; background: transparent; padding: 5px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; display: inline-block; font-weight: bold; width: auto; margin:0;}
+        .btn-wa:hover { background: #f0fdf4; }
+
+                .modal-popup { display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 400px; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-popup.active { display: flex; }
+        .popup-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+
+
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; background: #fff; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; }
+        .table-excel { width: 100%; border-collapse: collapse; min-width: 650px; font-size: 12px; text-align: left; }
+        .table-excel th, .table-excel td { border: 1px solid #ddd; padding: 8px 10px; vertical-align: middle; white-space: nowrap; }
+        .table-excel th { background-color: #f8f9fa; font-weight: bold; color: #333; }
+        .table-excel tr:nth-child(even) { background-color: #fcfcfc; }
+        .table-excel tr:hover { background-color: #f1f7ff; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+
+        .info-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .info-row input { margin-bottom: 0; }
+        .badge-info { display: inline-flex; align-items: center; background: #e9ecef; border: 1px solid #ced4da; padding: 4px 8px; border-radius: 15px; font-size: 11px; margin: 2px 4px 2px 0; color: #495057; }
+
+        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
+        .tab-btn { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-weight: bold; color: #999; border-bottom: 3px solid transparent; transition: all 0.3s;}
+        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+        .kat-folder { background: var(--primary); color: white; padding: 12px 15px; border-radius: 8px; margin-bottom: 5px; cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .kat-content { display: none; padding: 10px; background: #f8f9fa; border: 1px solid #eee; border-radius: 0 0 8px 8px; margin-top: -5px; margin-bottom: 15px; }
+        .kat-content.active { display: block; }
+        
+        /* Desain Struk Thermal */
+        .struk-kertas {
+            background: #fff;
+            color: #000;
+            padding: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            text-align: left;
+            width: 100%;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .kertas-struk {
+            background: white;
+            color: black;
+            padding: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            width: 100%;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            box-sizing: border-box;
+        }
+
+        .struk-divider {
+            border-top: 1px dashed #000;
+            margin: 8px 0;
+        }
+
+        .kotak-token {
+            border: 1.5px dashed #000;
+            padding: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+            font-size: 14px;
+            background: #fafafa;
+        }
+
+        /* ================================
+           MODE TOKEN PLN
+           ================================ */
+
+        .pilihan-mode-struk {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .tombol-mode-struk {
+            background: #fff;
+            color: #555;
+            border: 2px solid #ddd;
+            padding: 12px 8px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .tombol-mode-struk.aktif {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* Kotak token biasa */
+        #prevCatatanText {
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        /* Kotak token PLN besar */
+        #areaStrukManual.mode-token-pln #prevCatatanText {
+    font-family: Arial, Helvetica, sans-serif !important;
+
+    /* UKURAN TOKEN */
+    font-size: 50px !important;
+    line-height: 1.25 !important;
+    font-weight: 700 !important;
+
+    /* Jarak angka */
+    letter-spacing: 1.2px !important;
+    word-spacing: 4px !important;
+
+    text-align: center !important;
+
+    /* Lebarkan area token */
+    width: calc(100% + 60px) !important;
+    box-sizing: border-box !important;
+
+    /* Tarik sampai mendekati sisi kertas */
+    margin-left: -30px !important;
+    margin-right: -30px !important;
+
+    /* Tinggi kotak */
+    padding: 25px 10px !important;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+
+    background: #fff;
+
+    font-style: normal !important;
+
+    /* Jangan dipipihkan */
+    transform: none !important;
+}
+
+        #areaStrukManual.mode-token-pln #areaPrevCatatan {
+            display: block !important;
+        }
+
+        #areaStrukManual.mode-token-pln #prevNamaToko {
+            font-size: 21px !important;
+            font-weight: bold !important;
+        }
+
+        #areaStrukManual.mode-token-pln #prevInfoTokoSub {
+            font-size: 13px !important;
+        }
+
+        /* Sembunyikan bagian yang tidak diperlukan ketika Token PLN */
+        #areaStrukManual.mode-token-pln #areaPrevHeaderTglPlg,
+        #areaStrukManual.mode-token-pln #dividerHeader,
+        #areaStrukManual.mode-token-pln #areaPrevDaftarBarangUtama,
+        #areaStrukManual.mode-token-pln #areaPrevAdmin,
+        #areaStrukManual.mode-token-pln #areaPrevTotalContainer {
+            display: none !important;
+        }
+
+        #areaStrukManual.mode-token-pln #areaPrevCatatan {
+            margin-top: 8px;
+        }
+
+        /* Judul kecil TOKEN PLN di atas nomor */
+        #areaStrukManual.mode-token-pln #labelTokenPLN {
+            display: block !important;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-bottom: 3px;
+        }
+
+        #labelTokenPLN {
+            display: none;
+        }
