@@ -2827,6 +2827,10 @@ prevCatatan.style.textAlign = "center";
         /* ==========================================
            TOGGLE PENGATURAN
            ========================================== */
+        let showHeader =
+            document.getElementById('cbToggleHeader') ?
+            document.getElementById('cbToggleHeader').checked : true;
+
         let showTgl =
             document.getElementById('cbToggleTanggal') ?
             document.getElementById('cbToggleTanggal').checked : true;
@@ -2846,6 +2850,25 @@ prevCatatan.style.textAlign = "center";
         let showTotal =
             document.getElementById('cbToggleTotal') ?
             document.getElementById('cbToggleTotal').checked : true;
+
+        let showFooter =
+            document.getElementById('cbToggleFooter') ?
+            document.getElementById('cbToggleFooter').checked : true;
+
+        if(document.getElementById('areaPrevHeaderContainer')) {
+            document.getElementById('areaPrevHeaderContainer').style.display =
+                showHeader ? "block" : "none";
+        }
+
+        if(document.getElementById('areaPrevFooter')) {
+            document.getElementById('areaPrevFooter').style.display =
+                showFooter ? "block" : "none";
+        }
+
+        if(document.getElementById('dividerFooter')) {
+            document.getElementById('dividerFooter').style.display =
+                showFooter ? "block" : "none";
+        }
 
         /* ==========================================
            TANGGAL & PELANGGAN
@@ -2969,11 +2992,13 @@ prevCatatan.style.textAlign = "center";
 
     function simpanConfigStruk() {
         if(!db.strukToggle) db.strukToggle = {};
+        db.strukToggle.header = document.getElementById('cbToggleHeader') ? document.getElementById('cbToggleHeader').checked : true;
         db.strukToggle.tanggal = document.getElementById('cbToggleTanggal').checked;
         db.strukToggle.pelanggan = document.getElementById('cbTogglePelanggan').checked;
         db.strukToggle.barang = document.getElementById('cbToggleBarang').checked;
         db.strukToggle.admin = document.getElementById('cbToggleAdmin').checked;
         db.strukToggle.total = document.getElementById('cbToggleTotal').checked;
+        db.strukToggle.footer = document.getElementById('cbToggleFooter') ? document.getElementById('cbToggleFooter').checked : true;
         db.strukToggle.alignHeader = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
         db.strukToggle.alignCatatan = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
         simpanData();
@@ -2981,12 +3006,14 @@ prevCatatan.style.textAlign = "center";
     }
 
     function loadConfigStruk() {
-        if(!db.strukToggle) db.strukToggle = { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center', alignCatatan: 'left' };
+        if(!db.strukToggle) db.strukToggle = { header: true, tanggal: true, pelanggan: true, barang: true, admin: true, total: true, footer: true, alignHeader: 'center', alignCatatan: 'left' };
+        if(document.getElementById('cbToggleHeader')) document.getElementById('cbToggleHeader').checked = db.strukToggle.header !== undefined ? db.strukToggle.header : true;
         if(document.getElementById('cbToggleTanggal')) document.getElementById('cbToggleTanggal').checked = db.strukToggle.tanggal;
         if(document.getElementById('cbTogglePelanggan')) document.getElementById('cbTogglePelanggan').checked = db.strukToggle.pelanggan;
         if(document.getElementById('cbToggleBarang')) document.getElementById('cbToggleBarang').checked = db.strukToggle.barang;
         if(document.getElementById('cbToggleAdmin')) document.getElementById('cbToggleAdmin').checked = db.strukToggle.admin;
         if(document.getElementById('cbToggleTotal')) document.getElementById('cbToggleTotal').checked = db.strukToggle.total;
+        if(document.getElementById('cbToggleFooter')) document.getElementById('cbToggleFooter').checked = db.strukToggle.footer !== undefined ? db.strukToggle.footer : true;
         if(document.getElementById('selectAlignHeader')) document.getElementById('selectAlignHeader').value = db.strukToggle.alignHeader || 'center';
         if(document.getElementById('selectAlignCatatan')) document.getElementById('selectAlignCatatan').value = db.strukToggle.alignCatatan || 'left';
     }
@@ -3068,11 +3095,13 @@ prevCatatan.style.textAlign = "center";
         let catatan = document.getElementById('strukManualCatatan').value.trim();
         let adminFee = parseInt(document.getElementById('strukManualAdmin').value) || 0;
 
+        let showHeader = document.getElementById('cbToggleHeader') ? document.getElementById('cbToggleHeader').checked : true;
         let showTgl = document.getElementById('cbToggleTanggal') ? document.getElementById('cbToggleTanggal').checked : true;
         let showPlg = document.getElementById('cbTogglePelanggan') ? document.getElementById('cbTogglePelanggan').checked : true;
         let showBrg = document.getElementById('cbToggleBarang') ? document.getElementById('cbToggleBarang').checked : true;
         let showAdmin = document.getElementById('cbToggleAdmin') ? document.getElementById('cbToggleAdmin').checked : true;
         let showTotal = document.getElementById('cbToggleTotal') ? document.getElementById('cbToggleTotal').checked : true;
+        let showFooter = document.getElementById('cbToggleFooter') ? document.getElementById('cbToggleFooter').checked : true;
 
         let cmds = [];
         let add = arr => cmds.push(...arr);
@@ -3083,15 +3112,21 @@ prevCatatan.style.textAlign = "center";
 
         // Reset ESC/POS
         add([0x1B, 0x40]);
+        // Matikan Garis Miring di Angka 0 (Cancel Slashed Zero)
+        add([0x1B, 0x7A, 0x00]);
 
         if (isToken) {
             // MODE TOKEN PLN
-            add([0x1B, 0x61, 0x01]); // Align Center
-            add([0x1B, 0x45, 0x01]); // Bold On
-            addStr(namaToko + "\n");
-            add([0x1B, 0x45, 0x00]); // Bold Off
-            addStr("Terima Kasih Sudah Belanja\n");
-            addStr("--------------------------------\n");
+            if (showHeader) {
+                add([0x1B, 0x61, 0x01]); // Align Center
+                add([0x1B, 0x45, 0x01]); // Bold On
+                addStr(namaToko + "\n");
+                add([0x1B, 0x45, 0x00]); // Bold Off
+                addStr("Terima Kasih Sudah Belanja\n");
+                addStr("--------------------------------\n");
+            }
+
+            add([0x1B, 0x61, 0x01]);
             addStr("TOKEN PLN\n\n");
 
             // Teks Ukuran Besar
@@ -3101,20 +3136,26 @@ prevCatatan.style.textAlign = "center";
             add([0x1D, 0x21, 0x00]); // Normal Size
             add([0x1B, 0x45, 0x00]); // Bold Off
 
-            addStr("--------------------------------\n");
-            addStr("Powered by Sistem UMKM Pro\n\n\n\n");
+            if (showFooter) {
+                addStr("--------------------------------\n");
+                addStr("Powered by Sistem UMKM Pro\n");
+                addStr("by Gemini & Developer Amat Bajualan\n");
+            }
+            addStr("\n\n\n\n");
         } else {
             // MODE CATATAN BIASA
-            let alignH = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
-            let alignCode = alignH === 'left' ? 0 : (alignH === 'right' ? 2 : 1);
-            add([0x1B, 0x61, alignCode]);
-            add([0x1B, 0x45, 0x01]);
-            addStr(namaToko + "\n");
-            add([0x1B, 0x45, 0x00]);
-            addStr("Terima Kasih Sudah Belanja\n");
+            if (showHeader) {
+                let alignH = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
+                let alignCode = alignH === 'left' ? 0 : (alignH === 'right' ? 2 : 1);
+                add([0x1B, 0x61, alignCode]);
+                add([0x1B, 0x45, 0x01]);
+                addStr(namaToko + "\n");
+                add([0x1B, 0x45, 0x00]);
+                addStr("Terima Kasih Sudah Belanja\n");
+                addStr("--------------------------------\n");
+            }
 
             add([0x1B, 0x61, 0x00]); // Align Left
-            addStr("--------------------------------\n");
 
             if (showTgl) addStr("Tgl : " + tanggal + "\n");
             if (showPlg && namaPlg !== "") addStr("Plg : " + namaPlg + "\n");
@@ -3165,9 +3206,13 @@ prevCatatan.style.textAlign = "center";
                 addStr(catatan + "\n");
             }
 
-            add([0x1B, 0x61, 0x01]);
-            addStr("--------------------------------\n");
-            addStr("Powered by Sistem UMKM Pro\n\n\n\n");
+            if (showFooter) {
+                add([0x1B, 0x61, 0x01]);
+                addStr("--------------------------------\n");
+                addStr("Powered by Sistem UMKM Pro\n");
+                addStr("by Gemini & Developer Amat Bajualan\n");
+            }
+            addStr("\n\n\n\n");
         }
 
         let ok = await kirimDataBluetooth(new Uint8Array(cmds));
