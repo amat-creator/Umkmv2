@@ -250,15 +250,6 @@ function simpanData(renderFungsiKhusus = null) {
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
     }
     
-    function kembaliKeMenu() { 
-        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-rapor-pelanggan'];
-        allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
-        
-        if(document.getElementById('sub-analisa-kategori')) document.getElementById('sub-analisa-kategori').style.display = 'none';
-        document.getElementById('main-menu-grid').style.display = 'grid'; 
-        document.getElementById('judulHalaman').innerText = 'Menu Lainnya'; 
-        idDompetAktif = null;
-    }
 
     function eksekusiPengeluaran(e) {
         e.preventDefault();
@@ -1547,6 +1538,8 @@ function simpanData(renderFungsiKhusus = null) {
             }
         } else if (modePencarian === 'pelanggan-utang') {
             document.getElementById('utangPelangganId').value = i; document.getElementById('labelUtangPelanggan').innerHTML = `<b>${nama}</b>`; 
+        } else if (modePencarian === 'pelanggan-tabungan') {
+            document.getElementById('tabunganPelangganId').value = i; document.getElementById('labelTabunganPelanggan').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-kasbon') {
             document.getElementById('editKasbonNama').value = nama; document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-trans') {
@@ -2944,10 +2937,6 @@ prevCatatan.style.textAlign = "center";
                 document.getElementById('dividerHeader').style.display =
                     "none";
             }
-
-            let showTokenLabel =
-                document.getElementById('cbToggleTokenLabel') ?
-                document.getElementById('cbToggleTokenLabel').checked : true;
 
             let showTokenLabel = document.getElementById('cbToggleTokenLabel') ? document.getElementById('cbToggleTokenLabel').checked : true;
             if(document.getElementById('labelTokenPLN')) {
