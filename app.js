@@ -2944,9 +2944,13 @@ prevCatatan.style.textAlign = "center";
                     "none";
             }
 
+            let showTokenLabel =
+                document.getElementById('cbToggleTokenLabel') ?
+                document.getElementById('cbToggleTokenLabel').checked : true;
+
             if(document.getElementById('labelTokenPLN')) {
                 document.getElementById('labelTokenPLN').style.display =
-                    "block";
+                    showTokenLabel ? "block" : "none";
             }
 
             if(areaStruk) {
@@ -2998,6 +3002,7 @@ prevCatatan.style.textAlign = "center";
         db.strukToggle.barang = document.getElementById('cbToggleBarang').checked;
         db.strukToggle.admin = document.getElementById('cbToggleAdmin').checked;
         db.strukToggle.total = document.getElementById('cbToggleTotal').checked;
+        db.strukToggle.tokenLabel = document.getElementById('cbToggleTokenLabel') ? document.getElementById('cbToggleTokenLabel').checked : true;
         db.strukToggle.footer = document.getElementById('cbToggleFooter') ? document.getElementById('cbToggleFooter').checked : true;
         db.strukToggle.alignHeader = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
         db.strukToggle.alignCatatan = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
@@ -3006,13 +3011,14 @@ prevCatatan.style.textAlign = "center";
     }
 
     function loadConfigStruk() {
-        if(!db.strukToggle) db.strukToggle = { header: true, tanggal: true, pelanggan: true, barang: true, admin: true, total: true, footer: true, alignHeader: 'center', alignCatatan: 'left' };
+        if(!db.strukToggle) db.strukToggle = { header: true, tanggal: true, pelanggan: true, barang: true, admin: true, total: true, tokenLabel: true, footer: true, alignHeader: 'center', alignCatatan: 'left' };
         if(document.getElementById('cbToggleHeader')) document.getElementById('cbToggleHeader').checked = db.strukToggle.header !== undefined ? db.strukToggle.header : true;
         if(document.getElementById('cbToggleTanggal')) document.getElementById('cbToggleTanggal').checked = db.strukToggle.tanggal;
         if(document.getElementById('cbTogglePelanggan')) document.getElementById('cbTogglePelanggan').checked = db.strukToggle.pelanggan;
         if(document.getElementById('cbToggleBarang')) document.getElementById('cbToggleBarang').checked = db.strukToggle.barang;
         if(document.getElementById('cbToggleAdmin')) document.getElementById('cbToggleAdmin').checked = db.strukToggle.admin;
         if(document.getElementById('cbToggleTotal')) document.getElementById('cbToggleTotal').checked = db.strukToggle.total;
+        if(document.getElementById('cbToggleTokenLabel')) document.getElementById('cbToggleTokenLabel').checked = db.strukToggle.tokenLabel !== undefined ? db.strukToggle.tokenLabel : true;
         if(document.getElementById('cbToggleFooter')) document.getElementById('cbToggleFooter').checked = db.strukToggle.footer !== undefined ? db.strukToggle.footer : true;
         if(document.getElementById('selectAlignHeader')) document.getElementById('selectAlignHeader').value = db.strukToggle.alignHeader || 'center';
         if(document.getElementById('selectAlignCatatan')) document.getElementById('selectAlignCatatan').value = db.strukToggle.alignCatatan || 'left';
@@ -3101,6 +3107,7 @@ prevCatatan.style.textAlign = "center";
         let showBrg = document.getElementById('cbToggleBarang') ? document.getElementById('cbToggleBarang').checked : true;
         let showAdmin = document.getElementById('cbToggleAdmin') ? document.getElementById('cbToggleAdmin').checked : true;
         let showTotal = document.getElementById('cbToggleTotal') ? document.getElementById('cbToggleTotal').checked : true;
+        let showTokenLabel = document.getElementById('cbToggleTokenLabel') ? document.getElementById('cbToggleTokenLabel').checked : true;
         let showFooter = document.getElementById('cbToggleFooter') ? document.getElementById('cbToggleFooter').checked : true;
 
         let cmds = [];
@@ -3126,8 +3133,10 @@ prevCatatan.style.textAlign = "center";
                 addStr("--------------------------------\n");
             }
 
-            add([0x1B, 0x61, 0x01]);
-            addStr("TOKEN PLN\n\n");
+            if (showTokenLabel) {
+                add([0x1B, 0x61, 0x01]);
+                addStr("TOKEN PLN\n\n");
+            }
 
             // Teks Ukuran Besar
             add([0x1D, 0x21, 0x11]); // Double Height + Double Width
