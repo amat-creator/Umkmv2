@@ -2616,8 +2616,9 @@ function renderDaftarTransaksiBeranda() {
             tombolToken.classList.add('aktif');
 
 
+            let showTokenLabel = document.getElementById('cbToggleTokenLabel') ? document.getElementById('cbToggleTokenLabel').checked : true;
             document.getElementById('labelTokenPLN').style.display =
-                'block';
+                showTokenLabel ? 'block' : 'none';
 
             document.getElementById('areaPrevHeaderTglPlg').style.display =
                 'none';
@@ -2948,6 +2949,7 @@ prevCatatan.style.textAlign = "center";
                 document.getElementById('cbToggleTokenLabel') ?
                 document.getElementById('cbToggleTokenLabel').checked : true;
 
+            let showTokenLabel = document.getElementById('cbToggleTokenLabel') ? document.getElementById('cbToggleTokenLabel').checked : true;
             if(document.getElementById('labelTokenPLN')) {
                 document.getElementById('labelTokenPLN').style.display =
                     showTokenLabel ? "block" : "none";
