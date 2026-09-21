@@ -2991,6 +2991,191 @@ prevCatatan.style.textAlign = "center";
         if(document.getElementById('selectAlignCatatan')) document.getElementById('selectAlignCatatan').value = db.strukToggle.alignCatatan || 'left';
     }
 
+    let btDevice = null;
+    let btCharacteristic = null;
+
+    async function hubungkanPrinterBT() {
+        if (!("bluetooth" in navigator)) {
+            return alert("❌ Web Bluetooth tidak didukung di browser/perangkat ini. Gunakan Google Chrome di Android dengan koneksi HTTPS.");
+        }
+        try {
+            btDevice = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: [
+                    '000018f0-0000-1000-8000-00805f9b34fb',
+                    'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+                    '0000ff00-0000-1000-8000-00805f9b34fb',
+                    '0000ffe0-0000-1000-8000-00805f9b34fb',
+                    '00001101-0000-1000-8000-00805f9b34fb'
+                ]
+            });
+
+            let server = await btDevice.gatt.connect();
+            let services = await server.getPrimaryServices();
+            btCharacteristic = null;
+
+            for (let service of services) {
+                let characteristics = await service.getCharacteristics();
+                for (let c of characteristics) {
+                    if (c.properties.write || c.properties.writeWithoutResponse) {
+                        btCharacteristic = c;
+                        break;
+                    }
+                }
+                if (btCharacteristic) break;
+            }
+
+            if (btCharacteristic) {
+                alert("✅ Printer Bluetooth Berhasil Terhubung: " + (btDevice.name || "Printer Thermal"));
+            } else {
+                alert("⚠️ Printer terhubung, tetapi jalur cetak (Characteristic Write) tidak ditemukan.");
+            }
+        } catch (err) {
+            alert("❌ Gagal menghubungkan printer: " + err.message);
+        }
+    }
+
+    async function kirimDataBluetooth(uint8Data) {
+        if (!btCharacteristic || !btDevice || !btDevice.gatt.connected) {
+            alert("⚠️ Printer belum terhubung! Silakan klik 'Hubungkan Printer BT' terlebih dahulu.");
+            return false;
+        }
+        const CHUNK_SIZE = 100;
+        for (let i = 0; i < uint8Data.length; i += CHUNK_SIZE) {
+            let chunk = uint8Data.slice(i, i + CHUNK_SIZE);
+            if (btCharacteristic.properties.writeWithoutResponse) {
+                await btCharacteristic.writeValueWithoutResponse(chunk);
+            } else {
+                await btCharacteristic.writeValue(chunk);
+            }
+            await new Promise(r => setTimeout(r, 50));
+        }
+        return true;
+    }
+
+    async function cetakStrukBluetooth() {
+        if (!btCharacteristic || !btDevice || !btDevice.gatt.connected) {
+            await hubungkanPrinterBT();
+            if (!btCharacteristic) return;
+        }
+
+        let areaStruk = document.getElementById('areaStrukManual');
+        let isToken = areaStruk && areaStruk.classList.contains('mode-token-pln');
+
+        let namaToko = document.getElementById('strukManualNamaToko').value || "amat Bajualan";
+        let tanggal = document.getElementById('strukManualTanggal').value || ambilTanggal();
+        let namaPlg = document.getElementById('strukManualPelanggan').value.trim();
+        let catatan = document.getElementById('strukManualCatatan').value.trim();
+        let adminFee = parseInt(document.getElementById('strukManualAdmin').value) || 0;
+
+        let showTgl = document.getElementById('cbToggleTanggal') ? document.getElementById('cbToggleTanggal').checked : true;
+        let showPlg = document.getElementById('cbTogglePelanggan') ? document.getElementById('cbTogglePelanggan').checked : true;
+        let showBrg = document.getElementById('cbToggleBarang') ? document.getElementById('cbToggleBarang').checked : true;
+        let showAdmin = document.getElementById('cbToggleAdmin') ? document.getElementById('cbToggleAdmin').checked : true;
+        let showTotal = document.getElementById('cbToggleTotal') ? document.getElementById('cbToggleTotal').checked : true;
+
+        let cmds = [];
+        let add = arr => cmds.push(...arr);
+        let addStr = str => {
+            let encoder = new TextEncoder();
+            cmds.push(...encoder.encode(str));
+        };
+
+        // Reset ESC/POS
+        add([0x1B, 0x40]);
+
+        if (isToken) {
+            // MODE TOKEN PLN
+            add([0x1B, 0x61, 0x01]); // Align Center
+            add([0x1B, 0x45, 0x01]); // Bold On
+            addStr(namaToko + "\n");
+            add([0x1B, 0x45, 0x00]); // Bold Off
+            addStr("Terima Kasih Sudah Belanja\n");
+            addStr("--------------------------------\n");
+            addStr("TOKEN PLN\n\n");
+
+            // Teks Ukuran Besar
+            add([0x1D, 0x21, 0x11]); // Double Height + Double Width
+            add([0x1B, 0x45, 0x01]); // Bold On
+            addStr(catatan + "\n");
+            add([0x1D, 0x21, 0x00]); // Normal Size
+            add([0x1B, 0x45, 0x00]); // Bold Off
+
+            addStr("--------------------------------\n");
+            addStr("Powered by Sistem UMKM Pro\n\n\n\n");
+        } else {
+            // MODE CATATAN BIASA
+            let alignH = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
+            let alignCode = alignH === 'left' ? 0 : (alignH === 'right' ? 2 : 1);
+            add([0x1B, 0x61, alignCode]);
+            add([0x1B, 0x45, 0x01]);
+            addStr(namaToko + "\n");
+            add([0x1B, 0x45, 0x00]);
+            addStr("Terima Kasih Sudah Belanja\n");
+
+            add([0x1B, 0x61, 0x00]); // Align Left
+            addStr("--------------------------------\n");
+
+            if (showTgl) addStr("Tgl : " + tanggal + "\n");
+            if (showPlg && namaPlg !== "") addStr("Plg : " + namaPlg + "\n");
+            if (showTgl || (showPlg && namaPlg !== "")) addStr("--------------------------------\n");
+
+            let totalAkhir = 0;
+            if (showBrg) {
+                document.querySelectorAll('.item-barang-manual').forEach(baris => {
+                    let nama = baris.querySelector('.input-nama-barang').value || "-";
+                    let qty = parseInt(baris.querySelector('.input-qty-barang').value) || 0;
+                    let harga = parseInt(baris.querySelector('.input-harga-barang').value) || 0;
+                    let sub = qty * harga;
+                    totalAkhir += sub;
+
+                    if (nama !== "-" || harga > 0) {
+                        addStr(nama + " x" + qty + "\n");
+                        let subStr = "Rp " + sub.toLocaleString('id-ID');
+                        let padSpace = " ".repeat(Math.max(0, 32 - subStr.length));
+                        addStr(padSpace + subStr + "\n");
+                    }
+                });
+            }
+
+            if (showAdmin && adminFee > 0) {
+                addStr("--------------------------------\n");
+                totalAkhir += adminFee;
+                let adminStr = "Rp " + adminFee.toLocaleString('id-ID');
+                let label = "Biaya Admin";
+                let space = " ".repeat(Math.max(0, 32 - label.length - adminStr.length));
+                addStr(label + space + adminStr + "\n");
+            }
+
+            if (showTotal) {
+                addStr("--------------------------------\n");
+                add([0x1B, 0x45, 0x01]);
+                let totStr = "Rp " + totalAkhir.toLocaleString('id-ID');
+                let label = "TOTAL";
+                let space = " ".repeat(Math.max(0, 32 - label.length - totStr.length));
+                addStr(label + space + totStr + "\n");
+                add([0x1B, 0x45, 0x00]);
+            }
+
+            if (catatan !== "") {
+                addStr("--------------------------------\n");
+                let alignC = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
+                let cCode = alignC === 'left' ? 0 : (alignC === 'right' ? 2 : 1);
+                add([0x1B, 0x61, cCode]);
+                addStr(catatan + "\n");
+            }
+
+            add([0x1B, 0x61, 0x01]);
+            addStr("--------------------------------\n");
+            addStr("Powered by Sistem UMKM Pro\n\n\n\n");
+        }
+
+        let ok = await kirimDataBluetooth(new Uint8Array(cmds));
+        if (ok) {
+            mainkanSuara('ting');
+        }
+    }
+
     function downloadStrukManual() {
         let area = document.getElementById('areaStrukManual');
         html2canvas(area).then(canvas => { 
