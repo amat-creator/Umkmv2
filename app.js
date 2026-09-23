@@ -2538,6 +2538,22 @@ function renderDaftarTransaksiBeranda() {
         updatePreviewStruk();
     }
 
+    // Variabel bawaan untuk ukuran font Token PLN
+    let tokenFontSize = 24; 
+
+    function ubahUkuranFontToken(operasi) {
+        if(operasi === 'tambah') tokenFontSize += 2;
+        else if(operasi === 'kurang') tokenFontSize -= 2;
+        
+        if(tokenFontSize < 10) tokenFontSize = 10; // Batas minimal ukuran
+        if(tokenFontSize > 80) tokenFontSize = 80; // Batas maksimal ukuran
+        
+        let label = document.getElementById('labelUkuranToken');
+        if(label) label.innerText = tokenFontSize + "px";
+        
+        updatePreviewStruk();
+    }
+
     function tambahBarisBarang() {
         let wadah = document.getElementById('wadahBarangManual');
         let div = document.createElement('div');
@@ -2612,6 +2628,9 @@ function renderDaftarTransaksiBeranda() {
             document.getElementById('strukManualCatatan').placeholder =
                 "Tulis catatan di sini...";
 
+            if(document.getElementById('wadahFontToken')) {
+                document.getElementById('wadahFontToken').style.display = 'none';
+            }
         }
 
 
@@ -2650,6 +2669,9 @@ function renderDaftarTransaksiBeranda() {
             document.getElementById('strukManualCatatan').placeholder =
                 "Contoh:\n3316 9982 2741 6323 7124";
 
+            if(document.getElementById('wadahFontToken')) {
+                document.getElementById('wadahFontToken').style.display = 'flex';
+            }
         }
 
 
@@ -2775,12 +2797,14 @@ function renderDaftarTransaksiBeranda() {
                 let tokenBersih = catatan.replace(/\D/g, '').substring(0, 20);
                 let tokenBerjarak = tokenBersih.replace(/(.{4})/g, '$1 ').trim();
 
-                // Gunakan token yang sudah diformat, atau teks biasa jika kosong
-                prevCatatan.innerHTML = tokenBerjarak || catatan.replace(/\n/g, '<br>');
+                                            // Gunakan token yang sudah diformat, atau teks biasa jika kosong
+                            prevCatatan.innerHTML = tokenBerjarak || catatan.replace(/\n/g, '<br>');
 
-                prevCatatan.style.fontFamily = "Arial, Helvetica, sans-serif";
-                prevCatatan.style.fontSize = "24px"; // Ukuran diturunkan agar pas 2 baris (10 digit)
-                prevCatatan.style.fontWeight = "700";
+                            prevCatatan.style.fontFamily = "Arial, Helvetica, sans-serif";
+                            // Ukuran sekarang otomatis mengambil dari tombol [+] dan [-]
+                            prevCatatan.style.fontSize = (typeof tokenFontSize !== 'undefined' ? tokenFontSize : 24) + "px"; 
+                            prevCatatan.style.fontWeight = "700";
+
                 prevCatatan.style.lineHeight = "1.5";
                 prevCatatan.style.letterSpacing = "2px";
                 prevCatatan.style.wordSpacing = "8px";
