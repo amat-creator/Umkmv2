@@ -1141,8 +1141,8 @@ function simpanData(renderFungsiKhusus = null) {
     
     function hapusDompetItem(id) { if(confirm("Hapus dompet ini beserta isinya?")) { db.dompet = db.dompet.filter(d => String(d.id) !== String(id)); simpanData(); } }
     
-      function kembaliKeMenu() { 
-        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-rapor-pelanggan'];
+                function kembaliKeMenu() { 
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-rapor-pelanggan','sub-catatan'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
         
         if(document.getElementById('sub-analisa-kategori')) document.getElementById('sub-analisa-kategori').style.display = 'none';
@@ -1151,6 +1151,8 @@ function simpanData(renderFungsiKhusus = null) {
         idDompetAktif = null;
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+
 
     
     function eksekusiEditSaldoPintar(e) {
@@ -2520,6 +2522,18 @@ function renderDaftarTransaksiBeranda() {
 // ==========================================
     // MESIN STRUK MANUAL
     // ==========================================
+    function formatSpasiTokenPLN() {
+        let el = document.getElementById('strukManualCatatan');
+        if(!el) return;
+        let teks = el.value;
+        if(!teks.trim()) return alert("Ketik atau paste nomor tokennya dulu!");
+        
+        // Membagi setiap 4 digit angka dengan spasi
+        let hasil = teks.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+        el.value = hasil;
+        updatePreviewStruk();
+    }
+
     function tambahBarisBarang() {
         let wadah = document.getElementById('wadahBarangManual');
         let div = document.createElement('div');
