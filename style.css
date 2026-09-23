@@ -174,35 +174,30 @@
         #areaStrukManual.mode-token-pln #prevCatatanText {
     font-family: Arial, Helvetica, sans-serif !important;
 
-    /* UKURAN TOKEN */
-    font-size: 50px !important;
-    line-height: 1.25 !important;
+    /* UKURAN TOKEN DISESUAIKAN AGAR 2 BARIS SIMETRIS */
+    font-size: 24px !important;
+    line-height: 1.5 !important;
     font-weight: 700 !important;
 
-    /* Jarak angka */
-    letter-spacing: 1.2px !important;
-    word-spacing: 4px !important;
+    /* Jarak angka agar mudah dibaca */
+    letter-spacing: 2px !important;
+    word-spacing: 8px !important;
 
     text-align: center !important;
 
-    /* Lebarkan area token */
-    width: calc(100% + 60px) !important;
+    /* Normalisasi lebar agar tidak terpotong (margin negatif dihapus) */
+    width: 100% !important;
     box-sizing: border-box !important;
-
-    /* Tarik sampai mendekati sisi kertas */
-    margin-left: -30px !important;
-    margin-right: -30px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 
     /* Tinggi kotak */
-    padding: 25px 10px !important;
+    padding: 20px 10px !important;
     margin-top: 10px !important;
     margin-bottom: 10px !important;
 
     background: #fff;
-
     font-style: normal !important;
-
-    /* Jangan dipipihkan */
     transform: none !important;
 }
 
