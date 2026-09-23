@@ -691,8 +691,9 @@
                         <input type="number" id="strukManualAdmin" placeholder="0" oninput="updatePreviewStruk()" style="width:50%; margin-bottom:0; padding:8px; border:1px solid #ddd; border-radius:8px;">
                     </div>
                 </div>
-                <div id="labelInputCatatan">
+                <div id="labelInputCatatan" class="flex-between" style="margin-bottom: 5px;">
                     <b class="text-small">Catatan / Token (Opsional):</b>
+                    <button type="button" class="btn-outline" style="width: auto; padding: 4px 10px; font-size: 11px; margin: 0; border-color: var(--primary);" onclick="formatSpasiTokenPLN()">✨ Format Spasi 4 Angka</button>
                 </div>
 
                 <textarea
