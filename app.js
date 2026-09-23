@@ -2801,8 +2801,9 @@ function renderDaftarTransaksiBeranda() {
                             prevCatatan.innerHTML = tokenBerjarak || catatan.replace(/\n/g, '<br>');
 
                             prevCatatan.style.fontFamily = "Arial, Helvetica, sans-serif";
-                            // Ukuran sekarang otomatis mengambil dari tombol [+] dan [-]
-                            prevCatatan.style.fontSize = (typeof tokenFontSize !== 'undefined' ? tokenFontSize : 24) + "px"; 
+                            // Paksa perubahan ukuran dari tombol agar menang melawan Cache CSS HP
+                            let ukuranAktif = (typeof tokenFontSize !== 'undefined' ? tokenFontSize : 24) + "px";
+                            prevCatatan.style.setProperty('font-size', ukuranAktif, 'important');
                             prevCatatan.style.fontWeight = "700";
 
                 prevCatatan.style.lineHeight = "1.5";
