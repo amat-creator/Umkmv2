@@ -2528,9 +2528,13 @@ function renderDaftarTransaksiBeranda() {
         let teks = el.value;
         if(!teks.trim()) return alert("Ketik atau paste nomor tokennya dulu!");
         
+        // Membatasi maksimal 20 digit standar PLN dan hapus karakter selain angka
+        let hanyaAngka = teks.replace(/\D/g, '').substring(0, 20);
+        
         // Membagi setiap 4 digit angka dengan spasi
-        let hasil = teks.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+        let hasil = hanyaAngka.replace(/(.{4})/g, '$1 ').trim();
         el.value = hasil;
+        
         updatePreviewStruk();
     }
 
@@ -2766,17 +2770,21 @@ function renderDaftarTransaksiBeranda() {
              * Jika user mengetik beberapa baris, tetap ditampilkan.
              */
             if(modeToken) {
+                
+                // Auto-Format Preview: Walau user lupa klik tombol, pratinjau tetap dipisah per 4 angka
+                let tokenBersih = catatan.replace(/\D/g, '').substring(0, 20);
+                let tokenBerjarak = tokenBersih.replace(/(.{4})/g, '$1 ').trim();
 
-                prevCatatan.innerHTML =
-                    catatan.replace(/\n/g, '<br>');
+                // Gunakan token yang sudah diformat, atau teks biasa jika kosong
+                prevCatatan.innerHTML = tokenBerjarak || catatan.replace(/\n/g, '<br>');
 
                 prevCatatan.style.fontFamily = "Arial, Helvetica, sans-serif";
-prevCatatan.style.fontSize = "29px";
-prevCatatan.style.fontWeight = "700";
-prevCatatan.style.lineHeight = "1.25";
-prevCatatan.style.letterSpacing = "1.2px";
-prevCatatan.style.wordSpacing = "4px";
-prevCatatan.style.textAlign = "center";
+                prevCatatan.style.fontSize = "24px"; // Ukuran diturunkan agar pas 2 baris (10 digit)
+                prevCatatan.style.fontWeight = "700";
+                prevCatatan.style.lineHeight = "1.5";
+                prevCatatan.style.letterSpacing = "2px";
+                prevCatatan.style.wordSpacing = "8px";
+                prevCatatan.style.textAlign = "center";
 
             } else {
 
