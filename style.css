@@ -174,8 +174,8 @@
         #areaStrukManual.mode-token-pln #prevCatatanText {
     font-family: Arial, Helvetica, sans-serif !important;
 
-    /* UKURAN TOKEN DISESUAIKAN AGAR 2 BARIS SIMETRIS */
-    font-size: 24px !important;
+    /* UKURAN TOKEN DINAMIS DARI TOMBOL (Hapus !important) */
+    font-size: 24px;
     line-height: 1.5 !important;
     font-weight: 700 !important;
 
