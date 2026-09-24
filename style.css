@@ -232,7 +232,7 @@ button.btn-outline:hover { background: #eff6ff; }
 .tombol-mode-struk.aktif { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 6px rgba(37,99,235,0.2); }
 
 #prevCatatanText { white-space: normal; word-break: break-word; }
-#areaStrukManual.mode-token-pln #prevCatatanText { font-family: Arial, Helvetica, sans-serif !important; font-size: 20px; line-height: 1.4 !important; font-weight: 700 !important; letter-spacing: 2px !important; word-spacing: 6px !important; text-align: center !important; width: 100% !important; box-sizing: border-box !important; margin-left: 0 !important; margin-right: 0 !important; padding: 15px 8px !important; margin-top: 8px !important; margin-bottom: 8px !important; background: #fff; font-style: normal !important; transform: none !important; border: 2px dashed #000; border-radius: 8px; }
+#areaStrukManual.mode-token-pln #prevCatatanText { font-family: 'Courier New', Courier, monospace !important; font-size: 18px !important; line-height: 1.5 !important; font-weight: 700 !important; letter-spacing: 1px !important; word-spacing: 3px !important; text-align: center !important; width: 100% !important; max-width: 230px !important; margin: 8px auto !important; box-sizing: border-box !important; padding: 12px 6px !important; background: #fff; font-style: normal !important; transform: none !important; border: 2px dashed #000; border-radius: 8px; word-break: break-word !important; }
 #areaStrukManual.mode-token-pln #areaPrevCatatan { display: block !important; }
 #areaStrukManual.mode-token-pln #prevNamaToko { font-size: 18px !important; font-weight: bold !important; }
 #areaStrukManual.mode-token-pln #prevInfoTokoSub { font-size: 11px !important; }
