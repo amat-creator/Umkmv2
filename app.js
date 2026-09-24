@@ -2539,7 +2539,7 @@ function renderDaftarTransaksiBeranda() {
     }
 
     // Variabel bawaan untuk ukuran font Token PLN
-    let tokenFontSize = 24; 
+    let tokenFontSize = 30; 
 
     function ubahUkuranFontToken(operasi) {
         if(operasi === 'tambah') tokenFontSize += 2;
@@ -2849,7 +2849,7 @@ if(prevStatus) {
 
                             prevCatatan.style.fontFamily = "Arial, Helvetica, sans-serif";
                             // Paksa perubahan ukuran dari tombol agar menang melawan Cache CSS HP
-                            let ukuranAktif = (typeof tokenFontSize !== 'undefined' ? tokenFontSize : 24) + "px";
+                            let ukuranAktif = (typeof tokenFontSize !== 'undefined' ? tokenFontSize : 30) + "px";
                             prevCatatan.style.setProperty('font-size', ukuranAktif, 'important');
                             prevCatatan.style.fontWeight = "700";
 
