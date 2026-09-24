@@ -2703,8 +2703,55 @@ function renderDaftarTransaksiBeranda() {
         let tanggal = document.getElementById('strukManualTanggal').value;
 
         if(document.getElementById('prevTanggal')) {
-            document.getElementById('prevTanggal').innerText = tanggal;
-        }
+    document.getElementById('prevTanggal').innerText = tanggal;
+}
+
+/* ==========================================
+   DATA TRANSAKSI TAMBAHAN
+   ========================================== */
+
+let noTransaksi =
+    document.getElementById('strukManualNoTransaksi')?.value.trim() ||
+    ("TRX-" + Date.now());
+
+let idPelanggan =
+    document.getElementById('strukManualIdPelanggan')?.value.trim() || "";
+
+let jasaLayanan =
+    parseInt(document.getElementById('strukManualJasa')?.value) || 0;
+
+let statusTransaksi =
+    document.getElementById('strukManualStatus')?.value || "BERHASIL";
+
+let prevNoTransaksi =
+    document.getElementById('prevNoTransaksi');
+
+if(prevNoTransaksi) {
+    prevNoTransaksi.innerText = noTransaksi;
+}
+
+let prevIdPelanggan =
+    document.getElementById('prevIdPelanggan');
+
+if(prevIdPelanggan) {
+    prevIdPelanggan.innerText =
+        idPelanggan !== "" ? idPelanggan : "-";
+}
+
+let prevJasaLayanan =
+    document.getElementById('prevJasaLayanan');
+
+if(prevJasaLayanan) {
+    prevJasaLayanan.innerText =
+        "Rp " + jasaLayanan.toLocaleString('id-ID');
+}
+
+let prevStatus =
+    document.getElementById('prevStatusTransaksi');
+
+if(prevStatus) {
+    prevStatus.innerText = statusTransaksi;
+}
 
         /* ==========================================
            PELANGGAN
@@ -3133,11 +3180,33 @@ function renderDaftarTransaksiBeranda() {
         let areaStruk = document.getElementById('areaStrukManual');
         let isToken = areaStruk && areaStruk.classList.contains('mode-token-pln');
 
-        let namaToko = document.getElementById('strukManualNamaToko').value || "amat Bajualan";
-        let tanggal = document.getElementById('strukManualTanggal').value || ambilTanggal();
-        let namaPlg = document.getElementById('strukManualPelanggan').value.trim();
-        let catatan = document.getElementById('strukManualCatatan').value.trim();
-        let adminFee = parseInt(document.getElementById('strukManualAdmin').value) || 0;
+        let namaToko =
+    document.getElementById('strukManualNamaToko').value || "amat Bajualan";
+
+let tanggal =
+    document.getElementById('strukManualTanggal').value || ambilTanggal();
+
+let namaPlg =
+    document.getElementById('strukManualPelanggan').value.trim();
+
+let noTransaksi =
+    document.getElementById('strukManualNoTransaksi')?.value.trim() ||
+    ("TRX-" + Date.now());
+
+let idPelanggan =
+    document.getElementById('strukManualIdPelanggan')?.value.trim() || "";
+
+let catatan =
+    document.getElementById('strukManualCatatan').value.trim();
+
+let adminFee =
+    parseInt(document.getElementById('strukManualAdmin').value) || 0;
+
+let jasaLayanan =
+    parseInt(document.getElementById('strukManualJasa')?.value) || 0;
+
+let statusTransaksi =
+    document.getElementById('strukManualStatus')?.value || "BERHASIL";
 
         let showHeader = document.getElementById('cbToggleHeader') ? document.getElementById('cbToggleHeader').checked : true;
         let showTgl = document.getElementById('cbToggleTanggal') ? document.getElementById('cbToggleTanggal').checked : true;
@@ -3176,10 +3245,26 @@ function renderDaftarTransaksiBeranda() {
                 addStr("TOKEN PLN\n\n");
             }
 
-            // Teks Ukuran Besar
+            // Teks Ukuran Besar (ESC/POS Double Width + Double Height)
             add([0x1D, 0x21, 0x11]); // Double Height + Double Width
             add([0x1B, 0x45, 0x01]); // Bold On
-            addStr(catatan + "\n");
+            
+            // Formatter Token PLN untuk Printer Thermal 58mm (Maksimal 16 Karakter/Baris)
+            let tokenPolos = catatan.replace(/\D/g, '').substring(0, 20);
+            let tokenCetak = catatan;
+            
+            if (tokenPolos.length === 20) {
+                let b1 = tokenPolos.substr(0, 4);
+                let b2 = tokenPolos.substr(4, 4);
+                let b3 = tokenPolos.substr(8, 4);
+                let b4 = tokenPolos.substr(12, 4);
+                let b5 = tokenPolos.substr(16, 4);
+                // Baris 1: 14 karakter ("6661 3843 9199") -> Aman di bawah 16 char
+                // Baris 2: 9 karakter ("2448 4866")     -> Aman di bawah 16 char
+                tokenCetak = `${b1} ${b2} ${b3}\n${b4} ${b5}`;
+            }
+
+            addStr(tokenCetak + "\n");
             add([0x1D, 0x21, 0x00]); // Normal Size
             add([0x1B, 0x45, 0x00]); // Bold Off
 
@@ -3218,7 +3303,19 @@ function renderDaftarTransaksiBeranda() {
                     totalAkhir += sub;
 
                     if (nama !== "-" || harga > 0) {
-                        addStr(nama + " x" + qty + "\n");
+                        // Pengaman 32 Karakter agar Nama Barang dan Qty tetap 1 baris
+                        let qtyStr = " x" + qty;
+                        let maxNamaLen = 32 - qtyStr.length;
+                        let namaCetak = nama;
+                        
+                        // Jika nama barang kepanjangan, potong rapi dan beri akhiran ".."
+                        if (namaCetak.length > maxNamaLen) {
+                            namaCetak = nama.substring(0, maxNamaLen - 2) + "..";
+                        }
+                        
+                        addStr(namaCetak + qtyStr + "\n");
+                        
+                        // Print Harga Subtotal (Otomatis Rata Kanan)
                         let subStr = "Rp " + sub.toLocaleString('id-ID');
                         let padSpace = " ".repeat(Math.max(0, 32 - subStr.length));
                         addStr(padSpace + subStr + "\n");
