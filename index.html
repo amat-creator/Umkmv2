@@ -705,7 +705,10 @@
 
                 <!-- KONTROL UKURAN FONT TOKEN -->
                 <div id="wadahFontToken" style="display:none; background:#e8f4fd; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #b8daff;" class="flex-between">
-                    <b class="text-small text-blue">Ukuran Angka: <span id="labelUkuranToken">24px</span></b>
+                    <b class="text-small text-blue">
+    Ukuran Angka:
+    <span id="labelUkuranToken">30px</span>
+</b>
                     <div style="display:flex; gap:5px;">
                         <button type="button" class="btn-outline" style="width:auto; margin:0; padding:4px 12px; font-size:16px; font-weight:bold;" onclick="ubahUkuranFontToken('kurang')">➖</button>
                         <button type="button" class="btn-blue" style="width:auto; margin:0; padding:4px 12px; font-size:16px; font-weight:bold; color:white;" onclick="ubahUkuranFontToken('tambah')">➕</button>
@@ -786,10 +789,83 @@
             </div>
             
             <div class="grid-2" style="margin-top:15px;">
-                <button type="button" class="btn-blue" style="color:white; padding:12px; border-radius:8px; font-size:14px;" onclick="hubungkanPrinterBT()">🛜 Hubungkan Printer BT</button>
-                <button type="button" class="btn-green" style="padding:12px; border-radius:8px; font-size:14px;" onclick="cetakStrukBluetooth()">🖨️ Cetak Thermal</button>
+                <button
+                    type="button"
+                    class="btn-blue"
+                    style="color:white; padding:12px; border-radius:8px; font-size:14px;"
+                    onclick="hubungkanPrinterBT()">
+                    🛜 Hubungkan Printer BT
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-green"
+                    style="padding:12px; border-radius:8px; font-size:14px;"
+                    onclick="konfirmasiCetakStruk()">
+                    💾 Simpan & Cetak
+                </button>
             </div>
-            <button type="button" class="btn-outline" style="margin-top:5px; width:100%; padding:10px; border-radius:8px; font-size:13px; color:#666; border-color:#ccc;" onclick="downloadStrukManual()">⬇️ Download Gambar Struk (JPG)</button>
+
+            <button
+                type="button"
+                class="btn-outline"
+                style="margin-top:5px; width:100%; padding:10px; border-radius:8px; font-size:13px; color:#666; border-color:#ccc;"
+                onclick="simpanDraftStrukManual(true)">
+                💾 Simpan Draft Struk
+            </button>
+
+            <button
+                type="button"
+                class="btn-outline"
+                style="margin-top:5px; width:100%; padding:10px; border-radius:8px; font-size:13px; color:#666; border-color:#ccc;"
+                onclick="downloadStrukManual()">
+                ⬇️ Download Gambar Struk (JPG)
+            </button>
+
+            <!-- MODAL KONFIRMASI CETAK -->
+            <div id="modal-konfirmasi-struk" class="modal-popup">
+                <div class="popup-content">
+
+                    <h4 style="margin-bottom:8px;">
+                        🧾 Konfirmasi Struk
+                    </h4>
+
+                    <p
+                        class="text-small"
+                        style="margin-bottom:12px;">
+                        Draft sudah disimpan.
+                        Periksa kembali sebelum mencetak.
+                    </p>
+
+                    <div
+                        id="infoKonfirmasiStruk"
+                        style="
+                            background:#f8fafc;
+                            border:1px solid #e2e8f0;
+                            border-radius:10px;
+                            padding:10px;
+                            margin-bottom:15px;
+                            text-align:left;
+                            word-break:break-word;
+                        ">
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-green"
+                        onclick="cetakDariKonfirmasi()">
+                        🖨️ Ya, Cetak Thermal
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-red"
+                        onclick="batalKonfirmasiStruk()">
+                        ✏️ Kembali Edit
+                    </button>
+
+                </div>
+            </div>
         </div>
 
         <div id="sub-mutasi" class="card" style="display:none;">
