@@ -232,11 +232,60 @@ button.btn-outline:hover { background: #eff6ff; }
 .tombol-mode-struk.aktif { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 6px rgba(37,99,235,0.2); }
 
 #prevCatatanText { white-space: normal; word-break: break-word; }
-#areaStrukManual.mode-token-pln #prevCatatanText { font-family: 'Courier New', Courier, monospace !important; line-height: 1.5 !important; font-weight: 700 !important; letter-spacing: 2px !important; word-spacing: 6px !important; text-align: center !important; width: 100% !important; margin: 10px auto !important; box-sizing: border-box !important; padding: 20px 5px !important; background: #fff; font-style: normal !important; transform: none !important; border: 2px dashed #000; border-radius: 8px; word-break: break-word !important; }
-#areaStrukManual.mode-token-pln #areaPrevCatatan { display: block !important; }
-#areaStrukManual.mode-token-pln #prevNamaToko { font-size: 18px !important; font-weight: bold !important; }
-#areaStrukManual.mode-token-pln #prevInfoTokoSub { font-size: 11px !important; }
-#areaStrukManual.mode-token-pln #areaPrevHeaderTglPlg, #areaStrukManual.mode-token-pln #dividerHeader, #areaStrukManual.mode-token-pln #areaPrevDaftarBarangUtama, #areaStrukManual.mode-token-pln #areaPrevAdmin, #areaStrukManual.mode-token-pln #areaPrevTotalContainer { display: none !important; }
-#areaStrukManual.mode-token-pln #areaPrevCatatan { margin-top: 6px; }
-#areaStrukManual.mode-token-pln #labelTokenPLN { display: block !important; text-align: center; font-size: 12px; font-weight: bold; margin-top: 5px; margin-bottom: 3px; }
-#labelTokenPLN { display: none; }
+#areaStrukManual.mode-token-pln #prevCatatanText {
+    font-family: 'Courier New', Courier, monospace !important;
+    line-height: 1.5 !important;
+    font-weight: 700 !important;
+    letter-spacing: 2px !important;
+    word-spacing: 6px !important;
+    text-align: center !important;
+    width: 100% !important;
+    margin: 10px auto !important;
+    box-sizing: border-box !important;
+    padding: 20px 5px !important;
+    background: #fff;
+    font-style: normal !important;
+    transform: none !important;
+    border: 2px dashed #000;
+    border-radius: 8px;
+    word-break: break-word !important;
+}
+
+#areaStrukManual.mode-token-pln #areaPrevCatatan {
+    display: block !important;
+}
+
+#areaStrukManual.mode-token-pln #prevNamaToko {
+    font-size: 18px !important;
+    font-weight: bold !important;
+}
+
+#areaStrukManual.mode-token-pln #prevInfoTokoSub {
+    font-size: 11px !important;
+}
+
+#areaStrukManual.mode-token-pln #areaPrevHeaderTglPlg,
+#areaStrukManual.mode-token-pln #dividerHeader,
+#areaStrukManual.mode-token-pln #areaPrevDaftarBarangUtama,
+#areaStrukManual.mode-token-pln #areaPrevAdmin,
+#areaStrukManual.mode-token-pln #areaPrevTotalContainer {
+    display: none !important;
+}
+
+#areaStrukManual.mode-token-pln #areaPrevCatatan {
+    margin-top: 6px;
+}
+
+/* Jangan pakai !important pada display di sini.
+   JavaScript harus bisa menghidupkan/mematikan label. */
+#areaStrukManual.mode-token-pln #labelTokenPLN {
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 5px;
+    margin-bottom: 3px;
+}
+
+#labelTokenPLN {
+    display: none;
+}
