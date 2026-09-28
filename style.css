@@ -232,7 +232,106 @@ button.btn-outline:hover { background: #eff6ff; }
 .tombol-mode-struk.aktif { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 6px rgba(37,99,235,0.2); }
 
 #prevCatatanText { white-space: normal; word-break: break-word; }
+/* ==========================================
+   PERBAIKAN TAMPILAN STRUK MANUAL - HP
+   Preview tidak membuat halaman melebar
+   ========================================== */
+
+#areaStrukManual {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+/* Semua isi Struk Manual mengikuti lebar layar */
+#areaStrukManual *,
+#areaStrukManual *::before,
+#areaStrukManual *::after {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+/* Area preview struk */
+#areaStrukManual #areaPreviewStruk,
+#areaStrukManual #areaPrevStruk,
+#areaStrukManual .preview-struk,
+#areaStrukManual .struk-preview {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Isi struk jangan memaksa halaman menjadi lebar */
+#areaStrukManual #areaPrevCatatan,
+#areaStrukManual #prevCatatanText {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Token PLN tetap berada di dalam layar */
 #areaStrukManual.mode-token-pln #prevCatatanText {
+    max-width: 100% !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Input dan tombol tidak boleh membuat halaman melebar */
+#areaStrukManual input,
+#areaStrukManual select,
+#areaStrukManual textarea,
+#areaStrukManual button {
+    max-width: 100% !important;
+}
+
+/* Grid pada HP dibuat satu kolom jika terlalu sempit */
+@media (max-width: 600px) {
+
+    #areaStrukManual {
+        width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    #areaStrukManual .grid-2,
+    #areaStrukManual .grid-3 {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Tombol tetap berdampingan kalau muat */
+    #areaStrukManual .grid-2 {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    }
+
+    /* Preview tidak boleh keluar layar */
+    #areaStrukManual #areaPreviewStruk,
+    #areaStrukManual #areaPrevStruk {
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Token besar tetap dibatasi layar HP */
+    #areaStrukManual.mode-token-pln #prevCatatanText {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+        overflow: hidden !important;
+    }
+}
+
+/* Cegah seluruh halaman ikut melebar */
+body {
+    overflow-x: hidden !important;
+}.mode-token-pln #prevCatatanText {
     font-family: 'Courier New', Courier, monospace !important;
     line-height: 1.5 !important;
     font-weight: 700 !important;
