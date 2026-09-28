@@ -388,3 +388,41 @@ body {
 #labelTokenPLN {
     display: none;
 }
+/* PERBAIKAN TAMPILAN STRUK MANUAL DI HP */
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden !important;
+}
+
+#areaStrukManual {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+#areaStrukManual .struk-kertas,
+#areaStrukManual .kertas-struk {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 600px) {
+    #areaStrukManual {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    #areaStrukManual .struk-kertas,
+    #areaStrukManual .kertas-struk {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+}
