@@ -241,8 +241,15 @@ function simpanData(renderFungsiKhusus = null) {
         if(sub==='sub-mutasi') { jd="Mutasi Saldo"; document.getElementById('mutasiTglMulai').value = ambilTanggal(); document.getElementById('mutasiTglAkhir').value = ambilTanggal(); renderMutasiSaldo(); }
         if(sub==='sub-struk-manual') { 
             jd="Struk Manual"; 
-            document.getElementById('strukManualTanggal').value = ambilTanggal(); 
+
+            document.getElementById('strukManualTanggal').value =
+                ambilTanggal();
+
             loadConfigStruk();
+
+            // Muat draft terakhir jika tersedia
+            muatDraftStrukManual();
+
             updatePreviewStruk(); 
         }
         if(sub==='sub-catatan') { jd="Catatan Bebas"; renderCatatanList(); }
@@ -2538,19 +2545,42 @@ function renderDaftarTransaksiBeranda() {
         updatePreviewStruk();
     }
 
-    // Variabel bawaan untuk ukuran font Token PLN
-    let tokenFontSize = 30; 
+    // ==========================================
+    // UKURAN FONT TOKEN PLN
+    // ==========================================
+    let tokenFontSize = 30;
 
     function ubahUkuranFontToken(operasi) {
-        if(operasi === 'tambah') tokenFontSize += 2;
-        else if(operasi === 'kurang') tokenFontSize -= 2;
-        
-        if(tokenFontSize < 10) tokenFontSize = 10; // Batas minimal ukuran
-        if(tokenFontSize > 80) tokenFontSize = 80; // Batas maksimal ukuran
-        
+        if(operasi === 'tambah') {
+            tokenFontSize += 2;
+        } else if(operasi === 'kurang') {
+            tokenFontSize -= 2;
+        }
+
+        // Batas ukuran font
+        if(tokenFontSize < 10) tokenFontSize = 10;
+        if(tokenFontSize > 80) tokenFontSize = 80;
+
+        // Update tulisan ukuran
         let label = document.getElementById('labelUkuranToken');
-        if(label) label.innerText = tokenFontSize + "px";
-        
+        if(label) {
+            label.innerText = tokenFontSize + "px";
+        }
+
+        // Simpan ukuran agar tidak kembali ke awal
+        if(!db.strukToggle) {
+            db.strukToggle = {};
+        }
+
+        db.strukToggle.tokenFontSize = tokenFontSize;
+
+        // Simpan tanpa me-render ulang seluruh aplikasi
+        try {
+            localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
+        } catch(e) {
+            console.warn("Gagal menyimpan ukuran font:", e);
+        }
+
         updatePreviewStruk();
     }
 
@@ -2820,6 +2850,10 @@ if(prevStatus) {
         /* ==========================================
            CATATAN / TOKEN
            ========================================== */
+        /* ==========================================
+           CATATAN / TOKEN
+           ========================================== */
+
         let catatan =
             document.getElementById('strukManualCatatan').value.trim();
 
@@ -2833,46 +2867,60 @@ if(prevStatus) {
 
             areaCatatan.style.display = "block";
 
-            /*
-             * Mode Token PLN:
-             * Pertahankan angka dan spasi.
-             * Jika user mengetik beberapa baris, tetap ditampilkan.
-             */
             if(modeToken) {
-                
-                // Auto-Format Preview: Walau user lupa klik tombol, pratinjau tetap dipisah per 4 angka
-                let tokenBersih = catatan.replace(/\D/g, '').substring(0, 20);
-                let tokenBerjarak = tokenBersih.replace(/(.{4})/g, '$1 ').trim();
 
-                                            // Gunakan token yang sudah diformat, atau teks biasa jika kosong
-                            prevCatatan.innerHTML = tokenBerjarak || catatan.replace(/\n/g, '<br>');
+                // Bersihkan token menjadi maksimal 20 angka
+                let tokenBersih =
+                    catatan.replace(/\D/g, '').substring(0, 20);
 
-                            prevCatatan.style.fontFamily = "Arial, Helvetica, sans-serif";
-                            // Paksa perubahan ukuran dari tombol agar menang melawan Cache CSS HP
-                            let ukuranAktif = (typeof tokenFontSize !== 'undefined' ? tokenFontSize : 30) + "px";
-                            prevCatatan.style.setProperty('font-size', ukuranAktif, 'important');
-                            prevCatatan.style.fontWeight = "700";
+                // Pisahkan setiap 4 angka
+                let tokenBerjarak =
+                    tokenBersih.replace(/(.{4})/g, '$1 ').trim();
 
-                prevCatatan.style.lineHeight = "1.5";
+                prevCatatan.innerText =
+                    tokenBerjarak || catatan;
+
+                // Ambil ukuran font aktif
+                let ukuranAktif =
+                    Number(tokenFontSize) || 30;
+
+                // Paksa ukuran preview
+                prevCatatan.style.setProperty(
+                    'font-size',
+                    ukuranAktif + 'px',
+                    'important'
+                );
+
+                prevCatatan.style.fontFamily =
+                    "'Courier New', Courier, monospace";
+
+                prevCatatan.style.fontWeight = "700";
+                prevCatatan.style.lineHeight = "1.25";
                 prevCatatan.style.letterSpacing = "2px";
                 prevCatatan.style.wordSpacing = "8px";
                 prevCatatan.style.textAlign = "center";
 
             } else {
 
-                prevCatatan.innerHTML =
-                    catatan.replace(/\n/g, '<br>');
+                prevCatatan.innerText = catatan;
 
-                prevCatatan.style.fontSize = "14px";
+                prevCatatan.style.setProperty(
+                    'font-size',
+                    '14px',
+                    'important'
+                );
+
                 prevCatatan.style.fontWeight = "bold";
                 prevCatatan.style.lineHeight = "1.35";
                 prevCatatan.style.letterSpacing = "normal";
+                prevCatatan.style.wordSpacing = "normal";
+                prevCatatan.style.textAlign = "left";
             }
 
         } else {
 
             areaCatatan.style.display = "none";
-            prevCatatan.innerHTML = "";
+            prevCatatan.innerText = "";
         }
 
         /* ==========================================
@@ -3080,33 +3128,350 @@ if(prevStatus) {
     }
 
     function simpanConfigStruk() {
-        if(!db.strukToggle) db.strukToggle = {};
-        db.strukToggle.header = document.getElementById('cbToggleHeader') ? document.getElementById('cbToggleHeader').checked : true;
-        db.strukToggle.tanggal = document.getElementById('cbToggleTanggal').checked;
-        db.strukToggle.pelanggan = document.getElementById('cbTogglePelanggan').checked;
-        db.strukToggle.barang = document.getElementById('cbToggleBarang').checked;
-        db.strukToggle.admin = document.getElementById('cbToggleAdmin').checked;
-        db.strukToggle.total = document.getElementById('cbToggleTotal').checked;
-        db.strukToggle.tokenLabel = document.getElementById('cbToggleTokenLabel') ? document.getElementById('cbToggleTokenLabel').checked : true;
-        db.strukToggle.footer = document.getElementById('cbToggleFooter') ? document.getElementById('cbToggleFooter').checked : true;
-        db.strukToggle.alignHeader = document.getElementById('selectAlignHeader') ? document.getElementById('selectAlignHeader').value : 'center';
-        db.strukToggle.alignCatatan = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
+
+        if(!db.strukToggle) {
+            db.strukToggle = {};
+        }
+
+        db.strukToggle.header =
+            document.getElementById('cbToggleHeader') ?
+            document.getElementById('cbToggleHeader').checked : true;
+
+        db.strukToggle.tanggal =
+            document.getElementById('cbToggleTanggal') ?
+            document.getElementById('cbToggleTanggal').checked : true;
+
+        db.strukToggle.pelanggan =
+            document.getElementById('cbTogglePelanggan') ?
+            document.getElementById('cbTogglePelanggan').checked : true;
+
+        db.strukToggle.barang =
+            document.getElementById('cbToggleBarang') ?
+            document.getElementById('cbToggleBarang').checked : true;
+
+        db.strukToggle.admin =
+            document.getElementById('cbToggleAdmin') ?
+            document.getElementById('cbToggleAdmin').checked : true;
+
+        db.strukToggle.total =
+            document.getElementById('cbToggleTotal') ?
+            document.getElementById('cbToggleTotal').checked : true;
+
+        db.strukToggle.tokenLabel =
+            document.getElementById('cbToggleTokenLabel') ?
+            document.getElementById('cbToggleTokenLabel').checked : true;
+
+        db.strukToggle.footer =
+            document.getElementById('cbToggleFooter') ?
+            document.getElementById('cbToggleFooter').checked : true;
+
+        db.strukToggle.alignHeader =
+            document.getElementById('selectAlignHeader') ?
+            document.getElementById('selectAlignHeader').value : 'center';
+
+        db.strukToggle.alignCatatan =
+            document.getElementById('selectAlignCatatan') ?
+            document.getElementById('selectAlignCatatan').value : 'left';
+
+        db.strukToggle.tokenFontSize =
+            Number(tokenFontSize) || 30;
+
         simpanData();
         updatePreviewStruk();
     }
 
+
     function loadConfigStruk() {
-        if(!db.strukToggle) db.strukToggle = { header: true, tanggal: true, pelanggan: true, barang: true, admin: true, total: true, tokenLabel: true, footer: true, alignHeader: 'center', alignCatatan: 'left' };
-        if(document.getElementById('cbToggleHeader')) document.getElementById('cbToggleHeader').checked = db.strukToggle.header !== undefined ? db.strukToggle.header : true;
-        if(document.getElementById('cbToggleTanggal')) document.getElementById('cbToggleTanggal').checked = db.strukToggle.tanggal;
-        if(document.getElementById('cbTogglePelanggan')) document.getElementById('cbTogglePelanggan').checked = db.strukToggle.pelanggan;
-        if(document.getElementById('cbToggleBarang')) document.getElementById('cbToggleBarang').checked = db.strukToggle.barang;
-        if(document.getElementById('cbToggleAdmin')) document.getElementById('cbToggleAdmin').checked = db.strukToggle.admin;
-        if(document.getElementById('cbToggleTotal')) document.getElementById('cbToggleTotal').checked = db.strukToggle.total;
-        if(document.getElementById('cbToggleTokenLabel')) document.getElementById('cbToggleTokenLabel').checked = db.strukToggle.tokenLabel !== undefined ? db.strukToggle.tokenLabel : true;
-        if(document.getElementById('cbToggleFooter')) document.getElementById('cbToggleFooter').checked = db.strukToggle.footer !== undefined ? db.strukToggle.footer : true;
-        if(document.getElementById('selectAlignHeader')) document.getElementById('selectAlignHeader').value = db.strukToggle.alignHeader || 'center';
-        if(document.getElementById('selectAlignCatatan')) document.getElementById('selectAlignCatatan').value = db.strukToggle.alignCatatan || 'left';
+
+        if(!db.strukToggle) {
+            db.strukToggle = {
+                header: true,
+                tanggal: true,
+                pelanggan: true,
+                barang: true,
+                admin: true,
+                total: true,
+                tokenLabel: true,
+                footer: true,
+                alignHeader: 'center',
+                alignCatatan: 'left',
+                tokenFontSize: 30
+            };
+        }
+
+        if(document.getElementById('cbToggleHeader'))
+            document.getElementById('cbToggleHeader').checked =
+                db.strukToggle.header !== undefined ?
+                db.strukToggle.header : true;
+
+        if(document.getElementById('cbToggleTanggal'))
+            document.getElementById('cbToggleTanggal').checked =
+                db.strukToggle.tanggal !== undefined ?
+                db.strukToggle.tanggal : true;
+
+        if(document.getElementById('cbTogglePelanggan'))
+            document.getElementById('cbTogglePelanggan').checked =
+                db.strukToggle.pelanggan !== undefined ?
+                db.strukToggle.pelanggan : true;
+
+        if(document.getElementById('cbToggleBarang'))
+            document.getElementById('cbToggleBarang').checked =
+                db.strukToggle.barang !== undefined ?
+                db.strukToggle.barang : true;
+
+        if(document.getElementById('cbToggleAdmin'))
+            document.getElementById('cbToggleAdmin').checked =
+                db.strukToggle.admin !== undefined ?
+                db.strukToggle.admin : true;
+
+        if(document.getElementById('cbToggleTotal'))
+            document.getElementById('cbToggleTotal').checked =
+                db.strukToggle.total !== undefined ?
+                db.strukToggle.total : true;
+
+        if(document.getElementById('cbToggleTokenLabel'))
+            document.getElementById('cbToggleTokenLabel').checked =
+                db.strukToggle.tokenLabel !== undefined ?
+                db.strukToggle.tokenLabel : true;
+
+        if(document.getElementById('cbToggleFooter'))
+            document.getElementById('cbToggleFooter').checked =
+                db.strukToggle.footer !== undefined ?
+                db.strukToggle.footer : true;
+
+        if(document.getElementById('selectAlignHeader'))
+            document.getElementById('selectAlignHeader').value =
+                db.strukToggle.alignHeader || 'center';
+
+        if(document.getElementById('selectAlignCatatan'))
+            document.getElementById('selectAlignCatatan').value =
+                db.strukToggle.alignCatatan || 'left';
+
+        tokenFontSize =
+            Number(db.strukToggle.tokenFontSize) || 30;
+
+        let label = document.getElementById('labelUkuranToken');
+        if(label) {
+            label.innerText = tokenFontSize + "px";
+        }
+    }
+
+
+    // ==========================================
+    // DRAFT STRUK MANUAL
+    // ==========================================
+
+    function ambilDraftStrukManual() {
+
+        let area = document.getElementById('areaStrukManual');
+
+        let items = [];
+
+        document.querySelectorAll('.item-barang-manual').forEach(baris => {
+
+            items.push({
+                nama: baris.querySelector('.input-nama-barang')?.value || "",
+                qty: baris.querySelector('.input-qty-barang')?.value || "1",
+                harga: baris.querySelector('.input-harga-barang')?.value || ""
+            });
+
+        });
+
+        return {
+            mode: area && area.classList.contains('mode-token-pln')
+                ? 'token'
+                : 'biasa',
+
+            namaToko:
+                document.getElementById('strukManualNamaToko')?.value || "amat Bajualan",
+
+            tanggal:
+                document.getElementById('strukManualTanggal')?.value || ambilTanggal(),
+
+            pelanggan:
+                document.getElementById('strukManualPelanggan')?.value || "",
+
+            admin:
+                document.getElementById('strukManualAdmin')?.value || "",
+
+            catatan:
+                document.getElementById('strukManualCatatan')?.value || "",
+
+            tokenFontSize:
+                Number(tokenFontSize) || 30,
+
+            items: items,
+
+            waktuSimpan: new Date().toISOString()
+        };
+    }
+
+
+    function simpanDraftStrukManual(tampilkanPesan = true) {
+
+        db.strukDraft = ambilDraftStrukManual();
+
+        // Simpan ke localStorage tanpa me-refresh tampilan
+        try {
+            simpanData(() => {});
+        } catch(e) {
+            console.error("Gagal menyimpan draft struk:", e);
+            return false;
+        }
+
+        if(tampilkanPesan) {
+            alert("✅ Draft struk berhasil disimpan.");
+        }
+
+        return true;
+    }
+
+
+    function muatDraftStrukManual() {
+
+        let draft = db.strukDraft;
+
+        if(!draft) return;
+
+        let namaToko = document.getElementById('strukManualNamaToko');
+        let tanggal = document.getElementById('strukManualTanggal');
+        let pelanggan = document.getElementById('strukManualPelanggan');
+        let admin = document.getElementById('strukManualAdmin');
+        let catatan = document.getElementById('strukManualCatatan');
+
+        if(namaToko) namaToko.value = draft.namaToko || "amat Bajualan";
+        if(tanggal) tanggal.value = draft.tanggal || ambilTanggal();
+        if(pelanggan) pelanggan.value = draft.pelanggan || "";
+        if(admin) admin.value = draft.admin || "";
+        if(catatan) catatan.value = draft.catatan || "";
+
+        tokenFontSize =
+            Number(draft.tokenFontSize) || tokenFontSize || 30;
+
+        let label = document.getElementById('labelUkuranToken');
+        if(label) label.innerText = tokenFontSize + "px";
+
+        // Bersihkan daftar barang lama
+        let wadah = document.getElementById('wadahBarangManual');
+
+        if(wadah) {
+
+            wadah.innerHTML = "";
+
+            let daftar =
+                Array.isArray(draft.items) && draft.items.length
+                ? draft.items
+                : [{nama:"", qty:"1", harga:""}];
+
+            daftar.forEach(item => {
+
+                let div = document.createElement('div');
+
+                div.className =
+                    'grid-3 item-barang-manual';
+
+                div.style.gap = '5px';
+                div.style.marginBottom = '10px';
+
+                div.innerHTML = `
+                    <input type="text"
+                        class="input-nama-barang"
+                        placeholder="Barang"
+                        value="${String(item.nama || '').replace(/"/g, '&quot;')}"
+                        oninput="updatePreviewStruk()"
+                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+
+                    <input type="number"
+                        class="input-qty-barang"
+                        value="${item.qty || 1}"
+                        min="1"
+                        oninput="updatePreviewStruk()"
+                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+
+                    <input type="number"
+                        class="input-harga-barang"
+                        placeholder="Harga"
+                        value="${item.harga || ''}"
+                        oninput="updatePreviewStruk()"
+                        style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                `;
+
+                wadah.appendChild(div);
+            });
+        }
+
+        if(draft.mode === 'token') {
+            ubahModeStrukManual('token');
+        } else {
+            ubahModeStrukManual('biasa');
+        }
+
+        updatePreviewStruk();
+    }
+
+
+    // ==========================================
+    // KONFIRMASI SEBELUM CETAK
+    // ==========================================
+
+    function konfirmasiCetakStruk() {
+
+        // Simpan dahulu sebelum masuk tahap cetak
+        let berhasil =
+            simpanDraftStrukManual(false);
+
+        if(!berhasil) return;
+
+        let info = document.getElementById('infoKonfirmasiStruk');
+
+        if(info) {
+
+            let mode =
+                db.strukDraft.mode === 'token'
+                ? '⚡ Token PLN'
+                : '📝 Catatan Biasa';
+
+            let isi =
+                db.strukDraft.mode === 'token'
+                ? (db.strukDraft.catatan || '(Token belum diisi)')
+                : (db.strukDraft.catatan || '(Tanpa catatan)');
+
+            info.innerHTML =
+                `<b>${mode}</b><br>
+                 <span style="font-size:11px; color:#666;">
+                 Isi: ${isi.substring(0, 80)}
+                 ${isi.length > 80 ? '...' : ''}
+                 </span>`;
+        }
+
+        let modal =
+            document.getElementById('modal-konfirmasi-struk');
+
+        if(modal) {
+            modal.classList.add('active');
+        }
+    }
+
+
+    function batalKonfirmasiStruk() {
+
+        let modal =
+            document.getElementById('modal-konfirmasi-struk');
+
+        if(modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+
+    async function cetakDariKonfirmasi() {
+
+        batalKonfirmasiStruk();
+
+        // Beri sedikit waktu agar modal benar-benar tertutup
+        await new Promise(r => setTimeout(r, 100));
+
+        await cetakStrukBluetoothLangsung();
     }
 
     let btDevice = null;
@@ -3171,7 +3536,7 @@ if(prevStatus) {
         return true;
     }
 
-    async function cetakStrukBluetooth() {
+    async function cetakStrukBluetoothLangsung() {
         if (!btCharacteristic || !btDevice || !btDevice.gatt.connected) {
             await hubungkanPrinterBT();
             if (!btCharacteristic) return;
@@ -3245,28 +3610,71 @@ let statusTransaksi =
                 addStr("TOKEN PLN\n\n");
             }
 
-            // Teks Ukuran Besar (ESC/POS Double Width + Double Height)
-            add([0x1D, 0x21, 0x11]); // Double Height + Double Width
+            // ==========================================
+            // UKURAN TOKEN PLN DI PRINTER
+            // Mengikuti ukuran font yang dipilih di aplikasi
+            // ==========================================
+
+            let ukuranCetakToken =
+                Number(tokenFontSize) || 30;
+
+            let escposUkuran = 0x11;
+
+            /*
+             * ESC/POS GS !
+             *
+             * 0x00 = normal
+             * 0x11 = 2x lebar + 2x tinggi
+             * 0x22 = 3x lebar + 3x tinggi
+             *
+             * Kita batasi agar tetap aman untuk printer 58mm.
+             */
+
+            if(ukuranCetakToken <= 20) {
+                escposUkuran = 0x00;
+            } else if(ukuranCetakToken <= 40) {
+                escposUkuran = 0x11;
+            } else {
+                escposUkuran = 0x22;
+            }
+
+            add([0x1D, 0x21, escposUkuran]);
+
             add([0x1B, 0x45, 0x01]); // Bold On
-            
-            // Formatter Token PLN untuk Printer Thermal 58mm (Maksimal 16 Karakter/Baris)
-            let tokenPolos = catatan.replace(/\D/g, '').substring(0, 20);
-            let tokenCetak = catatan;
-            
-            if (tokenPolos.length === 20) {
+
+            // ==========================================
+            // FORMAT TOKEN PLN
+            // ==========================================
+
+            let tokenPolos =
+                catatan.replace(/\D/g, '').substring(0, 20);
+
+            let tokenCetak =
+                catatan;
+
+            if(tokenPolos.length === 20) {
+
                 let b1 = tokenPolos.substr(0, 4);
                 let b2 = tokenPolos.substr(4, 4);
                 let b3 = tokenPolos.substr(8, 4);
                 let b4 = tokenPolos.substr(12, 4);
                 let b5 = tokenPolos.substr(16, 4);
-                // Baris 1: 14 karakter ("6661 3843 9199") -> Aman di bawah 16 char
-                // Baris 2: 9 karakter ("2448 4866")     -> Aman di bawah 16 char
-                tokenCetak = `${b1} ${b2} ${b3}\n${b4} ${b5}`;
+
+                /*
+                 * Dibuat 2 baris agar aman
+                 * untuk printer thermal 58mm.
+                 */
+                tokenCetak =
+                    `${b1} ${b2} ${b3}\n${b4} ${b5}`;
             }
 
             addStr(tokenCetak + "\n");
-            add([0x1D, 0x21, 0x00]); // Normal Size
-            add([0x1B, 0x45, 0x00]); // Bold Off
+
+            // Kembalikan printer ke ukuran normal
+            add([0x1D, 0x21, 0x00]);
+
+            // Matikan Bold
+            add([0x1B, 0x45, 0x00]);
 
             if (showFooter) {
                 addStr("--------------------------------\n");
