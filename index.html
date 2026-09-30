@@ -169,30 +169,108 @@
     </div>
 
     <div id="modal-cicilan" class="modal-popup">
-        <div class="popup-content">
-            <h4 style="margin-bottom: 10px;">💳 Catat Cicilan</h4>
-            <p class="text-small" style="margin-bottom: 15px;">Info: <b class="text-red" id="cicilanSisaTampil">Rp 0</b></p>
-            <form onsubmit="eksekusiSimpanCicilan(event)">
-                <input type="hidden" id="cicilanUtangId">
-                <input type="hidden" id="editCicilanId"> 
-                <label class="text-small" style="text-align:left; display:block;">Tanggal Bayar:</label>
-                <input type="date" id="cicilanTgl" required style="border-color: var(--primary);">
-                <label class="text-small" style="text-align:left; display:block;">Nominal Bayar (Rp):</label>
-                <input type="text" inputmode="numeric" id="cicilanNominal" placeholder="0" oninput="formatInputRupiah(event)" required>
-                
-                <label class="text-small" style="text-align:left; display:block;">Keterangan (Opsional):</label>
-                <input type="text" id="cicilanKeterangan" placeholder="Cth: Transfer BCA / Titip teman" style="margin-bottom:0;">
+    <div class="popup-content">
 
-                <label class="text-small text-green" style="font-weight:bold; display:block; margin-top:10px;">📥 Uang Masuk / Keluar Dompet:</label>
-                <select id="cicilanDompetMasuk" style="background:#e8f5e9; border-color:#28a745; font-weight:bold; margin-bottom: 0;"></select>
+        <h4 style="margin-bottom: 10px;">
+            💳 Catat Cicilan
+        </h4>
 
-                <div class="grid-2" style="margin-top: 15px;">
-                    <button type="submit" class="btn-green">Simpan</button>
-                    <button type="button" class="btn-red" onclick="tutupModalCicilan()">Batal</button>
-                </div>
-            </form>
-        </div>
+        <p class="text-small" style="margin-bottom: 10px;">
+            Info:
+            <b class="text-red" id="cicilanSisaTampil">
+                Rp 0
+            </b>
+        </p>
+
+        <form onsubmit="eksekusiSimpanCicilan(event)">
+
+            <input type="hidden" id="cicilanUtangId">
+            <input type="hidden" id="editCicilanId">
+
+            <label class="text-small" style="text-align:left; display:block;">
+                Tanggal Bayar:
+            </label>
+
+            <input
+                type="date"
+                id="cicilanTgl"
+                required
+                style="border-color: var(--primary);"
+            >
+
+            <label class="text-small" style="text-align:left; display:block;">
+                Nominal Bayar (Rp):
+            </label>
+
+            <input
+                type="text"
+                inputmode="numeric"
+                id="cicilanNominal"
+                placeholder="0"
+                oninput="formatInputRupiah(event); renderSimulasiCicilan();"
+                required
+            >
+
+            <!-- SIMULASI PRODUK -->
+            <div
+                id="cicilanSimulasi"
+                style="
+                    margin-top:10px;
+                    background:#f8fafc;
+                    border:1px solid #e2e8f0;
+                    border-radius:8px;
+                    padding:8px;
+                ">
+            </div>
+
+            <label
+                class="text-small"
+                style="text-align:left; display:block; margin-top:10px;"
+            >
+                Keterangan (Opsional):
+            </label>
+
+            <input
+                type="text"
+                id="cicilanKeterangan"
+                placeholder="Cth: Transfer BCA / Titip teman"
+                style="margin-bottom:0;"
+            >
+
+            <label
+                class="text-small text-green"
+                style="font-weight:bold; display:block; margin-top:10px;"
+            >
+                📥 Uang Masuk / Keluar Dompet:
+            </label>
+
+            <select
+                id="cicilanDompetMasuk"
+                style="
+                    background:#e8f5e9;
+                    border-color:#28a745;
+                    font-weight:bold;
+                    margin-bottom:0;
+                ">
+            </select>
+
+            <div class="grid-2" style="margin-top:15px;">
+                <button type="submit" class="btn-green">
+                    ✅ Konfirmasi Cicilan
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-red"
+                    onclick="tutupModalCicilan()"
+                >
+                    Batal
+                </button>
+            </div>
+
+        </form>
     </div>
+</div>
 
 
     <div id="modal-mutasi" class="modal-popup">
@@ -941,43 +1019,99 @@
         </div>
 
         <div id="sub-portal" class="card" style="display:none;">
-            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
-            <h4>⚖️ Portal Dompet (Simulasi Kas)</h4>
-            <p class="text-small" style="margin-bottom: 10px;">Lihat total kekayaanmu jika semua utang/piutang dilunasi.</p>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
-                <div class="flex-between" style="margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 10px;"><span style="color: #555; font-size: 13px;">Saldo Asli (Total Dompet):</span><b style="font-size: 15px;" class="text-blue">Rp <span id="portal-saldo-asli">0</span></b></div>
-                
-                <label style="display: flex; align-items: center; font-size: 13px; margin-bottom: 5px; cursor: pointer; background: #e8f5e9; padding: 8px; border-radius: 5px; border: 1px solid #c8e6c9;">
-                    <input type="checkbox" id="cb-portal-piutang" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;"> 
-                    <span style="flex: 1;">➕ Modal di Luar (Kasbon)</span>
-                    <b class="text-blue">Rp <span id="portal-angka-piutang-modal">0</span></b>
-                </label>
-                
-                <label style="display: flex; align-items: center; font-size: 13px; margin-bottom: 10px; cursor: pointer; background: #d4edda; padding: 8px; border-radius: 5px; border: 1px solid #c3e6cb;">
-                    <input type="checkbox" id="cb-portal-untung" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;"> 
-                    <span style="flex: 1;">➕ Keuntungan Kasbon Saja</span>
-                    <b class="text-green">Rp <span id="portal-potensi-untung">0</span></b>
-                </label>
+            <div id="sub-portal" class="card" style="display:none;">
+    <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
 
-                <label style="display: flex; align-items: center; font-size: 13px; margin-bottom: 5px; cursor: pointer; background: #ffebee; padding: 8px; border-radius: 5px; border: 1px solid #ffcdd2;">
-                    <input type="checkbox" id="cb-portal-utang" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;"> 
-                    <span style="flex: 1;">➖ Utang Saya (Ke Orang)</span>
-                    <b class="text-red">Rp <span id="portal-angka-utang">0</span></b>
-                </label>
-            </div>
-            
-            <div style="background: #fff3cd; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 15px;">
-                <label style="display: flex; align-items: center; font-size: 12px; font-weight: bold; cursor: pointer; color: #856404;">
-                    <input type="checkbox" id="cb-portal-header" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;">
-                    📺 Tampilkan hitungan ini ke "Total Saldo Sistem" di layar paling atas
-                </label>
-            </div>
+    <h4>⚖️ Portal Dompet (Simulasi Kas)</h4>
+    <p class="text-small" style="margin-bottom: 10px;">
+        Lihat total kekayaanmu jika semua utang/piutang dilunasi.
+    </p>
 
-            <div style="background: #eef2f5; padding: 15px; border-radius: 8px; border: 1px solid #d1e3f8; text-align: center;">
-                <h4 style="color: #555; margin-bottom: 5px;">Total Kekayaan Bersih:</h4>
-                <h2 class="text-blue" style="font-size: 24px; margin: 0;">Rp <span id="portal-total-akhir">0</span></h2>
-            </div>
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
+
+        <!-- SALDO AKTUAL -->
+        <div class="flex-between" style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 10px;">
+            <span style="color: #555; font-size: 13px;">
+                💰 Saldo Aktual (Total Dompet):
+            </span>
+            <b style="font-size: 15px;" class="text-blue">
+                Rp <span id="portal-saldo-asli">0</span>
+            </b>
         </div>
+
+        <!-- DANA CICILAN -->
+        <div class="flex-between" style="margin-bottom: 8px; background:#fff3cd; padding:8px; border-radius:5px; border:1px solid #ffeeba;">
+            <span style="color:#856404; font-size:13px;">
+                🟡 Dana Cicilan Pelanggan:
+            </span>
+            <b style="font-size:14px; color:#d68910;">
+                Rp <span id="portal-dana-cicilan">0</span>
+            </b>
+        </div>
+
+        <!-- SALDO BEBAS -->
+        <div class="flex-between" style="margin-bottom: 10px; background:#e8f5e9; padding:8px; border-radius:5px; border:1px solid #c8e6c9;">
+            <span style="color:#155724; font-size:13px;">
+                🟢 Saldo Bebas:
+            </span>
+            <b style="font-size:14px;" class="text-green">
+                Rp <span id="portal-saldo-bebas">0</span>
+            </b>
+        </div>
+
+        <!-- MODAL DI LUAR -->
+        <label style="display: flex; align-items: center; font-size: 13px; margin-bottom: 5px; cursor: pointer; background: #e8f5e9; padding: 8px; border-radius: 5px; border: 1px solid #c8e6c9;">
+            <input type="checkbox" id="cb-portal-piutang" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;"> 
+            <span style="flex: 1;">➕ Modal di Luar (Kasbon)</span>
+            <b class="text-blue">
+                Rp <span id="portal-angka-piutang-modal">0</span>
+            </b>
+        </label>
+
+        <!-- KEUNTUNGAN -->
+        <label style="display: flex; align-items: center; font-size: 13px; margin-bottom: 10px; cursor: pointer; background: #d4edda; padding: 8px; border-radius: 5px; border: 1px solid #c3e6cb;">
+            <input type="checkbox" id="cb-portal-untung" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;"> 
+            <span style="flex: 1;">➕ Keuntungan Kasbon Saja</span>
+            <b class="text-green">
+                Rp <span id="portal-potensi-untung">0</span>
+            </b>
+        </label>
+
+        <!-- UTANG -->
+        <label style="display: flex; align-items: center; font-size: 13px; margin-bottom: 5px; cursor: pointer; background: #ffebee; padding: 8px; border-radius: 5px; border: 1px solid #ffcdd2;">
+            <input type="checkbox" id="cb-portal-utang" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;"> 
+            <span style="flex: 1;">➖ Utang Saya (Ke Orang)</span>
+            <b class="text-red">
+                Rp <span id="portal-angka-utang">0</span>
+            </b>
+        </label>
+
+    </div>
+
+    <!-- HEADER SIMULASI -->
+    <div style="background: #fff3cd; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 15px;">
+        <label style="display: flex; align-items: center; font-size: 12px; font-weight: bold; cursor: pointer; color: #856404;">
+            <input type="checkbox" id="cb-portal-header" onchange="hitungPortalDompet()" style="width: auto; margin: 0 10px 0 0;">
+            📺 Tampilkan hitungan ini ke "Total Saldo Sistem" di layar paling atas
+        </label>
+    </div>
+
+    <!-- TOTAL KEKAYAAN -->
+    <div style="background: #eef2f5; padding: 15px; border-radius: 8px; border: 1px solid #d1e3f8; text-align: center;">
+        <h4 style="color: #555; margin-bottom: 5px;">
+            Total Kekayaan Bersih:
+        </h4>
+
+        <h2 class="text-blue" style="font-size: 24px; margin: 0;">
+            Rp <span id="portal-total-akhir">0</span>
+        </h2>
+
+        <div style="font-size:10px; color:#718096; margin-top:8px;">
+            ℹ️ Dana Cicilan sudah termasuk dalam Saldo Aktual,
+            jadi tidak dihitung dua kali.
+        </div>
+    </div>
+</div>
 
         <div id="sub-dompet" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
