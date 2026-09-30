@@ -799,113 +799,901 @@ function simpanData(renderFungsiKhusus = null) {
         } 
     }
 
-        function bukaModalCicilan(id) {
-        let u = db.utang.find(x => String(x.id) === String(id)); if(!u) return;
-        let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
-        let s = (Number(u.nominal) || 0) - tD;
-        
-        document.getElementById('cicilanUtangId').value = id;
-        document.getElementById('editCicilanId').value = ""; 
-        
-        // --- FITUR BARU: Tampilan Diskon Kasbon ---
-        document.getElementById('cicilanSisaTampil').innerHTML = `
-            <div>Sisa Tagihan: <b class="text-red">Rp ${formatRupiah(s)}</b></div>
-            <div style="margin-top:5px; background:#fff3cd; padding:5px; border-radius:4px; font-size:10px;">
-                Diskon Potongan (Opsional): <input type="text" id="cicilanDiskonOtomatis" placeholder="0" oninput="formatInputRupiah(event)" style="margin:0; width:80px; text-align:center;">
-            </div>`;
-        
-        document.getElementById('cicilanTgl').value = ambilTanggal(); 
-        document.getElementById('cicilanNominal').value = formatRupiah(s); // Auto-isi nominal dengan sisa
-        if(document.getElementById('cicilanKeterangan')) document.getElementById('cicilanKeterangan').value = "";
-        if(document.getElementById('cicilanDompetMasuk')) document.getElementById('cicilanDompetMasuk').value = u.dompetId || 'none';
-        document.getElementById('modal-cicilan').classList.add('active');
+        let cicilanAlokasiDraft = [];
+
+function bukaModalCicilan(id) {
+    let u = db.utang.find(x => String(x.id) === String(id));
+    if(!u) return;
+
+    let tD = (Array.isArray(u.cicilan) ? u.cicilan : [])
+        .reduce((a,c) => a + (Number(c.nominal) || 0), 0);
+
+    let s = (Number(u.nominal) || 0) - tD;
+
+    cicilanAlokasiDraft = [];
+
+    document.getElementById('cicilanUtangId').value = id;
+    document.getElementById('editCicilanId').value = "";
+
+    document.getElementById('cicilanSisaTampil').innerHTML = `
+        <div>
+            Sisa Tagihan:
+            <b class="text-red">Rp ${formatRupiah(s)}</b>
+        </div>
+
+        <div style="
+            margin-top:5px;
+            background:#fff3cd;
+            padding:5px;
+            border-radius:4px;
+            font-size:10px;
+        ">
+            Diskon Potongan (Opsional):
+
+            <input
+                type="text"
+                id="cicilanDiskonOtomatis"
+                placeholder="0"
+                oninput="formatInputRupiah(event)"
+                style="
+                    margin:0;
+                    width:80px;
+                    text-align:center;
+                "
+            >
+        </div>
+    `;
+
+    document.getElementById('cicilanTgl').value = ambilTanggal();
+
+    document.getElementById('cicilanNominal').value =
+        formatRupiah(s);
+
+    if(document.getElementById('cicilanKeterangan')) {
+        document.getElementById('cicilanKeterangan').value = "";
     }
 
-
-    function bukaEditCicilan(idUtang, idx) {
-        let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
-        let c = u.cicilan[idx]; if(!c) return;
-        let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,x) => a + (Number(x.nominal) || 0), 0);
-        let s = (Number(u.nominal) || 0) - tD + Number(c.nominal); 
-        
-        document.getElementById('cicilanUtangId').value = idUtang;
-        document.getElementById('editCicilanId').value = idx; 
-        document.getElementById('cicilanSisaTampil').innerHTML = "Edit (Max Rp " + formatRupiah(s) + ") <br><label style='font-size:12px; margin-top:5px; display:inline-block;'>Diskon Cicilan:</label> <input type='number' id='cicilanDiskonOtomatis' value='0' style='width:100px; padding:2px;'>";
-       document.getElementById('cicilanTgl').value = c.tanggal; 
-        document.getElementById('cicilanNominal').value = formatRupiah(c.nominal);
-        if(document.getElementById('cicilanKeterangan')) document.getElementById('cicilanKeterangan').value = c.keterangan || "";
-        if(document.getElementById('cicilanDompetMasuk')) document.getElementById('cicilanDompetMasuk').value = u.dompetId || 'none';
-        document.getElementById('modal-cicilan').classList.add('active');
+    if(document.getElementById('cicilanDompetMasuk')) {
+        document.getElementById('cicilanDompetMasuk').value =
+            u.dompetId || 'none';
     }
+
+    renderSimulasiCicilan();
+
+    document.getElementById('modal-cicilan').classList.add('active');
+}
+
+
+function renderSimulasiCicilan() {
+
+    let box = document.getElementById('cicilanSimulasi');
+    if(!box) return;
+
+    let id = document.getElementById('cicilanUtangId').value;
+
+    let u = db.utang.find(x => String(x.id) === String(id));
+
+    if(!u) {
+        box.innerHTML = "";
+        return;
+    }
+
+    let nominalBayar =
+        getAngkaMurni(
+            document.getElementById('cicilanNominal').value
+        );
+
+    if(nominalBayar <= 0) {
+        box.innerHTML = `
+            <div class="text-small">
+                Masukkan nominal pembayaran untuk melihat simulasi.
+            </div>
+        `;
+        return;
+    }
+
+    let rincian = Array.isArray(u.rincianBarang)
+        ? u.rincianBarang
+        : [];
+
+    if(rincian.length === 0) {
+        box.innerHTML = `
+            <div style="
+                font-size:11px;
+                color:#856404;
+                background:#fff3cd;
+                padding:8px;
+                border-radius:6px;
+            ">
+                ℹ️ Kasbon ini tidak memiliki rincian produk.
+                Uang akan dicatat sebagai Dana Cicilan Pelanggan.
+            </div>
+        `;
+        return;
+    }
+
+    let totalDipilih = cicilanAlokasiDraft.reduce(
+        (a, x) => a + (Number(x.nominal) || 0),
+        0
+    );
+
+    let sisaUang = Math.max(
+        0,
+        nominalBayar - totalDipilih
+    );
+
+    let html = `
+        <div style="
+            font-size:11px;
+            font-weight:bold;
+            color:#334155;
+            margin-bottom:6px;
+        ">
+            🎯 Simulasi Pelunasan Produk
+        </div>
+
+        <div style="
+            font-size:10px;
+            color:#718096;
+            margin-bottom:8px;
+        ">
+            Pilih produk mana yang mau langsung dilunaskan.
+            Sisa uang tetap menjadi Dana Cicilan Pelanggan.
+        </div>
+    `;
+
+    rincian.forEach((r, idx) => {
+
+        let harga = Number(r.nominal) || 0;
+        let sudahDibayar = Number(r.dibayar) || 0;
+        let sisaProduk = Math.max(
+            0,
+            harga - sudahDibayar
+        );
+
+        let dipilih = cicilanAlokasiDraft.find(
+            x => Number(x.idx) === idx
+        );
+
+        let sudahLunas =
+            sisaProduk <= 0;
+
+        let bisaDipilih =
+            !sudahLunas &&
+            !dipilih &&
+            sisaProduk <= sisaUang;
+
+        let bg = sudahLunas
+            ? '#e8f5e9'
+            : dipilih
+                ? '#dbeafe'
+                : '#fff';
+
+        let tombol = '';
+
+        if(sudahLunas) {
+
+            tombol = `
+                <span style="
+                    color:#15803d;
+                    font-size:10px;
+                    font-weight:bold;
+                ">
+                    ✅ LUNAS
+                </span>
+            `;
+
+        } else if(dipilih) {
+
+            tombol = `
+                <button
+                    type="button"
+                    class="btn-outline"
+                    style="
+                        width:auto;
+                        padding:4px 7px;
+                        margin:0;
+                        font-size:9px;
+                    "
+                    onclick="pilihProdukCicilan(${idx})"
+                >
+                    ↩ Batal
+                </button>
+            `;
+
+        } else if(bisaDipilih) {
+
+            tombol = `
+                <button
+                    type="button"
+                    class="btn-green"
+                    style="
+                        width:auto;
+                        padding:4px 7px;
+                        margin:0;
+                        font-size:9px;
+                    "
+                    onclick="pilihProdukCicilan(${idx})"
+                >
+                    Lunasi
+                </button>
+            `;
+
+        } else {
+
+            tombol = `
+                <span style="
+                    color:#94a3b8;
+                    font-size:9px;
+                ">
+                    Uang kurang
+                </span>
+            `;
+        }
+
+        html += `
+            <div style="
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:5px;
+                padding:6px;
+                margin-bottom:4px;
+                background:${bg};
+                border:1px solid #e2e8f0;
+                border-radius:6px;
+            ">
+
+                <div style="
+                    min-width:0;
+                    flex:1;
+                ">
+                    <b style="
+                        font-size:10px;
+                        display:block;
+                        white-space:nowrap;
+                        overflow:hidden;
+                        text-overflow:ellipsis;
+                    ">
+                        ${r.produk || 'Produk'}
+                    </b>
+
+                    <span style="
+                        font-size:9px;
+                        color:#64748b;
+                    ">
+                        Rp ${formatRupiah(sisaProduk)}
+                    </span>
+                </div>
+
+                <div>
+                    ${tombol}
+                </div>
+
+            </div>
+        `;
+    });
+
+    html += `
+        <div style="
+            margin-top:7px;
+            padding:7px;
+            background:#f1f5f9;
+            border-radius:6px;
+            font-size:10px;
+        ">
+            <div class="flex-between">
+                <span>💵 Pembayaran</span>
+                <b>Rp ${formatRupiah(nominalBayar)}</b>
+            </div>
+
+            <div class="flex-between">
+                <span>✅ Produk dilunasi</span>
+                <b class="text-green">
+                    Rp ${formatRupiah(totalDipilih)}
+                </b>
+            </div>
+
+            <div class="flex-between" style="margin-top:3px;">
+                <span>🟡 Dana Cicilan</span>
+                <b style="color:#d68910;">
+                    Rp ${formatRupiah(sisaUang)}
+                </b>
+            </div>
+        </div>
+    `;
+
+    box.innerHTML = html;
+}
+
+
+function pilihProdukCicilan(idx) {
+
+    let id =
+        document.getElementById('cicilanUtangId').value;
+
+    let u =
+        db.utang.find(x => String(x.id) === String(id));
+
+    if(!u) return;
+
+    let r =
+        Array.isArray(u.rincianBarang)
+            ? u.rincianBarang[idx]
+            : null;
+
+    if(!r) return;
+
+    let harga = Number(r.nominal) || 0;
+
+    let sudahDibayar =
+        Number(r.dibayar) || 0;
+
+    let sisaProduk =
+        Math.max(0, harga - sudahDibayar);
+
+    if(sisaProduk <= 0) return;
+
+    let nominalBayar =
+        getAngkaMurni(
+            document.getElementById('cicilanNominal').value
+        );
+
+    let totalDipilih =
+        cicilanAlokasiDraft.reduce(
+            (a, x) => a + (Number(x.nominal) || 0),
+            0
+        );
+
+    let posisi =
+        cicilanAlokasiDraft.findIndex(
+            x => Number(x.idx) === Number(idx)
+        );
+
+    // Kalau sudah dipilih → batalkan
+    if(posisi > -1) {
+
+        cicilanAlokasiDraft.splice(posisi, 1);
+
+        renderSimulasiCicilan();
+
+        return;
+    }
+
+    let uangTersisa =
+        nominalBayar - totalDipilih;
+
+    if(sisaProduk > uangTersisa) {
+
+        alert(
+            "Uang cicilan belum cukup untuk melunasi produk ini."
+        );
+
+        return;
+    }
+
+    cicilanAlokasiDraft.push({
+        idx: Number(idx),
+        nominal: sisaProduk
+    });
+
+    renderSimulasiCicilan();
+}
+
+
+function bukaEditCicilan(idUtang, idx) {
+
+    let u =
+        db.utang.find(x => String(x.id) === String(idUtang));
+
+    if(!u) return;
+
+    let c = u.cicilan[idx];
+
+    if(!c) return;
+
+    /*
+     * Cicilan yang sudah memiliki alokasi produk
+     * jangan diedit langsung supaya riwayat produk
+     * tidak rusak. Hapus cicilan lalu catat ulang.
+     */
+    if(Array.isArray(c.alokasi) && c.alokasi.length > 0) {
+
+        alert(
+            "Cicilan ini sudah dialokasikan ke produk. " +
+            "Untuk mengubahnya, hapus cicilan ini lalu catat ulang."
+        );
+
+        return;
+    }
+
+    let tD =
+        (Array.isArray(u.cicilan) ? u.cicilan : [])
+        .reduce(
+            (a,x) => a + (Number(x.nominal) || 0),
+            0
+        );
+
+    let s =
+        (Number(u.nominal) || 0)
+        - tD
+        + Number(c.nominal);
+
+    document.getElementById('cicilanUtangId').value =
+        idUtang;
+
+    document.getElementById('editCicilanId').value =
+        idx;
+
+    document.getElementById('cicilanSisaTampil').innerHTML =
+        "Edit (Max Rp " +
+        formatRupiah(s) +
+        ")";
+
+    document.getElementById('cicilanTgl').value =
+        c.tanggal;
+
+    document.getElementById('cicilanNominal').value =
+        formatRupiah(c.nominal);
+
+    if(document.getElementById('cicilanKeterangan')) {
+        document.getElementById('cicilanKeterangan').value =
+            c.keterangan || "";
+    }
+
+    if(document.getElementById('cicilanDompetMasuk')) {
+        document.getElementById('cicilanDompetMasuk').value =
+            u.dompetId || 'none';
+    }
+
+    renderSimulasiCicilan();
+
+    document.getElementById('modal-cicilan').classList.add('active');
+}
 
     function tutupModalCicilan() {
         document.getElementById('modal-cicilan').classList.remove('active');
     }
 
     function hapusCicilan(idUtang, idx) {
-        if(!confirm("Yakin ingin menghapus riwayat cicilan ini?")) return;
-        let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
-        let c = u.cicilan[idx];
-        if(c && u.dompetId && u.dompetId !== 'none') {
-            let dk = db.dompet.find(x => String(x.id) === String(u.dompetId));
-            if(dk) {
-                if(u.jenis === 'Piutang') dk.saldo -= Number(c.nominal);
-                else if(u.jenis === 'Utang') dk.saldo += Number(c.nominal);
+
+    if(!confirm("Yakin ingin menghapus riwayat cicilan ini?")) {
+        return;
+    }
+
+    let u =
+        db.utang.find(
+            x => String(x.id) === String(idUtang)
+        );
+
+    if(!u) return;
+
+    let c = u.cicilan[idx];
+
+    if(!c) return;
+
+    /*
+     * Kembalikan alokasi produk jika cicilan
+     * yang dihapus sebelumnya sudah melunasi produk.
+     */
+    if(Array.isArray(c.alokasi) && Array.isArray(u.rincianBarang)) {
+
+        c.alokasi.forEach(a => {
+
+            let r = u.rincianBarang[
+                Number(a.idx)
+            ];
+
+            if(!r) return;
+
+            r.dibayar =
+                Math.max(
+                    0,
+                    (Number(r.dibayar) || 0)
+                    - (Number(a.nominal) || 0)
+                );
+
+            // Jika transaksi tadi dibuat otomatis
+            // untuk riwayat manual, hapus kembali.
+            if(a.riwayatId) {
+
+                db.transaksi =
+                    db.transaksi.filter(
+                        t =>
+                            String(t.id) !==
+                            String(a.riwayatId)
+                    );
+
+            }
+
+            // Kalau transaksi kasir sebelumnya
+            // menjadi Lunas, kembalikan ke Piutang.
+            if(r.transId && r.dibayar < r.nominal) {
+
+                let td =
+                    db.transaksi.find(
+                        t =>
+                            String(t.id) ===
+                            String(r.transId)
+                    );
+
+                if(td) {
+
+                    td.status = 'Piutang';
+
+                    // Kembalikan tanggal transaksi asli
+                    if(r.tanggal) {
+                        td.tanggal = r.tanggal;
+                    }
+                }
+            }
+        });
+    }
+
+    // Kembalikan uang dari dompet
+    if(c && u.dompetId && u.dompetId !== 'none') {
+
+        let dk =
+            db.dompet.find(
+                x =>
+                    String(x.id) ===
+                    String(u.dompetId)
+            );
+
+        if(dk) {
+
+            if(u.jenis === 'Piutang') {
+                dk.saldo -= Number(c.nominal) || 0;
+            }
+
+            else if(u.jenis === 'Utang') {
+                dk.saldo += Number(c.nominal) || 0;
             }
         }
-        u.cicilan.splice(idx, 1);
-        let tD = u.cicilan.reduce((a,x) => a + (Number(x.nominal) || 0), 0);
-        if(tD < (Number(u.nominal) || 0)) u.status = 'Belum Lunas';
-        simpanData();
     }
 
-    function eksekusiSimpanCicilan(e) {
-        e.preventDefault();
-        try {
-            let idUtang = document.getElementById('cicilanUtangId').value; 
-            let idEdit = document.getElementById('editCicilanId').value;
-            let u = db.utang.find(x => String(x.id) === String(idUtang)); if(!u) return;
-            
-            let nom = getAngkaMurni(document.getElementById('cicilanNominal').value); 
-            let diskon = document.getElementById('cicilanDiskonOtomatis') ? getAngkaMurni(document.getElementById('cicilanDiskonOtomatis').value) : 0;
-            let tgl = document.getElementById('cicilanTgl').value;
-            let dMasuk = document.getElementById('cicilanDompetMasuk').value;
-            let ket = document.getElementById('cicilanKeterangan') ? document.getElementById('cicilanKeterangan').value.trim() : "";
-            
-            if(nom <= 0 && diskon <= 0) return alert("Isi nominal bayar atau diskon!");
+    u.cicilan.splice(idx, 1);
 
-            // Jika ada diskon, kita perlakukan diskon sebagai "Cicilan Tidak Berbayar" agar sisa tagihan berkurang
-            if(diskon > 0) {
-                u.cicilan.push({ id: Date.now() + 1, tanggal: tgl, hari: getNamaHari(tgl), nominal: diskon, keterangan: "Diskon/Potongan: " + ket });
+    let tD =
+        u.cicilan.reduce(
+            (a,x) =>
+                a + (Number(x.nominal) || 0),
+            0
+        );
+
+    if(tD < (Number(u.nominal) || 0)) {
+        u.status = 'Belum Lunas';
+    }
+
+    simpanData();
+}
+
+
+function eksekusiSimpanCicilan(e) {
+
+    e.preventDefault();
+
+    try {
+
+        let idUtang =
+            document.getElementById(
+                'cicilanUtangId'
+            ).value;
+
+        let idEdit =
+            document.getElementById(
+                'editCicilanId'
+            ).value;
+
+        let u =
+            db.utang.find(
+                x =>
+                    String(x.id) ===
+                    String(idUtang)
+            );
+
+        if(!u) return;
+
+        let nom =
+            getAngkaMurni(
+                document.getElementById(
+                    'cicilanNominal'
+                ).value
+            );
+
+        let diskon =
+            document.getElementById(
+                'cicilanDiskonOtomatis'
+            )
+            ? getAngkaMurni(
+                document.getElementById(
+                    'cicilanDiskonOtomatis'
+                ).value
+            )
+            : 0;
+
+        let tgl =
+            document.getElementById(
+                'cicilanTgl'
+            ).value;
+
+        let dMasuk =
+            document.getElementById(
+                'cicilanDompetMasuk'
+            ).value;
+
+        let ket =
+            document.getElementById(
+                'cicilanKeterangan'
+            )
+            ? document.getElementById(
+                'cicilanKeterangan'
+            ).value.trim()
+            : "";
+
+        if(nom <= 0 && diskon <= 0) {
+            return alert(
+                "Isi nominal bayar atau diskon!"
+            );
+        }
+
+        if(!Array.isArray(u.cicilan)) {
+            u.cicilan = [];
+        }
+
+        /*
+         * MODE EDIT LAMA
+         * ----------------
+         * Cicilan lama yang belum mempunyai
+         * alokasi produk tetap bisa diedit.
+         */
+        if(idEdit !== "") {
+
+            let idx =
+                parseInt(idEdit);
+
+            if(!u.cicilan[idx]) {
+                return alert(
+                    "Data cicilan tidak ditemukan."
+                );
             }
 
+            if(
+                Array.isArray(
+                    u.cicilan[idx].alokasi
+                ) &&
+                u.cicilan[idx].alokasi.length > 0
+            ) {
+                return alert(
+                    "Cicilan yang sudah dialokasikan " +
+                    "ke produk tidak bisa diedit langsung. " +
+                    "Hapus lalu catat ulang."
+                );
+            }
+
+            u.cicilan[idx].nominal = nom;
+            u.cicilan[idx].tanggal = tgl;
+            u.cicilan[idx].keterangan = ket;
+
+        } else {
+
+            /*
+             * MODE CICILAN BARU
+             */
+            let alokasiBaru = [];
+
+            if(
+                nom > 0 &&
+                Array.isArray(
+                    cicilanAlokasiDraft
+                ) &&
+                cicilanAlokasiDraft.length > 0 &&
+                Array.isArray(u.rincianBarang)
+            ) {
+
+                cicilanAlokasiDraft.forEach(a => {
+
+                    let r =
+                        u.rincianBarang[
+                            Number(a.idx)
+                        ];
+
+                    if(!r) return;
+
+                    let nominalAlokasi =
+                        Number(a.nominal) || 0;
+
+                    if(nominalAlokasi <= 0) {
+                        return;
+                    }
+
+                    r.dibayar =
+                        Math.min(
+                            Number(r.nominal) || 0,
+                            (Number(r.dibayar) || 0)
+                            + nominalAlokasi
+                        );
+
+                    let riwayatId = null;
+
+                    /*
+                     * Produk dari Kasir:
+                     * ubah transaksi asli menjadi Lunas.
+                     */
+                    if(r.transId) {
+
+                        let td =
+                            db.transaksi.find(
+                                t =>
+                                    String(t.id) ===
+                                    String(r.transId)
+                            );
+
+                        if(td &&
+                           r.dibayar >=
+                           (Number(r.nominal) || 0)
+                        ) {
+
+                            td.status = 'Lunas';
+                            td.tanggal = tgl;
+                        }
+
+                    }
+
+                    /*
+                     * Kalau rincian manual tanpa transId,
+                     * buat catatan Riwayat Lunas.
+                     */
+                    else if(
+                        u.jenis === 'Piutang' &&
+                        r.dibayar >=
+                        (Number(r.nominal) || 0)
+                    ) {
+
+                        riwayatId =
+                            Date.now() +
+                            Math.random();
+
+                        db.transaksi.push({
+                            id: riwayatId,
+                            tanggal: tgl,
+                            namaProduk:
+                                r.produk ||
+                                u.namaProduk ||
+                                'Pelunasan Kasbon',
+                            jumlah: 1,
+                            modal: 0,
+                            total: r.nominal,
+                            untung: r.nominal,
+                            status: 'Lunas',
+                            pembeli: u.nama,
+                            dompetId:
+                                u.dompetId ||
+                                'none'
+                        });
+                    }
+
+                    alokasiBaru.push({
+                        idx: Number(a.idx),
+                        nominal: nominalAlokasi,
+                        riwayatId: riwayatId
+                    });
+                });
+            }
+
+            /*
+             * Simpan cicilan.
+             *
+             * alokasi = bagian uang yang benar-benar
+             * dipakai untuk melunasi produk.
+             *
+             * Sisa nominal yang tidak ada di alokasi
+             * otomatis menjadi Dana Cicilan Pelanggan.
+             */
             if(nom > 0) {
-                if(idEdit !== "") {
-                    let idx = parseInt(idEdit);
-                    u.cicilan[idx].nominal = nom; 
-                    u.cicilan[idx].tanggal = tgl; 
-                    u.cicilan[idx].keterangan = ket;
-                } else {
-                    u.cicilan.push({ id: Date.now(), tanggal: tgl, hari: getNamaHari(tgl), nominal: nom, keterangan: ket }); 
+
+                u.cicilan.push({
+                    id: Date.now(),
+                    tanggal: tgl,
+                    hari: getNamaHari(tgl),
+                    nominal: nom,
+                    keterangan: ket,
+                    alokasi: alokasiBaru
+                });
+            }
+
+            /*
+             * Diskon tetap bekerja seperti sistem lama.
+             */
+            if(diskon > 0) {
+
+                u.cicilan.push({
+                    id: Date.now() + 1,
+                    tanggal: tgl,
+                    hari: getNamaHari(tgl),
+                    nominal: diskon,
+                    keterangan:
+                        "Diskon/Potongan: " +
+                        ket,
+                    alokasi: []
+                });
+            }
+        }
+
+        /*
+         * Uang benar-benar masuk/keluar dompet.
+         */
+        if(
+            dMasuk !== 'none' &&
+            nom > 0
+        ) {
+
+            let dk =
+                db.dompet.find(
+                    x =>
+                        String(x.id) ===
+                        String(dMasuk)
+                );
+
+            if(dk) {
+
+                if(u.jenis === 'Piutang') {
+                    dk.saldo += nom;
+                }
+
+                else if(u.jenis === 'Utang') {
+                    dk.saldo -= nom;
                 }
             }
-            
-            // ... (lanjutkan bagian dompet dan simpanData seperti biasa)
-            if(dMasuk !== 'none' && nom > 0) {
-                let dk = db.dompet.find(x => String(x.id) === String(dMasuk));
-                if(dk) {
-                    if(u.jenis === 'Piutang') dk.saldo += nom;
-                    else if(u.jenis === 'Utang') dk.saldo -= nom;
-                }
-            }
-            
-            let tD = u.cicilan.reduce((a,c) => a + (Number(c.nominal) || 0), 0);
-            if(tD >= (Number(u.nominal) || 0)) { selesaikanUtang(u); } else { u.status = 'Belum Lunas'; }
-            
-            simpanData(); document.getElementById('modal-cicilan').classList.remove('active');
-            alert("Cicilan/Potongan berhasil dicatat!");
-        } catch(err) { alert("Error: " + err.message); }
+        }
+
+        /*
+         * Cek apakah seluruh tagihan kasbon
+         * sudah benar-benar dibayar.
+         */
+        let tD =
+            u.cicilan.reduce(
+                (a,c) =>
+                    a + (Number(c.nominal) || 0),
+                0
+            );
+
+        if(
+            tD >=
+            (Number(u.nominal) || 0)
+        ) {
+
+            selesaikanUtang(u);
+
+        } else {
+
+            u.status = 'Belum Lunas';
+        }
+
+        cicilanAlokasiDraft = [];
+
+        simpanData();
+
+        document
+            .getElementById(
+                'modal-cicilan'
+            )
+            .classList.remove('active');
+
+        alert(
+            "✅ Cicilan berhasil dicatat!\n\n" +
+            "Produk yang dipilih sudah diproses sebagai pelunasan.\n" +
+            "Sisa pembayaran tetap menjadi Dana Cicilan Pelanggan."
+        );
+
+    } catch(err) {
+
+        alert(
+            "Error: " +
+            err.message
+        );
     }
+}
 
 
     // --- FUNGSI TABUNGAN (Di luar agar tombol tidak mati) ---
@@ -2124,17 +2912,72 @@ function renderDaftarTransaksiBeranda() {
                 elBadgePribadi.style.display = 'none';
             }
         } 
-        let totalPiutang = db.utang.filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas').reduce((s, u) => s + ((Number(u.nominal)||0) - (Array.isArray(u.cicilan) ? u.cicilan.reduce((a,c) => a+(Number(c.nominal)||0), 0) : 0)), 0);
-        let totalUtang = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').reduce((s, u) => s + ((Number(u.nominal)||0) - (Array.isArray(u.cicilan) ? u.cicilan.reduce((a,c) => a+(Number(c.nominal)||0), 0) : 0)), 0);
-        
-        let untungDiKasbon = db.transaksi.filter(t => t.status !== 'Lunas').reduce((s, t) => s + t.untung, 0);
-        let modalDiKasbon = totalPiutang - untungDiKasbon;
-        if(modalDiKasbon < 0) { modalDiKasbon = 0; untungDiKasbon = totalPiutang; } 
-        
-        let salPortal = sal;
-        if (db.simulasi.piutang) salPortal += modalDiKasbon;
-        if (db.simulasi.untungKasbon) salPortal += untungDiKasbon;
-        if (db.simulasi.utang) salPortal -= totalUtang;
+        let totalPiutang = db.utang
+    .filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas')
+    .reduce((s, u) => s + (
+        (Number(u.nominal) || 0) -
+        (Array.isArray(u.cicilan)
+            ? u.cicilan.reduce((a, c) => a + (Number(c.nominal) || 0), 0)
+            : 0)
+    ), 0);
+
+let totalUtang = db.utang
+    .filter(u => u.jenis === 'Utang' && u.status !== 'Lunas')
+    .reduce((s, u) => s + (
+        (Number(u.nominal) || 0) -
+        (Array.isArray(u.cicilan)
+            ? u.cicilan.reduce((a, c) => a + (Number(c.nominal) || 0), 0)
+            : 0)
+    ), 0);
+
+/*
+ * DANA CICILAN PELANGGAN
+ * ------------------------------------------
+ * Ini adalah uang yang sudah masuk ke dompet,
+ * tetapi belum dialokasikan untuk melunasi
+ * produk tertentu.
+ *
+ * Jadi TIDAK ditambahkan lagi ke Saldo.
+ */
+let danaCicilanPelanggan = db.utang
+    .filter(u => u.jenis === 'Piutang' && u.status !== 'Lunas')
+    .reduce((total, u) => {
+        if (!Array.isArray(u.cicilan)) return total;
+
+        return total + u.cicilan.reduce((hasil, c) => {
+            let masuk = Number(c.nominal) || 0;
+
+            let sudahDialokasikan = Array.isArray(c.alokasi)
+                ? c.alokasi.reduce((a, x) => a + (Number(x.nominal) || 0), 0)
+                : 0;
+
+            let sisaBelumDialokasikan = masuk - sudahDialokasikan;
+
+            return hasil + Math.max(0, sisaBelumDialokasikan);
+        }, 0);
+    }, 0);
+
+let untungDiKasbon = db.transaksi
+    .filter(t => t.status !== 'Lunas')
+    .reduce((s, t) => s + (Number(t.untung) || 0), 0);
+
+let modalDiKasbon = totalPiutang - untungDiKasbon;
+
+if(modalDiKasbon < 0) {
+    modalDiKasbon = 0;
+    untungDiKasbon = totalPiutang;
+}
+
+/*
+ * SALDO PORTAL
+ * Dana Cicilan TIDAK ditambahkan lagi.
+ * Karena uang tersebut sudah berada di Saldo Aktual.
+ */
+let salPortal = sal;
+
+if (db.simulasi.piutang) salPortal += modalDiKasbon;
+if (db.simulasi.untungKasbon) salPortal += untungDiKasbon;
+if (db.simulasi.utang) salPortal -= totalUtang;
 
         let elBadge = document.getElementById('badge-header-saldo');
         if (db.simulasi.terapkanKeHeader) { 
@@ -2146,20 +2989,64 @@ function renderDaftarTransaksiBeranda() {
         }
 
         if(document.getElementById('portal-saldo-asli')) {
-            document.getElementById('portal-saldo-asli').innerText = formatRupiah(sal);
-            
-            if(document.getElementById('portal-angka-piutang-modal')) document.getElementById('portal-angka-piutang-modal').innerText = formatRupiah(modalDiKasbon);
-            if(document.getElementById('portal-potensi-untung')) document.getElementById('portal-potensi-untung').innerText = formatRupiah(untungDiKasbon); 
-            document.getElementById('portal-angka-utang').innerText = formatRupiah(totalUtang);
-            
-            let elTotal = document.getElementById('portal-total-akhir');
-            elTotal.innerText = formatRupiah(salPortal); elTotal.className = salPortal < 0 ? "text-red" : "text-blue";
-            
-            document.getElementById('cb-portal-piutang').checked = db.simulasi.piutang; 
-            if(document.getElementById('cb-portal-untung')) document.getElementById('cb-portal-untung').checked = db.simulasi.untungKasbon || false;
-            document.getElementById('cb-portal-utang').checked = db.simulasi.utang;
-            if(document.getElementById('cb-portal-header')) document.getElementById('cb-portal-header').checked = db.simulasi.terapkanKeHeader;
-        }
+
+    // Saldo fisik/aktual semua dompet
+    document.getElementById('portal-saldo-asli').innerText =
+        formatRupiah(sal);
+
+    // Dana cicilan yang sudah masuk dompet tetapi belum dialokasikan
+    if(document.getElementById('portal-dana-cicilan')) {
+        document.getElementById('portal-dana-cicilan').innerText =
+            formatRupiah(danaCicilanPelanggan);
+    }
+
+    // Saldo bebas = saldo aktual - dana cicilan
+    let saldoBebas = sal - danaCicilanPelanggan;
+
+    if(document.getElementById('portal-saldo-bebas')) {
+        document.getElementById('portal-saldo-bebas').innerText =
+            formatRupiah(saldoBebas);
+    }
+
+    if(document.getElementById('portal-angka-piutang-modal')) {
+        document.getElementById('portal-angka-piutang-modal').innerText =
+            formatRupiah(modalDiKasbon);
+    }
+
+    if(document.getElementById('portal-potensi-untung')) {
+        document.getElementById('portal-potensi-untung').innerText =
+            formatRupiah(untungDiKasbon);
+    }
+
+    if(document.getElementById('portal-angka-utang')) {
+        document.getElementById('portal-angka-utang').innerText =
+            formatRupiah(totalUtang);
+    }
+
+    let elTotal = document.getElementById('portal-total-akhir');
+
+    if(elTotal) {
+        elTotal.innerText = formatRupiah(salPortal);
+        elTotal.className =
+            salPortal < 0 ? "text-red" : "text-blue";
+    }
+
+    document.getElementById('cb-portal-piutang').checked =
+        db.simulasi.piutang;
+
+    if(document.getElementById('cb-portal-untung')) {
+        document.getElementById('cb-portal-untung').checked =
+            db.simulasi.untungKasbon || false;
+    }
+
+    document.getElementById('cb-portal-utang').checked =
+        db.simulasi.utang;
+
+    if(document.getElementById('cb-portal-header')) {
+        document.getElementById('cb-portal-header').checked =
+            db.simulasi.terapkanKeHeader;
+    }
+}
 
         // Hitungan kaku Omset dihapus, sudah dipindah ke Mesin Kalkulator Dinamis
         document.getElementById('rekapPiutang').innerText = formatRupiah(totalPiutang); document.getElementById('rekapUtang').innerText = formatRupiah(totalUtang);
