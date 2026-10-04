@@ -2084,21 +2084,30 @@ function eksekusiSimpanCicilan(e) {
         let d = db.dompet.find(x => String(x.id) === String(idDompetAktif));
         if (!d) return;
 
-        document.getElementById('daftar-pecahan-dinamis').innerHTML = d.pecahan.map((p, idx) => `
+        document.getElementById('daftar-pecahan-dinamis').innerHTML = d.pecahan.map((p, idx) => {
+            // Mesin pembaca UI: Jika Auto 000 aktif, angka di kotak dibagi 1000 agar terlihat seperti aslinya
+            let nilaiTampil = p.nilai === 0 ? '' : (p.autoRibuan ? formatRupiah(p.nilai / 1000) : formatRupiah(p.nilai));
+            let adjustTampil = p.adjust ? formatRupiah(p.adjust) : '';
+            // Ganti warna tombol kalau saklar Auto 000 aktif
+            let btnAutoStyle = p.autoRibuan ? 'background:#28a745; color:white; border-color:#28a745;' : 'background:#fff; color:#007bff; border-color:#007bff;';
+
+            return `
         <div style="display:flex; align-items:center; background:#f8f9fa; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:8px;">
             <div style="flex:1;">
                 <span style="font-size:13px; font-weight:bold; color: #333; display:block; margin-bottom:5px;">${p.nama}</span>
                 <div style="display:flex; align-items:center; gap:5px;">
                     <span style="font-size:12px; color:#666; font-weight:bold;">Rp</span>
-                    <input type="text" id="input-pecahan-${idx}" inputmode="numeric" value="${p.nilai === 0 ? '' : formatRupiah(p.nilai)}" placeholder="0" oninput="formatInputRupiah(event); updateNilaiPecahan(${idx}, this.value)" style="margin-bottom:0; padding:8px; width:100px;">
+                    <input type="text" id="input-pecahan-${idx}" inputmode="numeric" value="${nilaiTampil}" placeholder="0" oninput="formatInputRupiah(event); updateNilaiPecahan(${idx}, this.value)" style="margin-bottom:0; padding:8px; width:100px;">
                     
                     <button type="button" class="btn-outline" style="width:auto; padding:8px; margin:0; font-size:12px; background:#fff;" onmousedown="event.preventDefault()" onclick="tambahNolTigaPecahan(${idx})"><b>000</b></button>
                     
+                    <button type="button" class="btn-outline" style="width:auto; padding:8px; margin:0; font-size:12px; ${btnAutoStyle}" onmousedown="event.preventDefault()" onclick="toggleAutoRibuan(${idx})"><b>Auto 000</b></button>
+
                     <button type="button" class="btn-warning" style="width:auto; padding:8px; margin:0; font-size:13px; border:none; background:#ffc107;" onmousedown="event.preventDefault()" onclick="resetNilaiPecahan(${idx})">🧹</button>
                 </div>
                 
                 <div style="display:flex; align-items:center; gap:5px; margin-top: 5px;">
-                    <input type="text" id="input-adjust-${idx}" inputmode="numeric" placeholder="Hitung cepat (Rp)" oninput="formatInputRupiah(event)" style="margin-bottom:0; padding:6px; width:115px; font-size:11px;">
+                    <input type="text" id="input-adjust-${idx}" inputmode="numeric" value="${adjustTampil}" placeholder="Hitung cepat (Rp)" oninput="formatInputRupiah(event); simpanNilaiAdjust(${idx}, this.value)" style="margin-bottom:0; padding:6px; width:115px; font-size:11px;">
                     <button type="button" class="btn-green" style="width:auto; padding:6px 12px; margin:0; font-size:11px;" onclick="adjustPecahan(${idx}, 'tambah')">➕</button>
                     <button type="button" class="btn-red" style="width:auto; padding:6px 12px; margin:0; font-size:11px;" onclick="adjustPecahan(${idx}, 'kurang')">➖</button>
                 </div>
@@ -2106,7 +2115,8 @@ function eksekusiSimpanCicilan(e) {
                 <div class="text-bantuan" id="bantuan-pecahan-${idx}" style="font-size:10px; color:#888; margin-top:3px;">Terbaca: Rp ${formatRupiah(p.nilai)}</div>
             </div>
             <button type="button" class="btn-red" style="width:auto; padding:10px 12px; margin-left:5px; font-size:12px; border-radius:6px;" onclick="hapusBarisPecahan(${idx})">X</button>
-        </div>`).join(''); 
+        </div>`
+        }).join(''); 
         
         hitungOtomatisPecahan();
     }
@@ -2153,9 +2163,38 @@ function eksekusiSimpanCicilan(e) {
         inputEl.focus(); // Tarik paksa keyboard agar tetap tampil di layar
     }
 
-    function tambahPecahan() { let namaP = prompt("Masukkan jenis pecahan:"); if(namaP && namaP.trim() !== "") { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.push({ nama: namaP.trim(), nilai: 0 }); renderPecahanDompet(); } }
+    function tambahPecahan() { let namaP = prompt("Masukkan jenis pecahan:"); if(namaP && namaP.trim() !== "") { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.push({ nama: namaP.trim(), nilai: 0, adjust: 0, autoRibuan: false }); renderPecahanDompet(); } }
     function hapusBarisPecahan(idx) { if(confirm("Hapus baris pecahan ini?")) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); d.pecahan.splice(idx, 1); renderPecahanDompet(); } }
-    function updateNilaiPecahan(idx, val) { let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); let angka = getAngkaMurni(val); d.pecahan[idx].nilai = angka; document.getElementById('bantuan-pecahan-'+idx).innerText = "Terbaca: Rp " + formatRupiah(angka); hitungOtomatisPecahan(); }
+    function updateNilaiPecahan(idx, val) { 
+        let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); 
+        let angka = getAngkaMurni(val); 
+        // Jika saklar Auto 000 aktif, angka yang diketik otomatis dikali 1000 di background
+        if(d.pecahan[idx].autoRibuan) angka = angka * 1000;
+        
+        d.pecahan[idx].nilai = angka; 
+        document.getElementById('bantuan-pecahan-'+idx).innerText = "Terbaca: Rp " + formatRupiah(angka); 
+        hitungOtomatisPecahan(); 
+        // Simpan senyap agar aman bila ter-refresh (tanpa render ulang UI biar keyboard gak hilang)
+        localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
+    }
+
+    function toggleAutoRibuan(idx) {
+        let d = db.dompet.find(x => String(x.id) === String(idDompetAktif));
+        // Balikkan state saklar (On/Off)
+        d.pecahan[idx].autoRibuan = !d.pecahan[idx].autoRibuan;
+        
+        let inputEl = document.getElementById('input-pecahan-' + idx);
+        if(inputEl) updateNilaiPecahan(idx, inputEl.value);
+        
+        renderPecahanDompet(); // Refresh UI untuk mengganti warna tombol
+    }
+
+    function simpanNilaiAdjust(idx, val) {
+        let d = db.dompet.find(x => String(x.id) === String(idDompetAktif));
+        d.pecahan[idx].adjust = getAngkaMurni(val);
+        localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
+    }
+
     function hitungOtomatisPecahan() {
         let d = db.dompet.find(x => String(x.id) === String(idDompetAktif)); let totalFisik = d.pecahan.reduce((sum, p) => sum + p.nilai, 0); document.getElementById('jd-saldo-fisik').innerText = formatRupiah(totalFisik);
         let selisih = totalFisik - d.saldo; let elSelisih = document.getElementById('jd-status-selisih');
