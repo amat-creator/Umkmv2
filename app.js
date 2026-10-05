@@ -2938,6 +2938,88 @@ function renderDaftarTransaksiBeranda() {
         document.getElementById('peringatanPersen').style.display = (pTot>0&&pTot!==100)?'block':'none'; 
     }
 
+    // ========================================================
+    // 🗂️ AREA KHUSUS MESIN FOLDER (DOMPET, DLL)
+    // Area ini dibuat agar aman saat kita mau otak-atik (odadek)
+    // ========================================================
+    function toggleFolderDinamis(idFolder) {
+        let el = document.getElementById(idFolder);
+        if (el) el.classList.toggle('active');
+    }
+
+    function renderDaftarDompetFolder() {
+        let wadah = document.getElementById('listDompet');
+        if (!wadah) return;
+
+        if (db.dompet.length === 0) {
+            wadah.innerHTML = '<div class="text-small text-center" style="padding:15px; color: gray;">Belum ada dompet.</div>';
+            return;
+        }
+
+        // 1. Kelompokkan Dompet Berdasarkan Kategori
+        let grupKat = {
+            "Kas Fisik": [],
+            "Bank Digital": [],
+            "Pribadi": [],
+            "Lainnya": []
+        };
+
+        db.dompet.forEach((d, index) => {
+            let dLengkap = { ...d, indexAsli: index };
+            let kat = d.kategori || 'Kas Fisik';
+            if (grupKat[kat]) grupKat[kat].push(dLengkap);
+            else grupKat["Lainnya"].push(dLengkap);
+        });
+
+        // 2. Render HTML Folder
+        let htmlFinal = "";
+        let folderIkon = { "Kas Fisik": "💵", "Bank Digital": "🏦", "Pribadi": "💼", "Lainnya": "📁" };
+
+        for (let namaKat in grupKat) {
+            let isiDompet = grupKat[namaKat];
+            if (isiDompet.length > 0) {
+                let totalSaldoGrup = isiDompet.reduce((sum, d) => sum + (Number(d.saldo) || 0), 0);
+                let idFolder = "folder-dompet-" + namaKat.replace(/\s+/g, '-').toLowerCase();
+
+                htmlFinal += `
+                <div class="kat-folder" onclick="toggleFolderDinamis('${idFolder}')">
+                    <div>${folderIkon[namaKat]} ${namaKat}</div>
+                    <div style="font-size:11px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:12px;">
+                        ${isiDompet.length} Dompet | Rp ${formatRupiah(totalSaldoGrup)}
+                    </div>
+                </div>
+                <div id="${idFolder}" class="kat-content active">`;
+                
+                htmlFinal += isiDompet.map(d => `
+                <div class="list-item" ondblclick="geserPosisiDompet(${d.indexAsli})" style="border-left: 4px solid var(--primary); padding: 10px; background: #fff; margin-bottom:8px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05); cursor: pointer;" title="Ketuk 2x untuk geser urutan!">
+                    <div class="flex-between" style="align-items: center;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" class="check-dompet" value="${d.id}" style="width:auto; margin:0;" onchange="cekStatusPilihSemuaDompet()">
+                            <div>
+                                <b style="font-size: 14px;">${d.nama}</b><br>
+                                <span class="text-green" style="font-size: 13px; font-weight: bold;">Rp ${formatRupiah(d.saldo)}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Tombol Aksi Minimalis 1 Baris -->
+                        <div style="display:flex; gap:5px;">
+                            <button type="button" class="btn-outline" style="width:auto; padding:6px 8px; margin:0; font-size:14px; background: #eef2f5;" onclick="bukaDetailDompet('${d.id}')" title="Hitung Pecahan">🧮</button>
+                            <button type="button" class="btn-green" style="width:auto; padding:6px 8px; margin:0; font-size:14px; border:none;" onclick="bukaModalBungaBank('${d.id}')" title="Bunga Bank">🌱</button>
+                            <button type="button" class="btn-warning" style="width:auto; padding:6px 8px; margin:0; font-size:14px; border:none; color:white;" onclick="bukaModalEditSaldo('${d.id}')" title="Edit Saldo">✏️</button>
+                            <button type="button" class="btn-red" style="width:auto; padding:6px 8px; margin:0; font-size:14px;" onclick="hapusDompetItem('${d.id}')" title="Hapus Dompet">🗑️</button>
+                        </div>
+                    </div>
+                </div>`).join('');
+                
+                htmlFinal += `</div>`;
+            }
+        }
+        wadah.innerHTML = htmlFinal;
+    }
+    // ========================================================
+    // AKHIR AREA KHUSUS MESIN FOLDER
+    // ========================================================
+
     function updateSemuaTampilan() {
         let sal = db.dompet.filter(d => d.kategori !== 'Pribadi').reduce((s, d) => s + parseInt(d.saldo||0), 0); 
         let salPribadi = db.dompet.filter(d => d.kategori === 'Pribadi').reduce((s, d) => s + parseInt(d.saldo||0), 0);
@@ -3132,27 +3214,7 @@ if (db.simulasi.utang) salPortal -= totalUtang;
         try { renderKasbonList(); } catch(e) {}
         try { renderPengeluaranList(); } catch(e) {}
         
-        document.getElementById('listDompet').innerHTML = db.dompet.map((d, index) => `
-        <div class="list-item" ondblclick="geserPosisiDompet(${index})" style="border-left: 4px solid var(--primary); padding: 12px; background: #fdfdfd; margin-bottom:12px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1); cursor: pointer;" title="Ketuk 2x untuk geser urutan!">
-            <div class="flex-between" style="align-items: center;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" class="check-dompet" value="${d.id}" style="width:auto; margin:0;" onchange="cekStatusPilihSemuaDompet()">
-                    <div>
-                        <b style="font-size: 15px;">${d.nama}</b><br>
-                        <span class="text-small" style="color:#888;">${d.kategori || 'Kas Fisik'}</span><br>
-                        <span class="text-green" style="font-size: 14px; font-weight: bold;">Rp ${formatRupiah(d.saldo)}</span>
-                    </div>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
-                    <button type="button" class="btn-outline" style="width:auto; padding:6px 12px; margin:0; font-size:11px; background: #eef2f5;" onclick="bukaDetailDompet('${d.id}')">📝 Hitung Pecahan ➡</button>
-                    <div style="display:flex; gap:5px;">
-                        <button type="button" class="btn-green" style="width:auto; padding:4px 8px; margin:0; font-size:10px; border:none;" onclick="bukaModalBungaBank('${d.id}')">🌱 Bunga</button>
-                        <button type="button" class="btn-warning" style="width:auto; padding:4px 8px; margin:0; font-size:10px; border:none;" onclick="bukaModalEditSaldo('${d.id}')">✏️ Edit</button>
-                        <button type="button" class="btn-red" style="width:auto; padding:4px 8px; margin:0; font-size:10px;" onclick="hapusDompetItem('${d.id}')">Hapus</button>
-                    </div>
-                </div>
-            </div>
-        </div>`).join('') || '<div class="text-small text-center" style="padding:15px; color: gray;">Belum ada dompet.</div>';
+        try { renderDaftarDompetFolder(); } catch(e) { console.log("Gagal memuat folder dompet: ", e); }
         
         try { renderAlokasiList(); } catch(e) {}
     }
