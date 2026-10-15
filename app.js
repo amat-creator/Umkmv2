@@ -2099,11 +2099,11 @@ function eksekusiSimpanCicilan(e) {
                     <span style="font-size:12px; color:#666; font-weight:bold;">Rp</span>
                     <input type="text" id="input-pecahan-${idx}" inputmode="numeric" value="${nilaiTampil}" placeholder="0" oninput="formatInputRupiah(event); updateNilaiPecahan(${idx}, this.value)" style="margin-bottom:0; padding:8px; width:100px;">
                     
-                    <button type="button" class="btn-outline" style="width:auto; padding:8px; margin:0; font-size:12px; background:#fff;" onmousedown="event.preventDefault()" onclick="tambahNolTigaPecahan(${idx})"><b>000</b></button>
+                    <button type="button" class="btn-outline" style="width:auto; padding:8px; margin:0; font-size:12px; background:#fff;" onclick="tambahNolTigaPecahan(${idx})"><b>000</b></button>
                     
-                    <button type="button" class="btn-outline" style="width:auto; padding:8px; margin:0; font-size:12px; ${btnAutoStyle}" onmousedown="event.preventDefault()" onclick="toggleAutoRibuan(${idx})"><b>Auto 000</b></button>
+                    <button type="button" class="btn-outline" style="width:auto; padding:8px; margin:0; font-size:12px; ${btnAutoStyle}" onclick="toggleAutoRibuan(${idx})"><b>Auto 000</b></button>
 
-                    <button type="button" class="btn-warning" style="width:auto; padding:8px; margin:0; font-size:13px; border:none; background:#ffc107;" onmousedown="event.preventDefault()" onclick="resetNilaiPecahan(${idx})">🧹</button>
+                    <button type="button" class="btn-warning" style="width:auto; padding:8px; margin:0; font-size:13px; border:none; background:#ffc107;" onclick="resetNilaiPecahan(${idx})">🧹</button>
                 </div>
                 
                 <div style="display:flex; align-items:center; gap:5px; margin-top: 5px;">
