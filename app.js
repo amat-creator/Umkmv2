@@ -2003,7 +2003,7 @@ function eksekusiSimpanCicilan(e) {
         
         simpanData();
         document.getElementById('modal-bunga-bank').classList.remove('active');
-        alert("Sip! Bunga " + persen + "% per hari aktif untuk " + d.nama);
+        alert("Sip! Bunga " + persen + "% per tahun (p.a.) aktif untuk " + d.nama);
     }
 
 
