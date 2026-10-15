@@ -2578,29 +2578,29 @@ function renderDaftarTransaksiBeranda() {
     function tambahBarisInfo(label = '', value = '') { let idWadah = document.getElementById('wadahInfoPelanggan'); let div = document.createElement('div'); div.className = 'info-row grid-2'; div.style.gridTemplateColumns = "1fr 2fr 30px"; div.innerHTML = `<input type="text" class="info-label" placeholder="Cth: PLN/BCA" value="${label}"><input type="text" class="info-value" placeholder="Nomornya..." value="${value}"><button type="button" class="btn-red" style="padding:0; height:38px; width:100%; font-size:16px;" onclick="this.parentElement.remove()">×</button>`; idWadah.appendChild(div); }
 
     function eksekusiSimpanPelanggan(e) { 
-    e.preventDefault();
-    try { 
-        let idEdit = document.getElementById('editFormPelId').value; 
-        let nama = document.getElementById('formPelNama').value.trim(); 
-        if(!nama) return alert("Nama pelanggan harus diisi!");
-        let baris = document.querySelectorAll('#wadahInfoPelanggan .info-row'); 
-        let infoArr = []; 
-        baris.forEach(row => { 
-            let l = row.querySelector('.info-label').value.trim(); 
-            let v = row.querySelector('.info-value').value.trim(); 
-            if(l || v) infoArr.push({ label: l || 'Info', value: v }); 
-        }); 
-        
-        let tipePel = document.getElementById('formPelTipe') ? document.getElementById('formPelTipe').value : 'Biasa';
-        if(idEdit !== "") { 
-            let p = db.pelanggan.find(x => String(x.id) === String(idEdit)); 
-            if(p) { 
-                let namaLama = p.nama; // Simpan nama lama sebelum ditimpa
-                p.nama = nama; 
-                p.info = infoArr; 
-                p.tipe = tipePel;
-                
-                                   // Sinkronisasi: Ubah nama di database transaksi agar Rapor Pelanggan tetap menyatu
+        e.preventDefault();
+        try { 
+            let idEdit = document.getElementById('editFormPelId').value; 
+            let nama = document.getElementById('formPelNama').value.trim(); 
+            if(!nama) return alert("Nama pelanggan harus diisi!");
+            let baris = document.querySelectorAll('#wadahInfoPelanggan .info-row'); 
+            let infoArr = []; 
+            baris.forEach(row => { 
+                let l = row.querySelector('.info-label').value.trim(); 
+                let v = row.querySelector('.info-value').value.trim(); 
+                if(l || v) infoArr.push({ label: l || 'Info', value: v }); 
+            }); 
+            
+            let tipePel = document.getElementById('formPelTipe') ? document.getElementById('formPelTipe').value : 'Biasa';
+            if(idEdit !== "") { 
+                let p = db.pelanggan.find(x => String(x.id) === String(idEdit)); 
+                if(p) { 
+                    let namaLama = p.nama; // Simpan nama lama sebelum ditimpa
+                    p.nama = nama; 
+                    p.info = infoArr; 
+                    p.tipe = tipePel;
+                    
+                    // Sinkronisasi: Ubah nama di database transaksi agar Rapor Pelanggan tetap menyatu
                     if (namaLama !== nama) {
                         if (db.transaksi) {
                             db.transaksi.forEach(t => { 
@@ -2613,14 +2613,14 @@ function renderDaftarTransaksiBeranda() {
                             });
                         }
                     }
-
-        } else { 
-            db.pelanggan.push({ id: Date.now(), nama: nama, info: infoArr, tipe: tipePel }); 
-        } 
-        simpanData(); 
-        batalEditPelanggan(); // Fungsi ini sempat gaib, sekarang aman!
-    } catch(e) { alert("Error: " + e.message); } 
-}
+                }
+            } else { 
+                db.pelanggan.push({ id: Date.now(), nama: nama, info: infoArr, tipe: tipePel }); 
+            } 
+            simpanData(); 
+            batalEditPelanggan(); // Fungsi ini sempat gaib, sekarang aman!
+        } catch(e) { alert("Error: " + e.message); } 
+    }
 
 
     // FUNGSI INI SEMPAT HILANG (Buat narik data ke atas)
