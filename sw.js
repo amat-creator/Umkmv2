@@ -1,12 +1,13 @@
 const CACHE_NAME = 'amat-pro-v1';
 const urlsToCache = [
   './',
-  './index_3.html',
-  './app_3.js',
+  './index.html',
+  './app.js',
   './style.css',
   './manifest.json',
   './icon-toko.png'
 ];
+
 
 self.addEventListener('install', (e) => {
   console.log('Service Worker: Ter-install');
