@@ -2414,7 +2414,13 @@ function eksekusiSimpanCicilan(e) {
             if(tempStatusLama === 'Lunas' && t.dompetMasuk && t.dompetMasuk !== 'none') { let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk)); if(dk) dk.saldo -= t.total; }
             
             t.tanggal = document.getElementById('editTransTgl').value; 
-            t.pembeli = document.getElementById('editTransPelangganNama').value || 'Umum'; 
+            
+            // --- FIX BUG NAMA PEMBELI ---
+            let nmPel = document.getElementById('editTransPelangganNama').value || 'Umum';
+            if (nmPel === "Umum / Pelanggan Baru") nmPel = "Umum";
+            t.pembeli = nmPel; 
+            // -----------------------------
+            
             t.namaProduk = document.getElementById('editTransProduk').value; 
             t.modal = getAngkaMurni(document.getElementById('editTransModal').value); 
             t.total = getAngkaMurni(document.getElementById('editTransTotal').value); 
