@@ -2308,8 +2308,23 @@ function eksekusiSimpanCicilan(e) {
             let data = db.pelanggan.map((p, i) => ({...p, idAsli: p.id})).filter(p => { if(p.nama.toLowerCase().includes(kw)) return true; let foundInInfo = false; (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().includes(kw) || inf.value.toLowerCase().includes(kw)) foundInInfo = true; }); return foundInInfo; });
             if("umum pelanggan baru".includes(kw) || kw === "") html += `<div class="search-item" onclick="pilihPelanggan('', 'Umum / Pelanggan Baru')"><b>Umum / Pelanggan Baru</b></div>`;
             html += data.map(p => {
-                let namaAman = p.nama.replace(/\r/g, '').replace(/'/g, "\\'");
-                return `<div class="search-item" onclick="pilihPelanggan('${p.idAsli}', '${namaAman}')"><b>${p.nama.replace(/\r/g, '')}</b></div>`;
+                const namaBersih = String(p.nama || '').replace(/\r/g, '');
+                const idAman = String(p.id);
+
+                return `
+                    <div class="search-item"
+                         data-pelanggan-id="${encodeURIComponent(idAman)}"
+                         data-pelanggan-nama="${encodeURIComponent(namaBersih)}"
+                         onclick="pilihPelanggan(
+                             decodeURIComponent(this.dataset.pelangganId),
+                             decodeURIComponent(this.dataset.pelangganNama)
+                         )">
+                        <b>${namaBersih.replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')}</b>
+                    </div>
+                `;
             }).join('');
         }
         document.getElementById('listHasilPencarian').innerHTML = html;
