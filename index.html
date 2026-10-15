@@ -1,3 +1,5 @@
+</body>
+</html>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -1344,19 +1346,7 @@
 </div>
 
 <!-- Panggilan ke file Javascript Eksternal -->
-<script src="app.js"></script>
+<script src="app_3.js"></script>
 
-<script>
-    // Pendaftaran Service Worker agar aplikasi bisa diinstal (PWA)
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                console.log('Service Worker PWA berhasil didaftarkan!', reg);
-            }).catch(err => {
-                console.log('Pendaftaran Service Worker gagal:', err);
-            });
-        });
-    }
-</script>
 </body>
 </html>
