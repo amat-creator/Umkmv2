@@ -2600,20 +2600,20 @@ function renderDaftarTransaksiBeranda() {
                 p.info = infoArr; 
                 p.tipe = tipePel;
                 
-                // Sinkronisasi: Ubah nama di database transaksi agar Rapor Pelanggan tetap menyatu
-                if (namaLama !== nama) {
-                    if (db.transaksi) {
-                        db.transaksi.forEach(t => { 
-                            if (t.pembeli === namaLama) t.pembeli = nama; 
-                        });
+                                   // Sinkronisasi: Ubah nama di database transaksi & kasbon agar tetap menyatu
+                    if (namaLama !== nama) {
+                        if (db.transaksi) {
+                            db.transaksi.forEach(t => { 
+                                if (t.pembeli === namaLama) t.pembeli = nama; 
+                            });
+                        }
+                        if (db.utang) {
+                            db.utang.forEach(u => { 
+                                if (u.nama === namaLama) u.nama = nama; 
+                            });
+                        }
                     }
-                    if (db.utang) { // Sinkronisasi di menu Kasbon/Utang
-                        db.utang.forEach(u => { 
-                            if (u.nama === namaLama) u.nama = nama; // PERBAIKAN: Menggunakan u.nama
-                        });
-                    }
-                }
-            } 
+
         } else { 
             db.pelanggan.push({ id: Date.now(), nama: nama, info: infoArr, tipe: tipePel }); 
         } 
