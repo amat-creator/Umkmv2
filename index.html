@@ -531,6 +531,7 @@
 
     <div id="page-utang" class="page">
         <div class="card">
+            <button type="button" class="btn-outline btn-back" onclick="bukaHalaman('menu', null, 'Menu Lainnya')">⬅ Kembali ke Menu</button>
             <h4>Catat Kasbon / Piutang Baru</h4>
             <p class="text-small" style="margin-bottom:10px;">Catat utangan di sini. Uang akan dipotong/ditambah ke Dompet.</p>
             <form onsubmit="eksekusiTambahUtang(event)" style="margin-top: 10px;">
@@ -1019,10 +1020,9 @@
         </div>
 
         <div id="sub-portal" class="card" style="display:none;">
-            <div id="sub-portal" class="card" style="display:none;">
-    <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
 
-    <h4>⚖️ Portal Dompet (Simulasi Kas)</h4>
+            <h4>⚖️ Portal Dompet (Simulasi Kas)</h4>
     <p class="text-small" style="margin-bottom: 10px;">
         Lihat total kekayaanmu jika semua utang/piutang dilunasi.
     </p>
