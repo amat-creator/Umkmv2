@@ -2289,7 +2289,7 @@ function eksekusiSimpanCicilan(e) {
     function cekStatusPilihSemua() { let cb = document.querySelectorAll('.check-produk'); if(document.getElementById('checkSemuaProduk')) document.getElementById('checkSemuaProduk').checked = (cb.length > 0 && document.querySelectorAll('.check-produk:not(:checked)').length === 0); }
     function hapusProdukTerpilih() { let arr = Array.from(document.querySelectorAll('.check-produk:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Pilih minimal 1!"); if(confirm(`Hapus ${arr.length} produk?`)) { db.produk = db.produk.filter(p => !arr.includes(String(p.id))); if(document.getElementById('checkSemuaProduk')) document.getElementById('checkSemuaProduk').checked = false; simpanData(); } }
 
-    function bukaPencarian(tipe) { modePencarian = tipe; document.getElementById('modal-pencarian').classList.add('active'); document.getElementById('judulPencarian').innerText = (tipe === 'produk') ? 'Pencarian Produk' : 'Pencarian Pelanggan'; let input = document.getElementById('inputPencarian'); input.value = ''; filterPencarian(); setTimeout(() => input.focus(), 100); }
+    function bukaPencarian(tipe) { modePencarian = tipe; document.getElementById('modal-pencarian').classList.add('active'); document.getElementById('judulPencarian').innerText = (tipe.startsWith('produk')) ? 'Pencarian Produk' : 'Pencarian Pelanggan'; let input = document.getElementById('inputPencarian'); input.value = ''; filterPencarian(); }
     function tutupPencarian() { document.getElementById('modal-pencarian').classList.remove('active'); }
     function filterPencarian() {
         let kw = document.getElementById('inputPencarian').value.toLowerCase(); let html = '';
@@ -2345,6 +2345,7 @@ function eksekusiSimpanCicilan(e) {
     }
 
     function pilihPelanggan(i, nama) { 
+        let namaTampil = (nama === "Umum / Pelanggan Baru") ? "Umum" : nama;
         if (modePencarian === 'pelanggan-kasir') {
             let isReseller = false;
             if(i) { let pData = db.pelanggan.find(x => String(x.id) === String(i)); if(pData && pData.tipe === 'Reseller') isReseller = true; }
@@ -2373,13 +2374,13 @@ function eksekusiSimpanCicilan(e) {
                 }
             }
         } else if (modePencarian === 'pelanggan-utang') {
-            document.getElementById('utangPelangganId').value = i; document.getElementById('labelUtangPelanggan').innerHTML = `<b>${nama}</b>`; 
+            document.getElementById('utangPelangganId').value = i; document.getElementById('labelUtangPelanggan').innerHTML = `<b>${namaTampil}</b>`; 
         } else if (modePencarian === 'pelanggan-tabungan') {
-            document.getElementById('tabunganPelangganId').value = i; document.getElementById('labelTabunganPelanggan').innerHTML = `<b>${nama}</b>`; 
+            document.getElementById('tabunganPelangganId').value = i; document.getElementById('labelTabunganPelanggan').innerHTML = `<b>${namaTampil}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-kasbon') {
-            document.getElementById('editKasbonNama').value = nama; document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${nama}</b>`; 
+            document.getElementById('editKasbonNama').value = namaTampil; document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${namaTampil}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-trans') {
-            document.getElementById('editTransPelangganNama').value = nama; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${nama}</b>`; 
+            document.getElementById('editTransPelangganNama').value = namaTampil; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${namaTampil}</b>`; 
         }
         tutupPencarian(); 
 
