@@ -228,8 +228,8 @@ function simpanData(renderFungsiKhusus = null) {
         if(sub==='sub-rapor-pelanggan') { jd="Rapor Pelanggan"; renderRaporPelanggan(); }
         if(sub==='sub-analisa-kategori') { jd="Laporan Folder"; renderAnalisaKategori(); }
         if(sub==='sub-pengeluaran') { jd="Pengeluaran"; document.getElementById('pengeluaranTgl').value = ambilTanggal(); }
-        if(sub==='sub-pelanggan') jd="Data Pelanggan"; 
-        if(sub==='sub-dompet') jd="Dompet Manual"; 
+        if(sub==='sub-pelanggan') { jd="Data Pelanggan"; renderDaftarPelanggan(); } 
+        if(sub==='sub-dompet') { jd="Dompet Manual"; renderDaftarDompetFolder(); } 
         if(sub==='sub-backup') jd="Data Excel"; 
         if(sub==='sub-tema') jd="Tema Aplikasi"; 
         if(sub==='sub-riwayat') jd="Riwayat Full"; 
