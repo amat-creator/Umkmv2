@@ -48,6 +48,12 @@
                 let parsedData = JSON.parse(savedData);
                 db = { ...db, ...parsedData }; 
                 if(typeof db.saldo !== 'undefined') { db.dompet = [{ id: Date.now(), nama: "Dompet Utama", kategori: "Kas Fisik", saldo: db.saldo, pecahan: [] }]; delete db.saldo; }
+                
+                // --- SAPU BERSIH NAMA PELANGGAN BUG LAMA ---
+                if(db.transaksi) db.transaksi.forEach(t => { if(t.pembeli === "Umum / Pelanggan Baru") t.pembeli = "Umum"; });
+                if(db.utang) db.utang.forEach(u => { if(u.nama === "Umum / Pelanggan Baru") u.nama = "Umum"; });
+                simpanData(null); // Simpan perbaikan otomatis
+                // ---------------------------------------------
             } catch (error) {
                 console.error("Data JSON bermasalah:", error);
                 alert("⚠️ Sistem mendeteksi error pada data penyimpanan (JSON).\n\nJika layar nge-blank atau data hilang, silakan masuk ke 'Menu Lainnya' -> 'Data Excel / Backup' lalu gunakan tombol 'Pulihkan Data' dari file .json terakhirmu.");
@@ -2345,6 +2351,12 @@ function eksekusiSimpanCicilan(e) {
     }
 
     function pilihPelanggan(i, nama) { 
+        // --- FIX PUSAT BUG NAMA UMUM ---
+        if (nama === "Umum / Pelanggan Baru") {
+            nama = "Umum";
+        }
+        // -------------------------------
+
         if (modePencarian === 'pelanggan-kasir') {
             let isReseller = false;
             if(i) { let pData = db.pelanggan.find(x => String(x.id) === String(i)); if(pData && pData.tipe === 'Reseller') isReseller = true; }
