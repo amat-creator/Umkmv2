@@ -2600,16 +2600,16 @@ function renderDaftarTransaksiBeranda() {
                 p.info = infoArr; 
                 p.tipe = tipePel;
                 
-                                   // Sinkronisasi: Ubah nama di database transaksi & kasbon agar tetap menyatu
+                                   // Sinkronisasi: Ubah nama di database transaksi agar Rapor Pelanggan tetap menyatu
                     if (namaLama !== nama) {
                         if (db.transaksi) {
                             db.transaksi.forEach(t => { 
                                 if (t.pembeli === namaLama) t.pembeli = nama; 
                             });
                         }
-                        if (db.utang) {
+                        if (db.utang) { // Jaga-jaga untuk sinkronisasi di menu Kasbon/Utang (jika ada)
                             db.utang.forEach(u => { 
-                                if (u.nama === namaLama) u.nama = nama; 
+                                if (u.pembeli === namaLama) u.pembeli = nama; 
                             });
                         }
                     }
