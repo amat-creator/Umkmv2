@@ -48,12 +48,6 @@
                 let parsedData = JSON.parse(savedData);
                 db = { ...db, ...parsedData }; 
                 if(typeof db.saldo !== 'undefined') { db.dompet = [{ id: Date.now(), nama: "Dompet Utama", kategori: "Kas Fisik", saldo: db.saldo, pecahan: [] }]; delete db.saldo; }
-                
-                // --- SAPU BERSIH NAMA PELANGGAN BUG LAMA ---
-                if(db.transaksi) db.transaksi.forEach(t => { if(t.pembeli === "Umum / Pelanggan Baru") t.pembeli = "Umum"; });
-                if(db.utang) db.utang.forEach(u => { if(u.nama === "Umum / Pelanggan Baru") u.nama = "Umum"; });
-                simpanData(null); // Simpan perbaikan otomatis
-                // ---------------------------------------------
             } catch (error) {
                 console.error("Data JSON bermasalah:", error);
                 alert("⚠️ Sistem mendeteksi error pada data penyimpanan (JSON).\n\nJika layar nge-blank atau data hilang, silakan masuk ke 'Menu Lainnya' -> 'Data Excel / Backup' lalu gunakan tombol 'Pulihkan Data' dari file .json terakhirmu.");
@@ -2308,23 +2302,8 @@ function eksekusiSimpanCicilan(e) {
             let data = db.pelanggan.map((p, i) => ({...p, idAsli: p.id})).filter(p => { if(p.nama.toLowerCase().includes(kw)) return true; let foundInInfo = false; (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().includes(kw) || inf.value.toLowerCase().includes(kw)) foundInInfo = true; }); return foundInInfo; });
             if("umum pelanggan baru".includes(kw) || kw === "") html += `<div class="search-item" onclick="pilihPelanggan('', 'Umum / Pelanggan Baru')"><b>Umum / Pelanggan Baru</b></div>`;
             html += data.map(p => {
-                const namaBersih = String(p.nama || '').replace(/\r/g, '');
-                const idAman = String(p.id);
-
-                return `
-                    <div class="search-item"
-                         data-pelanggan-id="${encodeURIComponent(idAman)}"
-                         data-pelanggan-nama="${encodeURIComponent(namaBersih)}"
-                         onclick="pilihPelanggan(
-                             decodeURIComponent(this.dataset.pelangganId),
-                             decodeURIComponent(this.dataset.pelangganNama)
-                         )">
-                        <b>${namaBersih.replace(/&/g, '&amp;')
-                            .replace(/</g, '&lt;')
-                            .replace(/>/g, '&gt;')
-                            .replace(/"/g, '&quot;')}</b>
-                    </div>
-                `;
+                let namaAman = p.nama.replace(/\r/g, '').replace(/'/g, "\\'");
+                return `<div class="search-item" onclick="pilihPelanggan('${p.idAsli}', '${namaAman}')"><b>${p.nama.replace(/\r/g, '')}</b></div>`;
             }).join('');
         }
         document.getElementById('listHasilPencarian').innerHTML = html;
@@ -2366,12 +2345,6 @@ function eksekusiSimpanCicilan(e) {
     }
 
     function pilihPelanggan(i, nama) { 
-        // --- FIX PUSAT BUG NAMA UMUM ---
-        if (nama === "Umum / Pelanggan Baru") {
-            nama = "Umum";
-        }
-        // -------------------------------
-
         if (modePencarian === 'pelanggan-kasir') {
             let isReseller = false;
             if(i) { let pData = db.pelanggan.find(x => String(x.id) === String(i)); if(pData && pData.tipe === 'Reseller') isReseller = true; }
@@ -2441,13 +2414,7 @@ function eksekusiSimpanCicilan(e) {
             if(tempStatusLama === 'Lunas' && t.dompetMasuk && t.dompetMasuk !== 'none') { let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk)); if(dk) dk.saldo -= t.total; }
             
             t.tanggal = document.getElementById('editTransTgl').value; 
-            
-            // --- FIX BUG NAMA PEMBELI ---
-            let nmPel = document.getElementById('editTransPelangganNama').value || 'Umum';
-            if (nmPel === "Umum / Pelanggan Baru") nmPel = "Umum";
-            t.pembeli = nmPel; 
-            // -----------------------------
-            
+            t.pembeli = document.getElementById('editTransPelangganNama').value || 'Umum'; 
             t.namaProduk = document.getElementById('editTransProduk').value; 
             t.modal = getAngkaMurni(document.getElementById('editTransModal').value); 
             t.total = getAngkaMurni(document.getElementById('editTransTotal').value); 
@@ -2611,49 +2578,50 @@ function renderDaftarTransaksiBeranda() {
     function tambahBarisInfo(label = '', value = '') { let idWadah = document.getElementById('wadahInfoPelanggan'); let div = document.createElement('div'); div.className = 'info-row grid-2'; div.style.gridTemplateColumns = "1fr 2fr 30px"; div.innerHTML = `<input type="text" class="info-label" placeholder="Cth: PLN/BCA" value="${label}"><input type="text" class="info-value" placeholder="Nomornya..." value="${value}"><button type="button" class="btn-red" style="padding:0; height:38px; width:100%; font-size:16px;" onclick="this.parentElement.remove()">×</button>`; idWadah.appendChild(div); }
 
     function eksekusiSimpanPelanggan(e) { 
-        e.preventDefault();
-        try { 
-            let idEdit = document.getElementById('editFormPelId').value; 
-            let nama = document.getElementById('formPelNama').value.trim(); 
-            if(!nama) return alert("Nama pelanggan harus diisi!");
-            let baris = document.querySelectorAll('#wadahInfoPelanggan .info-row'); 
-            let infoArr = []; 
-            baris.forEach(row => { 
-                let l = row.querySelector('.info-label').value.trim(); 
-                let v = row.querySelector('.info-value').value.trim(); 
-                if(l || v) infoArr.push({ label: l || 'Info', value: v }); 
-            }); 
-            
-            let tipePel = document.getElementById('formPelTipe') ? document.getElementById('formPelTipe').value : 'Biasa';
-            if(idEdit !== "") { 
-                let p = db.pelanggan.find(x => String(x.id) === String(idEdit)); 
-                if(p) { 
-                    let namaLama = p.nama; // Simpan nama lama sebelum ditimpa
-                    p.nama = nama; 
-                    p.info = infoArr; 
-                    p.tipe = tipePel;
-                    
-                    // Sinkronisasi: Ubah nama di database transaksi agar Rapor Pelanggan tetap menyatu
-                    if (namaLama !== nama) {
-                        if (db.transaksi) {
-                            db.transaksi.forEach(t => { 
-                                if (t.pembeli === namaLama) t.pembeli = nama; 
-                            });
-                        }
-                        if (db.utang) { // Jaga-jaga untuk sinkronisasi di menu Kasbon/Utang (jika ada)
-                            db.utang.forEach(u => { 
-                                if (u.pembeli === namaLama) u.pembeli = nama; 
-                            });
-                        }
+    e.preventDefault();
+    try { 
+        let idEdit = document.getElementById('editFormPelId').value; 
+        let nama = document.getElementById('formPelNama').value.trim(); 
+        if(!nama) return alert("Nama pelanggan harus diisi!");
+        let baris = document.querySelectorAll('#wadahInfoPelanggan .info-row'); 
+        let infoArr = []; 
+        baris.forEach(row => { 
+            let l = row.querySelector('.info-label').value.trim(); 
+            let v = row.querySelector('.info-value').value.trim(); 
+            if(l || v) infoArr.push({ label: l || 'Info', value: v }); 
+        }); 
+        
+        let tipePel = document.getElementById('formPelTipe') ? document.getElementById('formPelTipe').value : 'Biasa';
+        if(idEdit !== "") { 
+            let p = db.pelanggan.find(x => String(x.id) === String(idEdit)); 
+            if(p) { 
+                let namaLama = p.nama; // Simpan nama lama sebelum ditimpa
+                p.nama = nama; 
+                p.info = infoArr; 
+                p.tipe = tipePel;
+                
+                // Sinkronisasi: Ubah nama di database transaksi agar Rapor Pelanggan tetap menyatu
+                if (namaLama !== nama) {
+                    if (db.transaksi) {
+                        db.transaksi.forEach(t => { 
+                            if (t.pembeli === namaLama) t.pembeli = nama; 
+                        });
                     }
-                } 
-            } else { 
-                db.pelanggan.push({ id: Date.now(), nama: nama, info: infoArr, tipe: tipePel }); 
+                    if (db.utang) { // Sinkronisasi di menu Kasbon/Utang
+                        db.utang.forEach(u => { 
+                            if (u.nama === namaLama) u.nama = nama; // PERBAIKAN: Menggunakan u.nama
+                        });
+                    }
+                }
             } 
-            simpanData(); 
-            batalEditPelanggan(); // Fungsi ini sempat gaib, sekarang aman!
-        } catch(e) { alert("Error: " + e.message); } 
-    }
+        } else { 
+            db.pelanggan.push({ id: Date.now(), nama: nama, info: infoArr, tipe: tipePel }); 
+        } 
+        simpanData(); 
+        batalEditPelanggan(); // Fungsi ini sempat gaib, sekarang aman!
+    } catch(e) { alert("Error: " + e.message); } 
+}
+
 
     // FUNGSI INI SEMPAT HILANG (Buat narik data ke atas)
     function editPelangganList(id) {
