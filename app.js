@@ -2413,18 +2413,9 @@ function eksekusiSimpanCicilan(e) {
             if(t.dompetModal && t.dompetModal !== 'none') { let dm = db.dompet.find(x => String(x.id) === String(t.dompetModal)); if(dm) dm.saldo += t.modal; }
             if(tempStatusLama === 'Lunas' && t.dompetMasuk && t.dompetMasuk !== 'none') { let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk)); if(dk) dk.saldo -= t.total; }
             
-            let namaPelangganBaru = document
-    .getElementById('editTransPelangganNama')
-    .value.trim();
-
-if (!namaPelangganBaru) {
-    alert("Nama pelanggan tidak boleh kosong!");
-    return;
-}
-
-t.tanggal = document.getElementById('editTransTgl').value;
-t.pembeli = namaPelangganBaru;
-t.namaProduk = document.getElementById('editTransProduk').value;
+            t.tanggal = document.getElementById('editTransTgl').value; 
+            t.pembeli = document.getElementById('editTransPelangganNama').value || 'Umum'; 
+            t.namaProduk = document.getElementById('editTransProduk').value; 
             t.modal = getAngkaMurni(document.getElementById('editTransModal').value); 
             t.total = getAngkaMurni(document.getElementById('editTransTotal').value); 
             t.untung = t.total - t.modal; 
@@ -2457,54 +2448,8 @@ t.namaProduk = document.getElementById('editTransProduk').value;
     function hapusTransaksi(id) { if(confirm("Yakin menghapus?")) { hapusDariUtangOtomatis(id); db.transaksi = db.transaksi.filter(t => String(t.id) !== String(id)); simpanData(); } }
 
     let tempStatusLama = "";
-
-function bukaEditTransaksi(id) {
-    let t = db.transaksi.find(x => String(x.id) === String(id));
-
-    if (!t) {
-        alert("Transaksi tidak ditemukan!");
-        return;
-    }
-
-    tempStatusLama = t.status;
-
-    document.getElementById('editTransId').value = t.id;
-    document.getElementById('editTransTgl').value = t.tanggal || '';
-
-    // Nama pelanggan sekarang bisa langsung diedit
-    document.getElementById('editTransPelangganNama').value =
-        t.pembeli || 'Umum';
-
-    document.getElementById('editTransProduk').value =
-        t.namaProduk || '';
-
-    document.getElementById('editTransModal').value =
-        formatRupiah(t.modal);
-
-    document.getElementById('editTransTotal').value =
-        formatRupiah(t.total);
-
-    document.getElementById('editTransStatus').value =
-        t.status || 'Lunas';
-
-    if (t.dompetModal) {
-        document.getElementById('editTransDompetModal').value =
-            t.dompetModal;
-    }
-
-    if (t.dompetMasuk) {
-        document.getElementById('editTransDompetMasuk').value =
-            t.dompetMasuk;
-    }
-
-    document.getElementById('modal-edit-transaksi')
-        .classList.add('active');
-}
-
-function tutupEditTransaksi() {
-    document.getElementById('modal-edit-transaksi')
-        .classList.remove('active');
-}
+    function bukaEditTransaksi(id) { let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return; tempStatusLama = t.status; document.getElementById('editTransId').value = t.id; document.getElementById('editTransTgl').value = t.tanggal; document.getElementById('editTransPelangganNama').value = t.pembeli || 'Umum'; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${t.pembeli || 'Umum'}</b>`; document.getElementById('editTransProduk').value = t.namaProduk; document.getElementById('editTransModal').value = formatRupiah(t.modal); document.getElementById('editTransTotal').value = formatRupiah(t.total); document.getElementById('editTransStatus').value = t.status; if(t.dompetModal) document.getElementById('editTransDompetModal').value = t.dompetModal; if(t.dompetMasuk) document.getElementById('editTransDompetMasuk').value = t.dompetMasuk; document.getElementById('modal-edit-transaksi').classList.add('active'); }
+    function tutupEditTransaksi() { document.getElementById('modal-edit-transaksi').classList.remove('active'); }
 function renderDaftarTransaksiBeranda() {
     let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
     let dt = new Date(); dt.setDate(dt.getDate()-7); let tglM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
