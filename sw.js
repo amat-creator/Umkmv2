@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amat-pro-v1';
+lconst CACHE_NAME = 'amat-pro-v1';
 const urlsToCache = [
   './',
   './index.html',
