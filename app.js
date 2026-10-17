@@ -2292,10 +2292,11 @@ function eksekusiSimpanCicilan(e) {
     function bukaPencarian(tipe) { 
         modePencarian = tipe; 
         document.getElementById('modal-pencarian').classList.add('active'); 
-        document.getElementById('judulPencarian').innerText = (tipe === 'produk') ? 'Pencarian Produk' : 'Pencarian Pelanggan'; 
+        document.getElementById('judulPencarian').innerText = (tipe.includes('produk')) ? 'Pencarian Produk' : 'Pencarian Pelanggan'; 
         let input = document.getElementById('inputPencarian'); 
         input.value = ''; 
         filterPencarian(); 
+        setTimeout(() => input.focus(), 100);
     }
 
     function tutupPencarian() { 
