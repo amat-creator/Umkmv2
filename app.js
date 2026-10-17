@@ -2289,8 +2289,19 @@ function eksekusiSimpanCicilan(e) {
     function cekStatusPilihSemua() { let cb = document.querySelectorAll('.check-produk'); if(document.getElementById('checkSemuaProduk')) document.getElementById('checkSemuaProduk').checked = (cb.length > 0 && document.querySelectorAll('.check-produk:not(:checked)').length === 0); }
     function hapusProdukTerpilih() { let arr = Array.from(document.querySelectorAll('.check-produk:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Pilih minimal 1!"); if(confirm(`Hapus ${arr.length} produk?`)) { db.produk = db.produk.filter(p => !arr.includes(String(p.id))); if(document.getElementById('checkSemuaProduk')) document.getElementById('checkSemuaProduk').checked = false; simpanData(); } }
 
-    function bukaPencarian(tipe) { modePencarian = tipe; document.getElementById('modal-pencarian').classList.add('active'); document.getElementById('judulPencarian').innerText = (tipe === 'produk') ? 'Pencarian Produk' : 'Pencarian Pelanggan'; let input = document.getElementById('inputPencarian'); input.value = ''; filterPencarian(); setTimeout(() => input.focus(), 100); }
-    function tutupPencarian() { document.getElementById('modal-pencarian').classList.remove('active'); }
+    function bukaPencarian(tipe) { 
+        modePencarian = tipe; 
+        document.getElementById('modal-pencarian').classList.add('active'); 
+        document.getElementById('judulPencarian').innerText = (tipe === 'produk') ? 'Pencarian Produk' : 'Pencarian Pelanggan'; 
+        let input = document.getElementById('inputPencarian'); 
+        input.value = ''; 
+        filterPencarian(); 
+    }
+
+    function tutupPencarian() { 
+        document.getElementById('modal-pencarian').classList.remove('active'); 
+    }
+
     function filterPencarian() {
         let kw = document.getElementById('inputPencarian').value.toLowerCase(); let html = '';
         if (modePencarian.startsWith('produk')) {
@@ -2298,11 +2309,11 @@ function eksekusiSimpanCicilan(e) {
             if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, ${p.modalReseller || p.modal || 0}, ${p.hargaReseller || p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}', '${p.dompetModalReseller || 'none'}', '${p.dompetMasukReseller || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
             else html = `<div class="text-small text-center" style="padding:20px;">Pencarian tidak ditemukan.</div>`;
         }
- else if (modePencarian.startsWith('pelanggan')) {
+        else if (modePencarian.startsWith('pelanggan')) {
             let data = db.pelanggan.map((p, i) => ({...p, idAsli: p.id})).filter(p => { if(p.nama.toLowerCase().includes(kw)) return true; let foundInInfo = false; (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().includes(kw) || inf.value.toLowerCase().includes(kw)) foundInInfo = true; }); return foundInInfo; });
             if("umum pelanggan baru".includes(kw) || kw === "") html += `<div class="search-item" onclick="pilihPelanggan('', 'Umum / Pelanggan Baru')"><b>Umum / Pelanggan Baru</b></div>`;
             html += data.map(p => {
-                let namaAman = p.nama.replace(/\r/g, '').replace(/'/g, "\\'");
+                let namaAman = p.nama.replace(/\r/g, '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
                 return `<div class="search-item" onclick="pilihPelanggan('${p.idAsli}', '${namaAman}')"><b>${p.nama.replace(/\r/g, '')}</b></div>`;
             }).join('');
         }
@@ -2408,7 +2419,8 @@ function eksekusiSimpanCicilan(e) {
     function hapusDariUtangOtomatis(transId) { db.utang.forEach(u => { if(u.rincianBarang) { let idx = u.rincianBarang.findIndex(r => String(r.transId) === String(transId)); if(idx > -1) { u.nominal -= u.rincianBarang[idx].nominal; u.rincianBarang.splice(idx, 1); } } }); db.utang = db.utang.filter(u => (u.rincianBarang && u.rincianBarang.length > 0) || u.nominal > 0); }
     function updateUtangOtomatis(t) { db.utang.forEach(u => { if(u.rincianBarang) { let r = u.rincianBarang.find(x => String(x.transId) === String(t.id)); if(r) { u.nominal = (u.nominal - r.nominal) + t.total; r.produk = t.namaProduk; r.nominal = t.total; r.tanggal = t.tanggal; r.hari = getNamaHari(t.tanggal); } } }); }
     function eksekusiSimpanEditTransaksi() { 
-        let id = document.getElementById('editTransId').value; let t = db.transaksi.find(x => String(x.id) === String(id)); 
+        let id = document.getElementById('editTransId').value; 
+        let t = db.transaksi.find(x => String(x.id) === String(id)); 
         if(t) { 
             if(t.dompetModal && t.dompetModal !== 'none') { let dm = db.dompet.find(x => String(x.id) === String(t.dompetModal)); if(dm) dm.saldo += t.modal; }
             if(tempStatusLama === 'Lunas' && t.dompetMasuk && t.dompetMasuk !== 'none') { let dk = db.dompet.find(x => String(x.id) === String(t.dompetMasuk)); if(dk) dk.saldo -= t.total; }
@@ -2430,7 +2442,9 @@ function eksekusiSimpanCicilan(e) {
             else if(tempStatusLama==='Piutang'&&t.status==='Lunas') hapusDariUtangOtomatis(t.id); 
             else if(t.status==='Piutang') { hapusDariUtangOtomatis(t.id); tambahUtangOtomatis(t); }
             
-            simpanData(); tutupEditTransaksi(); alert("Perubahan disimpan & dompet disesuaikan!");
+            simpanData(); 
+            tutupEditTransaksi(); 
+            alert("Perubahan disimpan & dompet disesuaikan!");
         } 
     }
 
@@ -2448,8 +2462,30 @@ function eksekusiSimpanCicilan(e) {
     function hapusTransaksi(id) { if(confirm("Yakin menghapus?")) { hapusDariUtangOtomatis(id); db.transaksi = db.transaksi.filter(t => String(t.id) !== String(id)); simpanData(); } }
 
     let tempStatusLama = "";
-    function bukaEditTransaksi(id) { let t = db.transaksi.find(x => String(x.id) === String(id)); if(!t) return; tempStatusLama = t.status; document.getElementById('editTransId').value = t.id; document.getElementById('editTransTgl').value = t.tanggal; document.getElementById('editTransPelangganNama').value = t.pembeli || 'Umum'; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${t.pembeli || 'Umum'}</b>`; document.getElementById('editTransProduk').value = t.namaProduk; document.getElementById('editTransModal').value = formatRupiah(t.modal); document.getElementById('editTransTotal').value = formatRupiah(t.total); document.getElementById('editTransStatus').value = t.status; if(t.dompetModal) document.getElementById('editTransDompetModal').value = t.dompetModal; if(t.dompetMasuk) document.getElementById('editTransDompetMasuk').value = t.dompetMasuk; document.getElementById('modal-edit-transaksi').classList.add('active'); }
-    function tutupEditTransaksi() { document.getElementById('modal-edit-transaksi').classList.remove('active'); }
+    
+    function bukaEditTransaksi(id) { 
+        let t = db.transaksi.find(x => String(x.id) === String(id)); 
+        if(!t) return; 
+        tempStatusLama = t.status; 
+        document.getElementById('editTransId').value = t.id; 
+        document.getElementById('editTransTgl').value = t.tanggal; 
+        
+        let namaAman = t.pembeli || 'Umum';
+        document.getElementById('editTransPelangganNama').value = namaAman; 
+        document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${namaAman}</b>`; 
+        
+        document.getElementById('editTransProduk').value = t.namaProduk; 
+        document.getElementById('editTransModal').value = formatRupiah(t.modal); 
+        document.getElementById('editTransTotal').value = formatRupiah(t.total); 
+        document.getElementById('editTransStatus').value = t.status; 
+        if(t.dompetModal) document.getElementById('editTransDompetModal').value = t.dompetModal; 
+        if(t.dompetMasuk) document.getElementById('editTransDompetMasuk').value = t.dompetMasuk; 
+        document.getElementById('modal-edit-transaksi').classList.add('active'); 
+    }
+
+    function tutupEditTransaksi() { 
+        document.getElementById('modal-edit-transaksi').classList.remove('active'); 
+    }
 function renderDaftarTransaksiBeranda() {
     let tglH = ambilTanggal(), blnI = tglH.substring(0, 7), thnI = tglH.substring(0, 4);
     let dt = new Date(); dt.setDate(dt.getDate()-7); let tglM = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
