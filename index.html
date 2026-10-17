@@ -90,11 +90,14 @@
         <div class="modal-body">
             <input type="hidden" id="editTransId">
             <label class="text-small">Tanggal:</label><input type="date" id="editTransTgl">
-            <label class="text-small">Nama Pelanggan:</label>
-<div style="display: flex; gap: 8px; margin-bottom: 5px;">
-    <input type="text" id="editTransPelangganNama" placeholder="Nama Pelanggan" style="margin-bottom: 0;">
-    <button type="button" class="btn-outline" style="width: auto; margin-bottom: 0; padding: 10px 15px;" onclick="bukaPencarian('pelanggan-edit-trans')">🔍 Cari</button>
-</div>
+                        <label class="text-small">Nama Pelanggan:</label>
+            <div class="search-select" onclick="bukaPencarian('pelanggan-edit-trans')"><span id="labelEditTransPelanggan"><b>Pilih Pelanggan</b></span></div>
+            <input type="hidden" id="editTransPelangganNama" value="">
+            <label class="text-small">Nama Produk:</label>
+            <div class="row-produk-edit">
+                <input type="text" id="editTransProduk" placeholder="Nama Produk">
+                <button type="button" class="btn-outline" onclick="bukaPencarian('produk-edit')">🔍 Cari</button>
+            </div>
 <span id="labelEditTransPelanggan" style="display:none;"></span>
 
             <label class="text-small">Nama Produk:</label>
