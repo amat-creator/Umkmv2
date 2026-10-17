@@ -1,20 +1,31 @@
-{
-  "name": "Amat Bajualan Pro",
-  "short_name": "Amat",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#f4f7f6",
-  "theme_color": "#007bff",
-  "icons": [
-    {
-      "src": "icon-toko.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-toko.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
-}
+const CACHE_NAME = 'amat-pro-v2';
+const urlsToCache = [
+  './',
+  './index.html',
+  './app.js',
+  './style.css',
+  './manifest.json',
+  './icon-toko.png'
+];
+
+
+self.addEventListener('install', (e) => {
+  console.log('Service Worker: Ter-install');
+  self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(urlsToCache.map((u) => new Request(u, { cache: 'reload' })));
+      })
+  );
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((names) => Promise.all(
+        names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
