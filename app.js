@@ -230,7 +230,7 @@ function simpanData(renderFungsiKhusus = null) {
         if(sub==='sub-pengeluaran') { jd="Pengeluaran"; document.getElementById('pengeluaranTgl').value = ambilTanggal(); }
         if(sub==='sub-pelanggan') { jd="Data Pelanggan"; renderDaftarPelanggan(); } 
         if(sub==='sub-dompet') { jd="Dompet Manual"; renderDaftarDompetFolder(); } 
-        if(sub==='sub-backup') jd="Data Excel"; 
+        if(sub==='sub-backup') { jd="Data Excel"; cekKapasitasMemori(); } 
         if(sub==='sub-tema') jd="Tema Aplikasi"; 
         if(sub==='sub-riwayat') jd="Riwayat Full"; 
         if(sub==='sub-alokasi') { jd="Bagi Hasil"; updateLabaAlokasi(); } 
@@ -2304,15 +2304,22 @@ function eksekusiSimpanCicilan(e) {
     }
 
     function filterPencarian() {
-        let kw = document.getElementById('inputPencarian').value.toLowerCase(); let html = '';
+        let kwRaw = document.getElementById('inputPencarian').value.toLowerCase(); 
+        let kw = kwRaw.replace(/[^a-z0-9]/gi, ''); // Bersihkan spasi & simbol agar toleransi typo
+        let html = '';
         if (modePencarian.startsWith('produk')) {
-            let data = db.produk.map((p, i) => ({...p, idAsli: p.id})).filter(p => p.nama.toLowerCase().includes(kw));
+            let data = db.produk.map((p, i) => ({...p, idAsli: p.id})).filter(p => p.nama.toLowerCase().replace(/[^a-z0-9]/gi, '').includes(kw));
             if(data.length) html = data.map(p => `<div class="search-item" onclick="pilihProduk('${p.idAsli}', '${p.nama.replace(/'/g, "\\'").replace(/"/g, "&quot;")}', ${p.modal || 0}, ${p.harga || 0}, ${p.modalReseller || p.modal || 0}, ${p.hargaReseller || p.harga || 0}, '${p.dompetModal || 'none'}', '${p.dompetMasuk || 'none'}', '${p.dompetModalReseller || 'none'}', '${p.dompetMasukReseller || 'none'}')"><b>${p.nama}</b><span class="text-blue text-small">Rp ${formatRupiah(p.harga)}</span></div>`).join('');
             else html = `<div class="text-small text-center" style="padding:20px;">Pencarian tidak ditemukan.</div>`;
         }
         else if (modePencarian.startsWith('pelanggan')) {
-            let data = db.pelanggan.map((p, i) => ({...p, idAsli: p.id})).filter(p => { if(p.nama.toLowerCase().includes(kw)) return true; let foundInInfo = false; (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().includes(kw) || inf.value.toLowerCase().includes(kw)) foundInInfo = true; }); return foundInInfo; });
-            if("umum pelanggan baru".includes(kw) || kw === "") html += `<div class="search-item" onclick="pilihPelanggan('', 'Umum / Pelanggan Baru')"><b>Umum / Pelanggan Baru</b></div>`;
+            let data = db.pelanggan.map((p, i) => ({...p, idAsli: p.id})).filter(p => { 
+                if(p.nama.toLowerCase().replace(/[^a-z0-9]/gi, '').includes(kw)) return true; 
+                let foundInInfo = false; 
+                (p.info||[]).forEach(inf => { if(inf.label.toLowerCase().replace(/[^a-z0-9]/gi, '').includes(kw) || inf.value.toLowerCase().replace(/[^a-z0-9]/gi, '').includes(kw)) foundInInfo = true; }); 
+                return foundInInfo; 
+            });
+            if("umum pelanggan baru".replace(/[^a-z0-9]/gi, '').includes(kw) || kw === "") html += `<div class="search-item" onclick="pilihPelanggan('', 'Umum / Pelanggan Baru')"><b>Umum / Pelanggan Baru</b></div>`;
             html += data.map(p => {
                 let namaAman = p.nama.replace(/\r/g, '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
                 return `<div class="search-item" onclick="pilihPelanggan('${p.idAsli}', '${namaAman}')"><b>${p.nama.replace(/\r/g, '')}</b></div>`;
@@ -5152,6 +5159,43 @@ function salinBackupJSON() {
         }
     }
 
+    function hapusSemuaCatatan() {
+        if(db.catatan.length === 0) return alert("Belum ada catatan untuk dihapus!");
+        if(confirm("⚠️ PERINGATAN! Yakin ingin menghapus SEMUA catatan? Data yang dihapus tidak bisa dikembalikan.")) {
+            db.catatan = [];
+            simpanData();
+            renderCatatanList();
+        }
+    }
+
+    function cekKapasitasMemori() {
+        try {
+            let dataStr = localStorage.getItem('sistemUMKMPro') || "";
+            let sizeInBytes = new Blob([dataStr]).size;
+            let sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+            let maxLimit = 5.0; // Rata-rata kapasitas localstorage HP adalah 5MB
+            let percent = Math.min(((sizeInMB / maxLimit) * 100).toFixed(1), 100);
+            
+            let elInfo = document.getElementById('infoKapasitasMemori');
+            let elBadge = document.getElementById('badgeKapasitasMemori');
+            
+            if (elInfo && elBadge) {
+                elInfo.innerText = `${sizeInMB} MB terpakai dari ~5 MB (${percent}%)`;
+                if (percent < 50) {
+                    elBadge.innerText = "🟢 Aman";
+                } else if (percent < 80) {
+                    elBadge.innerText = "🟡 Waspada";
+                    elInfo.style.color = "#856404";
+                } else {
+                    elBadge.innerText = "🔴 Penuh!";
+                    elInfo.style.color = "#dc3545";
+                }
+            }
+        } catch (e) {
+            console.log("Gagal cek memori:", e);
+        }
+    }
+
     function restoreBackupJSON() {
         let fileInput = document.getElementById('fileRestoreJSON');
         let file = fileInput.files[0];
@@ -5242,6 +5286,13 @@ function togglePilihSemuaKasbon() {
             alert("✅ Berhasil dihapus & saldo telah di-refund!");
         } 
     }
+
+    // [ FITUR UX ] KLIK DI LUAR MODAL UNTUK MENUTUP
+    window.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal-popup') || e.target.classList.contains('modal-search')) {
+            e.target.classList.remove('active');
+        }
+    });
 
     // [ FITUR 17 ] PENGAMAN TOMBOL KEMBALI HP (HARDWARE BACK BUTTON)
     history.pushState(null, null, window.location.href);
