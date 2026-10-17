@@ -77,7 +77,7 @@
         </div>
     </div>
 
-    <div id="modal-pencarian" class="modal-search" style="z-index: 10000;">
+    <div id="modal-pencarian" class="modal-search" style="z-index: 3000;">
         <div class="modal-header"><button type="button" class="btn-outline btn-back" onclick="tutupPencarian()">⬅ Kembali</button><h4 id="judulPencarian">Cari</h4></div>
         <div class="modal-body">
             <input type="text" id="inputPencarian" placeholder="Ketik pencarian di sini..." oninput="filterPencarian()" autocomplete="off">
@@ -90,16 +90,9 @@
         <div class="modal-body">
             <input type="hidden" id="editTransId">
             <label class="text-small">Tanggal:</label><input type="date" id="editTransTgl">
-                        <label class="text-small">Nama Pelanggan:</label>
+            <label class="text-small">Nama Pelanggan:</label>
             <div class="search-select" onclick="bukaPencarian('pelanggan-edit-trans')"><span id="labelEditTransPelanggan"><b>Pilih Pelanggan</b></span></div>
             <input type="hidden" id="editTransPelangganNama" value="">
-            <label class="text-small">Nama Produk:</label>
-            <div class="row-produk-edit">
-                <input type="text" id="editTransProduk" placeholder="Nama Produk">
-                <button type="button" class="btn-outline" onclick="bukaPencarian('produk-edit')">🔍 Cari</button>
-            </div>
-<span id="labelEditTransPelanggan" style="display:none;"></span>
-
             <label class="text-small">Nama Produk:</label>
             <div style="display: flex; gap: 8px; margin-bottom: 5px;">
                 <input type="text" id="editTransProduk" placeholder="Nama Produk" style="margin-bottom: 0;">
@@ -163,13 +156,8 @@
                 <input type="hidden" id="editKasbonId">
                 <input type="hidden" id="editKasbonDompetLama">
                 <label class="text-small" style="text-align:left; display:block;">Nama Pelanggan / Pihak:</label>
-                <label class="text-small" style="text-align:left; display:block;">Nama Pelanggan / Pihak:</label>
-<div style="display: flex; gap: 8px; margin-bottom: 5px;">
-    <input type="text" id="editKasbonNama" placeholder="Nama Pelanggan" required style="margin-bottom: 0;">
-    <button type="button" class="btn-outline" style="width: auto; margin-bottom: 0; padding: 10px 15px;" onclick="bukaPencarian('pelanggan-edit-kasbon')">🔍 Cari</button>
-</div>
-<span id="labelEditKasbonPelanggan" style="display:none;"></span>
-
+                <div class="search-select" onclick="bukaPencarian('pelanggan-edit-kasbon')"><span id="labelEditKasbonPelanggan"><b>Pilih Pelanggan</b></span></div>
+                <input type="hidden" id="editKasbonNama" required>
                 <label class="text-small" style="text-align:left; display:block;">Sumber/Tujuan Dompet Awal:</label>
                 <select id="editKasbonDompet" style="background:#e8f4fd; border-color:var(--primary); font-weight:bold;"></select>
                 <div class="grid-2" style="margin-top: 15px;">
