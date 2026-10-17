@@ -1260,7 +1260,10 @@
 
         <div id="sub-catatan" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
-            <h4>📒 Buku Catatan Bebas</h4>
+            <div class="flex-between" style="margin-bottom: 5px;">
+                <h4 style="margin: 0;">📒 Buku Catatan Bebas</h4>
+                <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 11px;" onclick="hapusSemuaCatatan()">🗑 Hapus Semua</button>
+            </div>
             <p class="text-small" style="margin-bottom: 15px;">Tulis ide, pengingat, tagihan suplier, atau nomor penting di sini.</p>
             <form onsubmit="eksekusiSimpanCatatan(event)" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
                 <input type="hidden" id="editCatatanId" value="">
@@ -1276,6 +1279,15 @@
 
         <div id="sub-backup" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            
+            <div style="background: #fff3cd; padding: 10px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <b style="font-size: 12px; color: #856404;">Kapasitas Memori Penyimpanan:</b><br>
+                    <span id="infoKapasitasMemori" style="font-size: 11px; color: #666;">Menghitung...</span>
+                </div>
+                <span id="badgeKapasitasMemori" style="font-size: 18px;">⏳</span>
+            </div>
+
             <h4 style="color:var(--primary); margin-bottom:5px;">📋 Ekspor Data (Ke Excel)</h4>
             <p class="text-small" style="margin-bottom:10px;">Centang data yang mau diekspor, lalu salin sekaligus ke Excel.</p>
             
@@ -1329,22 +1341,22 @@
 </div> 
 
 <!-- BOTTOM NAV MODERN BLUE -->
-<div class="bottom-nav" style="padding: 12px 10px; box-shadow: 0 -10px 25px rgba(0,0,0,0.04); border-radius: 20px 20px 0 0; justify-content: space-around; border-top: 1px solid #f1f5f9;">
-    <div class="nav-item active" onclick="bukaHalaman('kasir', this, 'Kasir')" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-        <i class="fas fa-cash-register nav-icon" style="font-size: 20px; margin-bottom: 0;"></i>
-        <span style="font-size: 10px; font-weight: 600;">Kasir</span>
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="bukaHalaman('kasir', this, 'Kasir')">
+        <i class="fas fa-cash-register nav-icon"></i>
+        <span>Kasir</span>
     </div>
-    <div class="nav-item" onclick="bukaHalaman('beranda', this, 'Riwayat Transaksi')" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-        <i class="fas fa-file-invoice-dollar nav-icon" style="font-size: 20px; margin-bottom: 0;"></i>
-        <span style="font-size: 10px; font-weight: 600;">Riwayat</span>
+    <div class="nav-item" onclick="bukaHalaman('beranda', this, 'Riwayat Transaksi')">
+        <i class="fas fa-file-invoice-dollar nav-icon"></i>
+        <span>Riwayat</span>
     </div>
-    <div class="nav-item" onclick="bukaHalaman('produk', this, 'Data Produk')" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-        <i class="fas fa-box-open nav-icon" style="font-size: 20px; margin-bottom: 0;"></i>
-        <span style="font-size: 10px; font-weight: 600;">Produk</span>
+    <div class="nav-item" onclick="bukaHalaman('produk', this, 'Data Produk')">
+        <i class="fas fa-box-open nav-icon"></i>
+        <span>Produk</span>
     </div>
-    <div class="nav-item" onclick="bukaHalaman('menu', this, 'Menu Lainnya')" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-        <i class="fas fa-cog nav-icon" style="font-size: 20px; margin-bottom: 0;"></i>
-        <span style="font-size: 10px; font-weight: 600;">Setting</span>
+    <div class="nav-item" onclick="bukaHalaman('menu', this, 'Menu Lainnya')">
+        <i class="fas fa-cog nav-icon"></i>
+        <span>Setting</span>
     </div>
 </div>
 
