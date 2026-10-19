@@ -259,3 +259,50 @@ function eksekusiSimpanCicilan(e) {
         alert("Error: " + err.message);
     }
 }
+
+let kasbonTabAktif = 'Piutang';
+let mutasiTabAktif = 'global';
+let strukManualTabAktif = 'isi';
+
+function activateTabButtons(selector, activeId) {
+    document.querySelectorAll(selector).forEach(btn => {
+        btn.classList.toggle('active', btn.id === activeId);
+    });
+}
+
+function switchKasbonTab(tab) {
+    kasbonTabAktif = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    const btn = document.getElementById('tab-btn-' + String(tab).toLowerCase());
+    if (btn) btn.classList.add('active');
+    if (typeof renderKasbonList === 'function') renderKasbonList();
+}
+
+function toggleAccordionUtang(id) {
+    const el = document.getElementById('acc-' + id);
+    if (el) el.classList.toggle('active');
+}
+
+function switchMutasiTab(tab) {
+    mutasiTabAktif = tab;
+    activateTabButtons('#tab-mutasi-global, #tab-mutasi-dompet', 'tab-mutasi-' + String(tab));
+    if (typeof renderMutasiSaldo === 'function') renderMutasiSaldo();
+}
+
+function switchTabStrukManual(tab) {
+    strukManualTabAktif = tab;
+    activateTabButtons('.tombol-mode-struk, .tab-btn', 'tab-sm-' + String(tab));
+    if (typeof updatePreviewStruk === 'function') updatePreviewStruk();
+}
+
+function switchTabLaporan(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    const target = document.getElementById('tab-' + String(tab));
+    if (target) target.classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof renderKasbonList === 'function') renderKasbonList();
+    if (typeof renderMutasiSaldo === 'function') renderMutasiSaldo();
+    if (typeof updatePreviewStruk === 'function') updatePreviewStruk();
+});
