@@ -4769,7 +4769,7 @@ let statusTransaksi =
             if (showFooter) {
                 addStr("--------------------------------\n");
                 addStr("Powered by Sistem UMKM Pro\n");
-                addStr("by Gemini & Developer Amat Bajualan\n");
+                addStr("by Gemini & CHATGPT Developer Amat Bajualan\n");
             }
             addStr("\n\n\n\n");
         } else {
