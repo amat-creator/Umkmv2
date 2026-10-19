@@ -4447,7 +4447,7 @@ if(prevStatus) {
     // KONFIRMASI SEBELUM CETAK
     // ==========================================
 
-    function konfirmasiCetakStruk() {
+        function konfirmasiCetakStruk() {
         // Simpan dahulu sebelum masuk tahap cetak
         let berhasil = simpanDraftStrukManual(false);
         if(!berhasil) return;
@@ -4455,51 +4455,60 @@ if(prevStatus) {
         let info = document.getElementById('infoKonfirmasiStruk');
         if(info) {
             let d = db.strukDraft;
-            let html = `<div style="font-family:monospace; font-size:12px; color:#333; line-height:1.5;">`;
+            let html = `<div style="font-family:monospace; font-size:11px; color:#333; line-height:1.4; word-break:break-all;">`;
             
             if (d.mode === 'token') {
                 html += `<div style="text-align:center; margin-bottom:5px; color:var(--primary);"><b>⚡ PREVIEW CETAK TOKEN</b></div>`;
                 html += `<div>Toko: <b>${d.namaToko}</b></div>`;
-                html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
+                html += `<div style="border-top:1px dashed #ccc; margin:6px 0;"></div>`;
                 
-                // Format spasi otomatis untuk preview token
                 let tokenBersih = (d.catatan || '').replace(/\D/g, '').substring(0, 20);
                 let tokenTampil = tokenBersih.replace(/(.{4})/g, '$1 ').trim();
-                
-                html += `<div style="font-size:18px; font-weight:bold; text-align:center; padding:10px 0; letter-spacing:1px;">${tokenTampil || '(Belum diisi)'}</div>`;
+                html += `<div style="font-size:16px; font-weight:bold; text-align:center; padding:8px 0; letter-spacing:1px;">${tokenTampil || '(Belum diisi)'}</div>`;
             } else {
-                html += `<div style="text-align:center; margin-bottom:5px; color:var(--primary);"><b>📝 PREVIEW CETAK STRUK</b></div>`;
-                html += `<div>Toko: <b>${d.namaToko}</b></div>`;
-                html += `<div>Tgl : ${d.tanggal}</div>`;
-                if (d.pelanggan) html += `<div>Plg : ${d.pelanggan}</div>`;
-                html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
+                html += `<div style="text-align:center; margin-bottom:4px; color:var(--primary);"><b>📝 PREVIEW STRUK PPOB / TAGIHAN</b></div>`;
+                html += `<div>Toko : <b>${d.namaToko}</b></div>`;
+                html += `<div>Tgl  : ${d.tanggal}</div>`;
+                if (d.pelanggan) html += `<div>Plg  : ${d.pelanggan}</div>`;
+                html += `<div style="border-top:1px dashed #ccc; margin:6px 0;"></div>`;
                 
-                let total = 0;
+                // Cek apakah ada item barang manual standar
+                let totalBarang = 0;
+                let adaBarangAktif = false;
                 if (d.items && d.items.length > 0) {
                     d.items.forEach(item => {
                         let sub = (parseInt(item.qty)||0) * (parseInt(item.harga)||0);
-                        total += sub;
+                        totalBarang += sub;
                         if (item.nama || sub > 0) {
+                            adaBarangAktif = true;
                             html += `<div style="display:flex; justify-content:space-between;"><span>${item.nama} x${item.qty}</span><span>Rp ${sub.toLocaleString('id-ID')}</span></div>`;
                         }
                     });
                 }
-                
+
                 let admin = parseInt(d.admin) || 0;
-                if (admin > 0) {
-                    total += admin;
-                    html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
-                    html += `<div style="display:flex; justify-content:space-between;"><span>Biaya Admin</span><span>Rp ${admin.toLocaleString('id-ID')}</span></div>`;
+                let totalAkhir = totalBarang + admin;
+
+                if (adaBarangAktif && (totalBarang > 0 || admin > 0)) {
+                    if (admin > 0) {
+                        html += `<div style="display:flex; justify-content:space-between;"><span>Biaya Admin</span><span>Rp ${admin.toLocaleString('id-ID')}</span></div>`;
+                    }
+                    html += `<div style="border-top:1px dashed #ccc; margin:6px 0;"></div>`;
+                    html += `<div style="display:flex; justify-content:space-between; font-weight:bold;"><span>TOTAL</span><span class="text-blue">Rp ${totalAkhir.toLocaleString('id-ID')}</span></div>`;
                 }
                 
-                html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
-                html += `<div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>TOTAL</span><span class="text-blue">Rp ${total.toLocaleString('id-ID')}</span></div>`;
-                
+                // Jika mencetak catatan PPOB / Tagihan panjang (seperti PLN)
                 if (d.catatan) {
-                    html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
-                    html += `<div>Catatan:<br><b>${d.catatan}</b></div>`;
+                    if (adaBarangAktif) {
+                        html += `<div style="border-top:1px dashed #ccc; margin:6px 0;"></div>`;
+                    }
+                    html += `<div style="font-size:10px; white-space:pre-line;">${d.catatan}</div>`;
                 }
             }
+
+            // Footer Sesuai Permintaan
+            html += `<div style="border-top:1px dashed #ccc; margin:6px 0;"></div>`;
+            html += `<div style="text-align:center; font-size:9px; color:#555;">Powered by Sistem UMKM Pro<br>by Gemini & CHATGPT DEVELOPER amat Bajualan</div>`;
             html += `</div>`;
             info.innerHTML = html;
         }
@@ -4509,6 +4518,7 @@ if(prevStatus) {
             modal.classList.add('active');
         }
     }
+
 
 
     function resetFormStrukManual() {
@@ -4766,11 +4776,13 @@ let statusTransaksi =
             // Matikan Bold
             add([0x1B, 0x45, 0x00]);
 
-            if (showFooter) {
+                if (showFooter) {
                 addStr("--------------------------------\n");
                 addStr("Powered by Sistem UMKM Pro\n");
-                addStr("by Gemini & CHATGPT Developer Amat Bajualan\n");
+                addStr("by Gemini & CHATGPT DEVELOPER\n");
+                addStr("amat Bajualan\n");
             }
+
             addStr("\n\n\n\n");
         } else {
             // MODE CATATAN BIASA
