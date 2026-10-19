@@ -4508,7 +4508,7 @@ if(prevStatus) {
 
             // Footer Sesuai Permintaan
             html += `<div style="border-top:1px dashed #ccc; margin:6px 0;"></div>`;
-            html += `<div style="text-align:center; font-size:9px; color:#555;">Powered by Sistem UMKM Pro<br>by Gemini & CHATGPT DEVELOPER amat Bajualan</div>`;
+            html += `<div style="text-align:center; font-size:9px; color:#555;">Powered by Sistem UMKM Pro<br>by Gemini & CHATGPT developer amat Bajualan</div>`;
             html += `</div>`;
             info.innerHTML = html;
         }
@@ -4779,8 +4779,8 @@ let statusTransaksi =
                 if (showFooter) {
                 addStr("--------------------------------\n");
                 addStr("Powered by Sistem UMKM Pro\n");
-                addStr("by Gemini & CHATGPT DEVELOPER\n");
-                addStr("amat Bajualan\n");
+                addStr("by Gemini & CHATGPT \n");
+                addStr("developer amat Bajualan\n");
             }
 
             addStr("\n\n\n\n");
@@ -4864,7 +4864,8 @@ let statusTransaksi =
                 add([0x1B, 0x61, 0x01]);
                 addStr("--------------------------------\n");
                 addStr("Powered by Sistem UMKM Pro\n");
-                addStr("by Gemini & Developer Amat Bajualan\n");
+                addStr("by Gemini & CHATGPT");
+                addStr("Developer amat Bajualan\n");
             }
             addStr("\n\n\n\n");
         }
