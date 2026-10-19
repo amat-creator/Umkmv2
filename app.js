@@ -4448,43 +4448,95 @@ if(prevStatus) {
     // ==========================================
 
     function konfirmasiCetakStruk() {
-
         // Simpan dahulu sebelum masuk tahap cetak
-        let berhasil =
-            simpanDraftStrukManual(false);
-
+        let berhasil = simpanDraftStrukManual(false);
         if(!berhasil) return;
 
         let info = document.getElementById('infoKonfirmasiStruk');
-
         if(info) {
-
-            let mode =
-                db.strukDraft.mode === 'token'
-                ? '⚡ Token PLN'
-                : '📝 Catatan Biasa';
-
-            let isi =
-                db.strukDraft.mode === 'token'
-                ? (db.strukDraft.catatan || '(Token belum diisi)')
-                : (db.strukDraft.catatan || '(Tanpa catatan)');
-
-            info.innerHTML =
-                `<b>${mode}</b><br>
-                 <span style="font-size:11px; color:#666;">
-                 Isi: ${isi.substring(0, 80)}
-                 ${isi.length > 80 ? '...' : ''}
-                 </span>`;
+            let d = db.strukDraft;
+            let html = `<div style="font-family:monospace; font-size:12px; color:#333; line-height:1.5;">`;
+            
+            if (d.mode === 'token') {
+                html += `<div style="text-align:center; margin-bottom:5px; color:var(--primary);"><b>⚡ PREVIEW CETAK TOKEN</b></div>`;
+                html += `<div>Toko: <b>${d.namaToko}</b></div>`;
+                html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
+                
+                // Format spasi otomatis untuk preview token
+                let tokenBersih = (d.catatan || '').replace(/\D/g, '').substring(0, 20);
+                let tokenTampil = tokenBersih.replace(/(.{4})/g, '$1 ').trim();
+                
+                html += `<div style="font-size:18px; font-weight:bold; text-align:center; padding:10px 0; letter-spacing:1px;">${tokenTampil || '(Belum diisi)'}</div>`;
+            } else {
+                html += `<div style="text-align:center; margin-bottom:5px; color:var(--primary);"><b>📝 PREVIEW CETAK STRUK</b></div>`;
+                html += `<div>Toko: <b>${d.namaToko}</b></div>`;
+                html += `<div>Tgl : ${d.tanggal}</div>`;
+                if (d.pelanggan) html += `<div>Plg : ${d.pelanggan}</div>`;
+                html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
+                
+                let total = 0;
+                if (d.items && d.items.length > 0) {
+                    d.items.forEach(item => {
+                        let sub = (parseInt(item.qty)||0) * (parseInt(item.harga)||0);
+                        total += sub;
+                        if (item.nama || sub > 0) {
+                            html += `<div style="display:flex; justify-content:space-between;"><span>${item.nama} x${item.qty}</span><span>Rp ${sub.toLocaleString('id-ID')}</span></div>`;
+                        }
+                    });
+                }
+                
+                let admin = parseInt(d.admin) || 0;
+                if (admin > 0) {
+                    total += admin;
+                    html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
+                    html += `<div style="display:flex; justify-content:space-between;"><span>Biaya Admin</span><span>Rp ${admin.toLocaleString('id-ID')}</span></div>`;
+                }
+                
+                html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
+                html += `<div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;"><span>TOTAL</span><span class="text-blue">Rp ${total.toLocaleString('id-ID')}</span></div>`;
+                
+                if (d.catatan) {
+                    html += `<div style="border-top:1px dashed #ccc; margin:8px 0;"></div>`;
+                    html += `<div>Catatan:<br><b>${d.catatan}</b></div>`;
+                }
+            }
+            html += `</div>`;
+            info.innerHTML = html;
         }
 
-        let modal =
-            document.getElementById('modal-konfirmasi-struk');
-
+        let modal = document.getElementById('modal-konfirmasi-struk');
         if(modal) {
             modal.classList.add('active');
         }
     }
 
+
+    function resetFormStrukManual() {
+        if(!confirm("Yakin ingin membersihkan semua isian data struk ini?")) return;
+
+        if (document.getElementById('strukManualPelanggan')) document.getElementById('strukManualPelanggan').value = "";
+        if (document.getElementById('strukManualAdmin')) document.getElementById('strukManualAdmin').value = "";
+        
+        let wadah = document.getElementById('wadahBarangManual');
+        if (wadah) {
+            wadah.innerHTML = `
+                <div class="grid-3 item-barang-manual" style="gap:5px; margin-bottom:10px;">
+                    <input type="text" class="input-nama-barang" placeholder="Barang" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                    <input type="number" class="input-qty-barang" value="1" min="1" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                    <input type="number" class="input-harga-barang" placeholder="Harga" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                </div>
+            `;
+        }
+        
+        let catatan = document.getElementById('strukManualCatatan');
+        if (catatan) {
+            catatan.value = "";
+            catatan.style.height = '120px';
+        }
+        
+        // Nama Toko dan Tanggal sengaja tidak dihapus agar tidak repot mengetik ulang terus-menerus
+        updatePreviewStruk();
+    }
 
     function batalKonfirmasiStruk() {
 
@@ -4618,8 +4670,13 @@ let statusTransaksi =
         let cmds = [];
         let add = arr => cmds.push(...arr);
         let addStr = str => {
+            // FIX: Bersihkan simbol HP/Copy-Paste (seperti dash panjang) agar printer tidak mencetak öõÇ
+            let cleanStr = str.replace(/[—–]/g, '-')
+                              .replace(/[“”]/g, '"')
+                              .replace(/[‘’]/g, "'")
+                              .replace(/[^\x00-\x7F]/g, ""); 
             let encoder = new TextEncoder();
-            cmds.push(...encoder.encode(str));
+            cmds.push(...encoder.encode(cleanStr));
         };
 
         // Reset ESC/POS
