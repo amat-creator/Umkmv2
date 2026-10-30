@@ -332,6 +332,7 @@ function simpanData(renderFungsiKhusus = null) {
             let titipKembalian = document.getElementById('kasirTambahDeposit') ? getAngkaMurni(document.getElementById('kasirTambahDeposit').value) : 0;
             
             let siklusHari = document.getElementById('kasirSiklus') ? parseInt(document.getElementById('kasirSiklus').value) : 0;
+            let targetIdVal = document.getElementById('kasirTargetId') ? document.getElementById('kasirTargetId').value.trim() : "";
             
             let adminVal = document.getElementById('kasirBiayaAdmin') ? getAngkaMurni(document.getElementById('kasirBiayaAdmin').value) : 0;
             let dAdminId = document.getElementById('kasirDompetAdmin') ? document.getElementById('kasirDompetAdmin').value : 'none';
@@ -410,8 +411,9 @@ function simpanData(renderFungsiKhusus = null) {
                     let existJadwal = db.jadwal.find(j => j.pembeli === nmPel && j.produk === nmProdFinal);
                     if(existJadwal) {
                         existJadwal.tglBeli = tgl; existJadwal.tglJatuhTempo = tglJatuhTempo; existJadwal.siklus = siklusHari;
+                        if(targetIdVal) existJadwal.targetId = targetIdVal;
                     } else {
-                        db.jadwal.push({ id: 'jdwl_' + Date.now() + i, pembeli: nmPel, produk: nmProdFinal, tglBeli: tgl, siklus: siklusHari, tglJatuhTempo: tglJatuhTempo });
+                        db.jadwal.push({ id: 'jdwl_' + Date.now() + i, pembeli: nmPel, produk: nmProdFinal, tglBeli: tgl, siklus: siklusHari, tglJatuhTempo: tglJatuhTempo, targetId: targetIdVal });
                     }
                 }
 
@@ -480,9 +482,6 @@ function simpanData(renderFungsiKhusus = null) {
             document.getElementById('kasirNamaProduk').value = ''; document.getElementById('kasirHargaModal').value = ''; document.getElementById('kasirHargaJual').value = ''; document.getElementById('kasirJumlah').value = '1';
             if(document.getElementById('kasirDiskon')) document.getElementById('kasirDiskon').value = '';
             if(document.getElementById('kasirBiayaAdmin')) document.getElementById('kasirBiayaAdmin').value = '';
-            if(document.getElementById('kasirTambahDeposit')) document.getElementById('kasirTambahDeposit').value = '';
-            if(document.getElementById('kasirSiklus')) document.getElementById('kasirSiklus').value = '0';
-            if(elStatus) elStatus.value = 'Lunas';
             if(document.getElementById('wadahDepositKasir')) { document.getElementById('wadahDepositKasir').style.display = 'none'; document.getElementById('wadahDepositKasir').innerHTML = ''; }
 
             simpanData();
@@ -5422,30 +5421,50 @@ function togglePilihSemuaKasbon() {
             
             let statusWarna = '#333';
             let statusTeks = '';
-            if(selisihHari < 0) { statusWarna = '#dc3545'; statusTeks = `Terlewat ${Math.abs(selisihHari)} hari`; }
-            else if(selisihHari === 0) { statusWarna = '#ffc107'; statusTeks = 'Hari ini habis!'; }
+            let persentase = 100;
+            
+            if(j.siklus > 0) {
+                persentase = Math.max(0, Math.min(100, (selisihHari / j.siklus) * 100));
+            }
+            
+            if(selisihHari < 0) { statusWarna = '#dc3545'; statusTeks = `Terlewat ${Math.abs(selisihHari)} hari`; persentase = 0; }
+            else if(selisihHari === 0) { statusWarna = '#ffc107'; statusTeks = 'Hari ini habis!'; persentase = 5; }
             else if(selisihHari <= 3) { statusWarna = '#17a2b8'; statusTeks = `Sisa ${selisihHari} hari lagi`; }
             else { statusWarna = '#28a745'; statusTeks = `${selisihHari} Hari lagi`; }
 
+            let infoId = j.targetId ? `<div style="font-size:11px; margin-top:3px; color:#555;">📱 ID/No: <b>${j.targetId}</b> <i class="fas fa-copy" style="cursor:pointer; color:var(--primary); padding-left:5px;" onclick="salinTeks('${j.targetId}')"></i></div>` : '';
+            let infoLastWA = j.lastWA ? `<div style="font-size:9px; color:#888; margin-top:2px;">Terakhir di-WA: ${formatTanggalIndo(j.lastWA)}</div>` : `<div style="font-size:9px; color:#888; margin-top:2px;">Belum pernah di-WA</div>`;
+
             return `
-            <div class="list-item" style="border-left: 4px solid ${statusWarna}; background: #fff; padding: 12px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div class="flex-between" style="margin-bottom:8px; border-bottom:1px dashed #eee; padding-bottom:5px;">
+            <div class="list-item" style="border-left: 4px solid ${statusWarna}; background: #fff; padding: 12px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.08);">
+                <div class="flex-between" style="margin-bottom:5px;">
                     <div>
-                        <b style="font-size:14px;">${j.pembeli}</b><br>
-                        <span class="text-small" style="color:var(--primary); font-weight:bold;">${j.produk}</span>
+                        <b style="font-size:14px;">${j.pembeli}</b>
                     </div>
                     <div style="text-align:right;">
                         <span style="font-size:10px; background:#f8f9fa; padding:2px 6px; border-radius:4px; border:1px solid #ddd;">Siklus: ${j.siklus} Hari</span>
                     </div>
                 </div>
-                <div class="flex-between" style="align-items:center;">
+                
+                <div style="margin-bottom:8px; border-bottom:1px dashed #eee; padding-bottom:8px;">
+                    <span class="text-small" style="color:var(--primary); font-weight:bold;">${j.produk}</span>
+                    ${infoId}
+                </div>
+
+                <!-- PROGRESS BAR HITUNG MUNDUR -->
+                <div style="width:100%; background:#eef2f5; height:6px; border-radius:3px; margin-bottom:8px; overflow:hidden;">
+                    <div style="width:${persentase}%; background:${statusWarna}; height:100%; transition: width 0.5s ease;"></div>
+                </div>
+                
+                <div class="flex-between" style="align-items:flex-end;">
                     <div>
-                        <div class="text-small">Tgl Beli: ${formatTanggalIndo(j.tglBeli)}</div>
-                        <div style="font-size:12px; font-weight:bold; color:${statusWarna};">Tempo: ${formatTanggalIndo(j.tglJatuhTempo)} (${statusTeks})</div>
+                        <div style="font-size:11px; font-weight:bold; color:${statusWarna};">Tempo: ${formatTanggalIndo(j.tglJatuhTempo)} (${statusTeks})</div>
+                        ${infoLastWA}
                     </div>
-                    <div style="display:flex; gap:5px;">
-                        <button type="button" class="btn-wa" style="width:auto; padding:6px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWAPengingat('${j.id}')">📱 WA</button>
-                        <button type="button" class="btn-red" style="width:auto; padding:6px 10px; margin:0;" onclick="hapusJadwal('${j.id}')">🗑</button>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; max-width: 150px;">
+                        <button type="button" class="btn-green" style="width:auto; padding:5px 8px; margin:0; font-size:10px;" onclick="perpanjangJadwal('${j.id}')" title="Perpanjang Cepat">🔄 Renew</button>
+                        <button type="button" class="btn-wa" style="width:auto; padding:5px 8px; margin:0; font-size:10px; border-color:#25D366; color:#25D366;" onclick="kirimWAPengingat('${j.id}')">📱 WA</button>
+                        <button type="button" class="btn-red" style="width:auto; padding:5px 8px; margin:0; font-size:10px;" onclick="hapusJadwal('${j.id}')">🗑</button>
                     </div>
                 </div>
             </div>`;
@@ -5460,9 +5479,33 @@ function togglePilihSemuaKasbon() {
         }
     }
 
+    function perpanjangJadwal(id) {
+        let j = db.jadwal.find(x => String(x.id) === String(id));
+        if(!j) return;
+        
+        let tambahHari = j.siklus > 0 ? j.siklus : 30; 
+        if(confirm(`Perpanjang cepat jadwal ini (+${tambahHari} Hari)?\n(Aksi ini tidak membuat struk kasir, hanya memajukan tanggal jatuh tempo)`)) {
+            j.tglBeli = ambilTanggal(); 
+            
+            let tglTempoBaru = new Date();
+            tglTempoBaru.setDate(tglTempoBaru.getDate() + tambahHari);
+            j.tglJatuhTempo = `${tglTempoBaru.getFullYear()}-${String(tglTempoBaru.getMonth()+1).padStart(2,'0')}-${String(tglTempoBaru.getDate()).padStart(2,'0')}`;
+            
+            simpanData();
+            renderJadwalList();
+            alert(`✅ Jadwal diperpanjang hingga ${formatTanggalIndo(j.tglJatuhTempo)}`);
+        }
+    }
+
     function kirimWAPengingat(id) {
         let j = db.jadwal.find(x => String(x.id) === String(id));
         if(!j) return;
+        
+        // Catat tanggal terakhir WA agar tidak dobel tagih
+        j.lastWA = ambilTanggal();
+        simpanData();
+        renderJadwalList();
+
         let tpl = db.templateWA.pengingat || "Halo kak *[Nama]*, permisi 🙏\nMengingatkan aja nih, paket/produk *[Produk]* kakak perkiraan akan habis dalam waktu dekat (Jatuh tempo: [TglTempo]).\n\nMau sekalian diisi ulang kah kak biar nggak kehabisan? 😊";
         let psn = tpl.replace(/\[Nama\]/gi, j.pembeli).replace(/\[Produk\]/gi, j.produk).replace(/\[TglTempo\]/gi, formatTanggalIndo(j.tglJatuhTempo));
         tampilkanPilihanWA(psn);
@@ -5483,6 +5526,7 @@ function togglePilihSemuaKasbon() {
         document.getElementById('jadwalPelangganNama').value = '';
         document.getElementById('labelJadwalPelanggan').innerHTML = '<b>Pilih Pelanggan</b>';
         document.getElementById('jadwalProduk').value = '';
+        document.getElementById('jadwalTargetId').value = '';
     }
 
     function eksekusiSimpanJadwalManual(e) {
@@ -5491,6 +5535,7 @@ function togglePilihSemuaKasbon() {
         let produk = document.getElementById('jadwalProduk').value.trim();
         let tglBeli = document.getElementById('jadwalTglBeli').value;
         let tglTempo = document.getElementById('jadwalTglTempo').value;
+        let targetId = document.getElementById('jadwalTargetId').value.trim();
 
         if(!pelNama || pelNama === "Umum / Pelanggan Baru") return alert("Pilih pelanggan yang spesifik dari kontak Anda!");
         if(!produk) return alert("Nama produk tidak boleh kosong!");
@@ -5506,6 +5551,7 @@ function togglePilihSemuaKasbon() {
             existJadwal.tglBeli = tglBeli; 
             existJadwal.tglJatuhTempo = tglTempo; 
             existJadwal.siklus = siklusHari;
+            if(targetId) existJadwal.targetId = targetId;
         } else {
             db.jadwal.push({ 
                 id: 'jdwl_man_' + Date.now(), 
@@ -5513,7 +5559,8 @@ function togglePilihSemuaKasbon() {
                 produk: produk, 
                 tglBeli: tglBeli, 
                 siklus: siklusHari, 
-                tglJatuhTempo: tglTempo 
+                tglJatuhTempo: tglTempo,
+                targetId: targetId
             });
         }
 
