@@ -67,6 +67,7 @@
         
         if(!db.alokasi) { db.alokasi = [{ id: Date.now(), nama: 'Putar Modal', persen: 100 }]; }
         if(!db.pengeluaran) db.pengeluaran = [];
+        if(!db.jadwal) db.jadwal = [];
         if(!db.pemasukanLain) db.pemasukanLain = [];
         if(!db.tema) db.tema = '#007bff';
         if(!db.wallpaperText) db.wallpaperText = '';
@@ -78,7 +79,8 @@
             db.templateWA = {
                 pelanggan: "Halo kak *[Nama]*,\nTerima kasih sudah order pada [Tgl].\n\n*Rincian Pesanan:*\n[Produk]\n\n*Total Tagihan: Rp [Total]*\nSemoga harinya menyenangkan! 🙏",
                 tagihan: "Halo kak *[Nama]*,\nIzin mengingatkan untuk tagihan kasbonnya ya.\n\n*📝 Rincian Belanja:*\n[Produk]\n-----------------------------------\n*Total Tagihan Awal : Rp [Total]*\n\n*💳 Riwayat Pembayaran:*\n[RiwayatCicilan]\n*(Total Sudah Dibayar : Rp [TotalDibayar])*\n-----------------------------------\n🚨 *SISA TAGIHAN : Rp [Sisa]*\n\nMohon bantuannya untuk pelunasan ya kak, terima kasih! 🙏",
-                bos: "Laporan Masuk Bos! 🚀\nTanggal: [Tgl]\nPelanggan: [Nama]\n\n*Rincian Terjual:*\n[Produk]\n\nModal: Rp [Modal]\nTotal Jual: Rp [Total]\n*Untung Bersih: Rp [Untung]*"
+                bos: "Laporan Masuk Bos! 🚀\nTanggal: [Tgl]\nPelanggan: [Nama]\n\n*Rincian Terjual:*\n[Produk]\n\nModal: Rp [Modal]\nTotal Jual: Rp [Total]\n*Untung Bersih: Rp [Untung]*",
+                pengingat: "Halo kak *[Nama]*, permisi 🙏\nMengingatkan aja nih, paket/produk *[Produk]* kakak perkiraan akan habis dalam waktu dekat (Jatuh tempo: [TglTempo]).\n\nMau sekalian diisi ulang kah kak biar nggak kehabisan? 😊"
             };
         }
 
@@ -219,7 +221,7 @@ function simpanData(renderFungsiKhusus = null) {
     function bukaSubHalaman(sub) { 
         document.getElementById('main-menu-grid').style.display = 'none';
         
-        let allSub = ['sub-pengeluaran','sub-kategori','sub-analisa-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-rapor-pelanggan','sub-catatan'];
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-analisa-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-rapor-pelanggan','sub-catatan','sub-jadwal'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
 
         document.getElementById(sub).style.display = 'block'; 
@@ -234,8 +236,9 @@ function simpanData(renderFungsiKhusus = null) {
         if(sub==='sub-tema') jd="Tema Aplikasi"; 
         if(sub==='sub-riwayat') jd="Riwayat Full"; 
         if(sub==='sub-alokasi') { jd="Bagi Hasil"; updateLabaAlokasi(); } 
-        if(sub==='sub-wa') { jd="Struk WA"; document.getElementById('tplPelanggan').value=db.templateWA.pelanggan; document.getElementById('tplTagihan').value=db.templateWA.tagihan; document.getElementById('tplBos').value=db.templateWA.bos; } 
+        if(sub==='sub-wa') { jd="Struk WA"; document.getElementById('tplPelanggan').value=db.templateWA.pelanggan; document.getElementById('tplTagihan').value=db.templateWA.tagihan; document.getElementById('tplBos').value=db.templateWA.bos; if(document.getElementById('tplPengingat')) document.getElementById('tplPengingat').value=db.templateWA.pengingat || "Halo kak *[Nama]*, permisi 🙏\nMengingatkan aja nih, paket/produk *[Produk]* kakak perkiraan akan habis dalam waktu dekat (Jatuh tempo: [TglTempo]).\n\nMau sekalian diisi ulang kah kak biar nggak kehabisan? 😊"; } 
         if(sub==='sub-kategori') { jd="Kategori Produk"; renderKategoriMasterList(); }
+        if(sub==='sub-jadwal') { jd="Jadwal Isi Ulang"; renderJadwalList(); }
         if(sub==='sub-portal') { jd="Portal Dompet"; } 
         if(sub==='sub-grafik') { jd="Grafik Bisnis"; renderGrafik(); } 
         if(sub==='sub-mutasi') { jd="Mutasi Saldo"; document.getElementById('mutasiTglMulai').value = ambilTanggal(); document.getElementById('mutasiTglAkhir').value = ambilTanggal(); renderMutasiSaldo(); }
@@ -328,6 +331,8 @@ function simpanData(renderFungsiKhusus = null) {
             let diskon = document.getElementById('kasirDiskon') ? getAngkaMurni(document.getElementById('kasirDiskon').value) : 0;
             let titipKembalian = document.getElementById('kasirTambahDeposit') ? getAngkaMurni(document.getElementById('kasirTambahDeposit').value) : 0;
             
+            let siklusHari = document.getElementById('kasirSiklus') ? parseInt(document.getElementById('kasirSiklus').value) : 0;
+            
             let adminVal = document.getElementById('kasirBiayaAdmin') ? getAngkaMurni(document.getElementById('kasirBiayaAdmin').value) : 0;
             let dAdminId = document.getElementById('kasirDompetAdmin') ? document.getElementById('kasirDompetAdmin').value : 'none';
 
@@ -392,10 +397,23 @@ function simpanData(renderFungsiKhusus = null) {
                     dompetMasuk: dMasukId, 
                     dompetAdmin: dAdminId, 
                     admin: adminBarisIni,
-                    diskon: diskonBarisIni // Disimpan terpisah agar bisa dihitung di modul laporan & Excel nantinya
+                    diskon: diskonBarisIni 
                 };
                 db.transaksi.push(tr);
                 if(stat !== 'Lunas') tambahUtangOtomatis(tr);
+
+                if(siklusHari > 0 && nmPel !== "Umum") {
+                    let tglSkrg = new Date(tgl);
+                    tglSkrg.setDate(tglSkrg.getDate() + siklusHari);
+                    let tglJatuhTempo = `${tglSkrg.getFullYear()}-${String(tglSkrg.getMonth()+1).padStart(2,'0')}-${String(tglSkrg.getDate()).padStart(2,'0')}`;
+                    
+                    let existJadwal = db.jadwal.find(j => j.pembeli === nmPel && j.produk === nmProdFinal);
+                    if(existJadwal) {
+                        existJadwal.tglBeli = tgl; existJadwal.tglJatuhTempo = tglJatuhTempo; existJadwal.siklus = siklusHari;
+                    } else {
+                        db.jadwal.push({ id: 'jdwl_' + Date.now() + i, pembeli: nmPel, produk: nmProdFinal, tglBeli: tgl, siklus: siklusHari, tglJatuhTempo: tglJatuhTempo });
+                    }
+                }
 
                 if(dModalId !== 'none') { let dm = db.dompet.find(x => String(x.id) === String(dModalId)); if(dm) dm.saldo -= modalFinal; }
                 if(stat === 'Lunas') { 
@@ -463,6 +481,7 @@ function simpanData(renderFungsiKhusus = null) {
             if(document.getElementById('kasirDiskon')) document.getElementById('kasirDiskon').value = '';
             if(document.getElementById('kasirBiayaAdmin')) document.getElementById('kasirBiayaAdmin').value = '';
             if(document.getElementById('kasirTambahDeposit')) document.getElementById('kasirTambahDeposit').value = '';
+            if(document.getElementById('kasirSiklus')) document.getElementById('kasirSiklus').value = '0';
             if(elStatus) elStatus.value = 'Lunas';
             if(document.getElementById('wadahDepositKasir')) { document.getElementById('wadahDepositKasir').style.display = 'none'; document.getElementById('wadahDepositKasir').innerHTML = ''; }
 
@@ -1937,7 +1956,7 @@ function eksekusiSimpanCicilan(e) {
     function hapusDompetItem(id) { if(confirm("Hapus dompet ini beserta isinya?")) { db.dompet = db.dompet.filter(d => String(d.id) !== String(id)); simpanData(); } }
     
                 function kembaliKeMenu() { 
-        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-rapor-pelanggan','sub-catatan'];
+        let allSub = ['sub-pengeluaran','sub-kategori','sub-grafik','sub-pelanggan','sub-alokasi','sub-dompet','sub-portal','sub-wa','sub-backup','sub-tema','sub-dompet-detail','sub-riwayat','sub-mutasi','sub-struk-manual','sub-rapor-pelanggan','sub-catatan','sub-jadwal'];
         allSub.forEach(s => { let el = document.getElementById(s); if(el) el.style.display = 'none'; });
         
         if(document.getElementById('sub-analisa-kategori')) document.getElementById('sub-analisa-kategori').style.display = 'none';
@@ -2581,8 +2600,8 @@ function renderDaftarTransaksiBeranda() {
         <td class="text-center"><button type="button" class="btn-outline" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="bukaEditTransaksi('${t.id}')">E</button><button type="button" class="btn-red" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="hapusTransaksi('${t.id}')">X</button></td></tr>`;
     }
 
-    function simpanTemplateWA() { db.templateWA.pelanggan = document.getElementById('tplPelanggan').value; db.templateWA.tagihan = document.getElementById('tplTagihan').value; db.templateWA.bos = document.getElementById('tplBos').value; simpanData(); alert("Disimpan!"); }
-    function resetTemplateWA() { if(confirm("Reset ke awal?")) { db.templateWA = { pelanggan: "Halo kak *[Nama]*,\nTerima kasih sudah order pada [Tgl].\n\n*Rincian Pesanan:*\n[Produk]\n\n*Total Tagihan: Rp [Total]*\nSemoga harinya menyenangkan! 🙏", tagihan: "Halo kak *[Nama]*,\nIzin mengingatkan untuk tagihan kasbonnya ya.\n\n*📝 Rincian Belanja:*\n[Produk]\n-----------------------------------\n*Total Tagihan Awal : Rp [Total]*\n\n*💳 Riwayat Pembayaran:*\n[RiwayatCicilan]\n*(Total Sudah Dibayar : Rp [TotalDibayar])*\n-----------------------------------\n🚨 *SISA TAGIHAN : Rp [Sisa]*\n\nMohon bantuannya untuk pelunasan ya kak, terima kasih! 🙏", bos: "Laporan Masuk Bos! 🚀\nTanggal: [Tgl]\nPelanggan: [Nama]\n\n*Rincian Terjual:*\n[Produk]\n\nModal: Rp [Modal]\nTotal Jual: Rp [Total]\n*Untung Bersih: Rp [Untung]*" }; document.getElementById('tplPelanggan').value = db.templateWA.pelanggan; document.getElementById('tplTagihan').value = db.templateWA.tagihan; document.getElementById('tplBos').value = db.templateWA.bos; simpanData(); } }
+    function simpanTemplateWA() { db.templateWA.pelanggan = document.getElementById('tplPelanggan').value; db.templateWA.tagihan = document.getElementById('tplTagihan').value; db.templateWA.bos = document.getElementById('tplBos').value; if(document.getElementById('tplPengingat')) { db.templateWA.pengingat = document.getElementById('tplPengingat').value; } simpanData(); alert("Disimpan!"); }
+    function resetTemplateWA() { if(confirm("Reset ke awal?")) { db.templateWA = { pelanggan: "Halo kak *[Nama]*,\nTerima kasih sudah order pada [Tgl].\n\n*Rincian Pesanan:*\n[Produk]\n\n*Total Tagihan: Rp [Total]*\nSemoga harinya menyenangkan! 🙏", tagihan: "Halo kak *[Nama]*,\nIzin mengingatkan untuk tagihan kasbonnya ya.\n\n*📝 Rincian Belanja:*\n[Produk]\n-----------------------------------\n*Total Tagihan Awal : Rp [Total]*\n\n*💳 Riwayat Pembayaran:*\n[RiwayatCicilan]\n*(Total Sudah Dibayar : Rp [TotalDibayar])*\n-----------------------------------\n🚨 *SISA TAGIHAN : Rp [Sisa]*\n\nMohon bantuannya untuk pelunasan ya kak, terima kasih! 🙏", bos: "Laporan Masuk Bos! 🚀\nTanggal: [Tgl]\nPelanggan: [Nama]\n\n*Rincian Terjual:*\n[Produk]\n\nModal: Rp [Modal]\nTotal Jual: Rp [Total]\n*Untung Bersih: Rp [Untung]*", pengingat: "Halo kak *[Nama]*, permisi 🙏\nMengingatkan aja nih, paket/produk *[Produk]* kakak perkiraan akan habis dalam waktu dekat (Jatuh tempo: [TglTempo]).\n\nMau sekalian diisi ulang kah kak biar nggak kehabisan? 😊" }; document.getElementById('tplPelanggan').value = db.templateWA.pelanggan; document.getElementById('tplTagihan').value = db.templateWA.tagihan; document.getElementById('tplBos').value = db.templateWA.bos; if(document.getElementById('tplPengingat')) document.getElementById('tplPengingat').value = db.templateWA.pengingat; simpanData(); } }
     function tampilkanPilihanWA(psn) { tempPesanWA = encodeURIComponent(psn); document.getElementById('modal-pilih-wa').classList.add('active'); }
     function tutupModalWA() { document.getElementById('modal-pilih-wa').classList.remove('active'); }
     function eksekusiKirimWA(tp) {
@@ -5143,6 +5162,7 @@ function salinBackupJSON() {
             dataFiltered.catatan = fullData.catatan;
             dataFiltered.alokasi = fullData.alokasi;
             dataFiltered.pengeluaran = fullData.pengeluaran;
+            dataFiltered.jadwal = fullData.jadwal;
         }
 
         let blob = new Blob([JSON.stringify(dataFiltered)], {type: "application/json"});
@@ -5355,6 +5375,95 @@ function togglePilihSemuaKasbon() {
             simpanData();
             alert("✅ Berhasil dihapus & saldo telah di-refund!");
         } 
+    }
+
+    // ==========================================
+    // MESIN JADWAL ISI ULANG (LANGGANAN)
+    // ==========================================
+    let tabJadwalAktif = 'semua';
+    function switchJadwalTab(tab) {
+        tabJadwalAktif = tab;
+        document.querySelectorAll('#sub-jadwal .tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('tab-jadwal-' + tab).classList.add('active');
+        renderJadwalList();
+    }
+
+    function renderJadwalList() {
+        let wadah = document.getElementById('listJadwal');
+        if(!wadah) return;
+        if(!db.jadwal || db.jadwal.length === 0) {
+            wadah.innerHTML = '<div class="text-small text-center" style="padding:20px; color:gray;">Belum ada jadwal tersimpan. Atur di menu Kasir saat mencatat transaksi.</div>';
+            return;
+        }
+
+        let hariIniStr = ambilTanggal();
+        let hariIniDate = new Date(hariIniStr);
+        let h3Date = new Date(hariIniDate);
+        h3Date.setDate(h3Date.getDate() + 3);
+
+        let dataTampil = db.jadwal.filter(j => {
+            let tempoDate = new Date(j.tglJatuhTempo);
+            if (tabJadwalAktif === 'semua') return true;
+            if (tabJadwalAktif === 'h3') return tempoDate >= hariIniDate && tempoDate <= h3Date;
+            if (tabJadwalAktif === 'lewat') return tempoDate < hariIniDate;
+            return true;
+        }).sort((a, b) => new Date(a.tglJatuhTempo) - new Date(b.tglJatuhTempo));
+
+        if (dataTampil.length === 0) {
+            wadah.innerHTML = '<div class="text-small text-center" style="padding:20px; color:gray;">Tidak ada jadwal di kategori ini.</div>';
+            return;
+        }
+
+        wadah.innerHTML = dataTampil.map(j => {
+            let tglT = new Date(j.tglJatuhTempo);
+            let selisihHari = Math.ceil((tglT - hariIniDate) / (1000 * 60 * 60 * 24));
+            
+            let statusWarna = '#333';
+            let statusTeks = '';
+            if(selisihHari < 0) { statusWarna = '#dc3545'; statusTeks = `Terlewat ${Math.abs(selisihHari)} hari`; }
+            else if(selisihHari === 0) { statusWarna = '#ffc107'; statusTeks = 'Hari ini habis!'; }
+            else if(selisihHari <= 3) { statusWarna = '#17a2b8'; statusTeks = `Sisa ${selisihHari} hari lagi`; }
+            else { statusWarna = '#28a745'; statusTeks = `${selisihHari} Hari lagi`; }
+
+            return `
+            <div class="list-item" style="border-left: 4px solid ${statusWarna}; background: #fff; padding: 12px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div class="flex-between" style="margin-bottom:8px; border-bottom:1px dashed #eee; padding-bottom:5px;">
+                    <div>
+                        <b style="font-size:14px;">${j.pembeli}</b><br>
+                        <span class="text-small" style="color:var(--primary); font-weight:bold;">${j.produk}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:10px; background:#f8f9fa; padding:2px 6px; border-radius:4px; border:1px solid #ddd;">Siklus: ${j.siklus} Hari</span>
+                    </div>
+                </div>
+                <div class="flex-between" style="align-items:center;">
+                    <div>
+                        <div class="text-small">Tgl Beli: ${formatTanggalIndo(j.tglBeli)}</div>
+                        <div style="font-size:12px; font-weight:bold; color:${statusWarna};">Tempo: ${formatTanggalIndo(j.tglJatuhTempo)} (${statusTeks})</div>
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <button type="button" class="btn-wa" style="width:auto; padding:6px 10px; margin:0; border-color:#25D366; color:#25D366;" onclick="kirimWAPengingat('${j.id}')">📱 WA</button>
+                        <button type="button" class="btn-red" style="width:auto; padding:6px 10px; margin:0;" onclick="hapusJadwal('${j.id}')">🗑</button>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function hapusJadwal(id) {
+        if(confirm("Hapus jadwal pengingat ini?")) {
+            db.jadwal = db.jadwal.filter(j => String(j.id) !== String(id));
+            simpanData();
+            renderJadwalList();
+        }
+    }
+
+    function kirimWAPengingat(id) {
+        let j = db.jadwal.find(x => String(x.id) === String(id));
+        if(!j) return;
+        let tpl = db.templateWA.pengingat || "Halo kak *[Nama]*, permisi 🙏\nMengingatkan aja nih, paket/produk *[Produk]* kakak perkiraan akan habis dalam waktu dekat (Jatuh tempo: [TglTempo]).\n\nMau sekalian diisi ulang kah kak biar nggak kehabisan? 😊";
+        let psn = tpl.replace(/\\[Nama\\]/gi, j.pembeli).replace(/\\[Produk\\]/gi, j.produk).replace(/\\[TglTempo\\]/gi, formatTanggalIndo(j.tglJatuhTempo));
+        tampilkanPilihanWA(psn);
     }
 
     // [ FITUR UX ] KLIK DI LUAR MODAL UNTUK MENUTUP
