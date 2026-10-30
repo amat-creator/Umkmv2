@@ -2418,6 +2418,8 @@ function eksekusiSimpanCicilan(e) {
             document.getElementById('editKasbonNama').value = nama; document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-trans') {
             document.getElementById('editTransPelangganNama').value = nama; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${nama}</b>`; 
+        } else if (modePencarian === 'pelanggan-jadwal') {
+            document.getElementById('jadwalPelangganNama').value = nama; document.getElementById('labelJadwalPelanggan').innerHTML = `<b>${nama}</b>`;
         }
         tutupPencarian(); 
 
@@ -5462,8 +5464,63 @@ function togglePilihSemuaKasbon() {
         let j = db.jadwal.find(x => String(x.id) === String(id));
         if(!j) return;
         let tpl = db.templateWA.pengingat || "Halo kak *[Nama]*, permisi 🙏\nMengingatkan aja nih, paket/produk *[Produk]* kakak perkiraan akan habis dalam waktu dekat (Jatuh tempo: [TglTempo]).\n\nMau sekalian diisi ulang kah kak biar nggak kehabisan? 😊";
-        let psn = tpl.replace(/\\[Nama\\]/gi, j.pembeli).replace(/\\[Produk\\]/gi, j.produk).replace(/\\[TglTempo\\]/gi, formatTanggalIndo(j.tglJatuhTempo));
+        let psn = tpl.replace(/\[Nama\]/gi, j.pembeli).replace(/\[Produk\]/gi, j.produk).replace(/\[TglTempo\]/gi, formatTanggalIndo(j.tglJatuhTempo));
         tampilkanPilihanWA(psn);
+    }
+
+    function bukaFormJadwalManual() {
+        document.getElementById('formJadwalManual').style.display = 'block';
+        document.getElementById('jadwalTglBeli').value = ambilTanggal();
+        
+        let tglTempo = new Date();
+        tglTempo.setDate(tglTempo.getDate() + 30); // Default saran: 30 hari
+        let tglTempoStr = `${tglTempo.getFullYear()}-${String(tglTempo.getMonth()+1).padStart(2,'0')}-${String(tglTempo.getDate()).padStart(2,'0')}`;
+        document.getElementById('jadwalTglTempo').value = tglTempoStr;
+    }
+
+    function tutupFormJadwalManual() {
+        document.getElementById('formJadwalManual').style.display = 'none';
+        document.getElementById('jadwalPelangganNama').value = '';
+        document.getElementById('labelJadwalPelanggan').innerHTML = '<b>Pilih Pelanggan</b>';
+        document.getElementById('jadwalProduk').value = '';
+    }
+
+    function eksekusiSimpanJadwalManual(e) {
+        e.preventDefault();
+        let pelNama = document.getElementById('jadwalPelangganNama').value.trim();
+        let produk = document.getElementById('jadwalProduk').value.trim();
+        let tglBeli = document.getElementById('jadwalTglBeli').value;
+        let tglTempo = document.getElementById('jadwalTglTempo').value;
+
+        if(!pelNama || pelNama === "Umum / Pelanggan Baru") return alert("Pilih pelanggan yang spesifik dari kontak Anda!");
+        if(!produk) return alert("Nama produk tidak boleh kosong!");
+        if(tglTempo <= tglBeli) return alert("Tanggal Jatuh Tempo harus lebih besar dari Tanggal Pembelian!");
+
+        // Otomatis menghitung jarak hari (siklus) berdasarkan 2 tanggal yang dipilih
+        let dateBeli = new Date(tglBeli);
+        let dateTempo = new Date(tglTempo);
+        let siklusHari = Math.ceil((dateTempo - dateBeli) / (1000 * 60 * 60 * 24));
+
+        let existJadwal = db.jadwal.find(j => j.pembeli === pelNama && j.produk === produk);
+        if(existJadwal) {
+            existJadwal.tglBeli = tglBeli; 
+            existJadwal.tglJatuhTempo = tglTempo; 
+            existJadwal.siklus = siklusHari;
+        } else {
+            db.jadwal.push({ 
+                id: 'jdwl_man_' + Date.now(), 
+                pembeli: pelNama, 
+                produk: produk, 
+                tglBeli: tglBeli, 
+                siklus: siklusHari, 
+                tglJatuhTempo: tglTempo 
+            });
+        }
+
+        simpanData();
+        tutupFormJadwalManual();
+        renderJadwalList();
+        alert("✅ Jadwal pengingat manual berhasil disimpan!");
     }
 
     // [ FITUR UX ] KLIK DI LUAR MODAL UNTUK MENUTUP
