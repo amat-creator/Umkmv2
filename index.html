@@ -385,12 +385,15 @@
                 
                 <div style="background: #e8f4fd; padding: 10px; border-radius: 8px; border: 1px solid #b8daff; margin-bottom: 15px;">
                     <label class="text-small text-blue"><b>⏱️ Jadwal Pengingat (Paket Data/Token):</b></label>
-                    <select id="kasirSiklus" style="margin-bottom:0; font-weight:bold; border-color:#80bdff;">
-                        <option value="0">Tidak ada pengingat</option>
-                        <option value="7">7 Hari (Mingguan)</option>
-                        <option value="15">15 Hari</option>
-                        <option value="30">30 Hari (Bulanan)</option>
-                    </select>
+                    <div class="grid-2" style="margin-bottom: 5px;">
+                        <select id="kasirSiklus" style="margin-bottom:0; font-weight:bold; border-color:#80bdff;">
+                            <option value="0">Tidak ada pengingat</option>
+                            <option value="7">7 Hari (Mingguan)</option>
+                            <option value="15">15 Hari</option>
+                            <option value="30">30 Hari (Bulanan)</option>
+                        </select>
+                        <input type="text" inputmode="numeric" id="kasirTargetId" placeholder="No. HP / ID PLN" style="margin-bottom:0; border-color:#80bdff;">
+                    </div>
                 </div>
                 
                 <div style="background: #ffebee; padding: 10px; border-radius: 8px; border: 1px dashed #dc3545; margin-bottom: 15px;">
@@ -639,8 +642,16 @@
                 <div class="search-select" onclick="bukaPencarian('pelanggan-jadwal')"><span id="labelJadwalPelanggan"><b>Pilih Pelanggan</b></span></div>
                 <input type="hidden" id="jadwalPelangganNama" value="">
                 
-                <label class="text-small">Nama Produk / Paket:</label>
-                <input type="text" id="jadwalProduk" placeholder="Cth: Paket Data / Token PLN" required>
+                <div class="grid-2" style="margin-bottom: 5px;">
+                    <div>
+                        <label class="text-small">Nama Produk / Paket:</label>
+                        <input type="text" id="jadwalProduk" placeholder="Cth: Paket Data / Token PLN" required>
+                    </div>
+                    <div>
+                        <label class="text-small text-blue"><b>📱 No. HP / ID PLN (Opsional):</b></label>
+                        <input type="text" inputmode="numeric" id="jadwalTargetId" placeholder="Cth: 08123... / 321...">
+                    </div>
+                </div>
                 
                 <div class="grid-2">
                     <div>
