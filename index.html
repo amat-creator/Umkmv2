@@ -379,9 +379,19 @@
                     <div><label class="text-small">Harga Jual:</label><input type="text" inputmode="numeric" id="kasirHargaJual" placeholder="Rp 0" oninput="formatInputRupiah(event)" required></div>
                 </div>
                 <label class="text-small">Jumlah Barang (Qty):</label><input type="number" inputmode="numeric" id="kasirJumlah" placeholder="Jumlah" value="1" required>
-                <label style="display:flex; align-items:center; font-size:11px; margin-bottom: 15px; background: #e8f5e9; padding: 6px 10px; border-radius: 6px; border: 1px solid #c8e6c9; cursor: pointer;">
+                <label style="display:flex; align-items:center; font-size:11px; margin-bottom: 5px; background: #e8f5e9; padding: 6px 10px; border-radius: 6px; border: 1px solid #c8e6c9; cursor: pointer;">
                     <input type="checkbox" id="kasirGabungQty" checked style="width:auto; margin:0 8px 0 0;"><b style="color: #28a745;">Jadikan 1 baris riwayat (Hapus centang untuk pisah 1 per 1)</b>
                 </label>
+                
+                <div style="background: #e8f4fd; padding: 10px; border-radius: 8px; border: 1px solid #b8daff; margin-bottom: 15px;">
+                    <label class="text-small text-blue"><b>⏱️ Jadwal Pengingat (Paket Data/Token):</b></label>
+                    <select id="kasirSiklus" style="margin-bottom:0; font-weight:bold; border-color:#80bdff;">
+                        <option value="0">Tidak ada pengingat</option>
+                        <option value="7">7 Hari (Mingguan)</option>
+                        <option value="15">15 Hari</option>
+                        <option value="30">30 Hari (Bulanan)</option>
+                    </select>
+                </div>
                 
                 <div style="background: #ffebee; padding: 10px; border-radius: 8px; border: 1px dashed #dc3545; margin-bottom: 15px;">
                     <label class="text-small text-red"><b>✨ Diskon / Potongan Harga Total (Opsional):</b></label>
@@ -609,10 +619,25 @@
             <div class="menu-btn" onclick="bukaSubHalaman('sub-mutasi')"><span>📑</span>Mutasi Kas</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-struk-manual')"><span>🖨️</span>Struk Manual</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-analisa-kategori')"><span>📊</span>Laporan Folder</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-jadwal')"><span>⏱️</span>Jadwal Isi Ulang</div>
             <div class="menu-btn" onclick="alert('Sistem Manajemen UMKM Pro\nVersi: 2.1 (Full Feature)\nDeveloper: Muhammad Rizky')"><span>ℹ️</span>Info App</div>
         </div>
 
         
+
+        <div id="sub-jadwal" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>⏱️ Jadwal Isi Ulang & Langganan</h4>
+            <p class="text-small" style="margin-bottom: 15px;">Pantau pelanggan yang paket data atau tokennya akan habis.</p>
+            
+            <div class="tabs">
+                <div id="tab-jadwal-semua" class="tab-btn active" onclick="switchJadwalTab('semua')">Semua Jadwal</div>
+                <div id="tab-jadwal-h3" class="tab-btn" onclick="switchJadwalTab('h3')">Mendesak (H-3)</div>
+                <div id="tab-jadwal-lewat" class="tab-btn" onclick="switchJadwalTab('lewat')">Terlewat</div>
+            </div>
+            
+            <div id="listJadwal"></div>
+        </div>
 
         <div id="sub-rapor-pelanggan" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
@@ -1178,6 +1203,7 @@
             <label class="text-small text-blue"><b>1. Struk Pembelian Lunas</b></label><textarea id="tplPelanggan" rows="3"></textarea>
             <label class="text-small text-red"><b>2. Tagihan Utang</b></label><textarea id="tplTagihan" rows="5"></textarea>
             <label class="text-small text-green"><b>3. Laporan Transaksi</b></label><textarea id="tplBos" rows="3"></textarea>
+            <label class="text-small text-blue" style="margin-top:10px;"><b>4. Pengingat Isi Ulang / Langganan</b></label><textarea id="tplPengingat" rows="4"></textarea>
             <div class="grid-2"><button type="button" class="btn-green" onclick="simpanTemplateWA()">💾 Simpan</button><button type="button" class="btn-outline" style="border-color:#dc3545; color:#dc3545;" onclick="resetTemplateWA()">🔄 Reset</button></div>
         </div>
 
