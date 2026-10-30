@@ -627,8 +627,37 @@
 
         <div id="sub-jadwal" class="card" style="display:none;">
             <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
-            <h4>⏱️ Jadwal Isi Ulang & Langganan</h4>
-            <p class="text-small" style="margin-bottom: 15px;">Pantau pelanggan yang paket data atau tokennya akan habis.</p>
+            <div class="flex-between">
+                <h4 style="margin:0;">⏱️ Jadwal Isi Ulang</h4>
+                <button type="button" class="btn-green" style="width:auto; padding:5px 10px; margin:0; font-size:11px;" onclick="bukaFormJadwalManual()">➕ Tambah Manual</button>
+            </div>
+            <p class="text-small" style="margin-bottom: 15px; margin-top:5px;">Pantau pelanggan yang paket data atau tokennya akan habis.</p>
+            
+            <!-- FORM MANUAL JADWAL -->
+            <form id="formJadwalManual" onsubmit="eksekusiSimpanJadwalManual(event)" style="display:none; background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
+                <label class="text-small">Pilih Pelanggan:</label>
+                <div class="search-select" onclick="bukaPencarian('pelanggan-jadwal')"><span id="labelJadwalPelanggan"><b>Pilih Pelanggan</b></span></div>
+                <input type="hidden" id="jadwalPelangganNama" value="">
+                
+                <label class="text-small">Nama Produk / Paket:</label>
+                <input type="text" id="jadwalProduk" placeholder="Cth: Paket Data / Token PLN" required>
+                
+                <div class="grid-2">
+                    <div>
+                        <label class="text-small text-blue"><b>📅 Tgl Pembelian:</b></label>
+                        <input type="date" id="jadwalTglBeli" style="border-color:#80bdff;" required>
+                    </div>
+                    <div>
+                        <label class="text-small text-red"><b>⏰ Tgl Jatuh Tempo:</b></label>
+                        <input type="date" id="jadwalTglTempo" style="border-color:#dc3545;" required>
+                    </div>
+                </div>
+                
+                <div class="grid-2" style="margin-top:10px;">
+                    <button type="submit" class="btn-green">💾 Simpan Jadwal</button>
+                    <button type="button" class="btn-red" onclick="tutupFormJadwalManual()">Batal</button>
+                </div>
+            </form>
             
             <div class="tabs">
                 <div id="tab-jadwal-semua" class="tab-btn active" onclick="switchJadwalTab('semua')">Semua Jadwal</div>
