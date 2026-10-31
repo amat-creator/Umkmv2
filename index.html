@@ -386,12 +386,7 @@
                 <div style="background: #e8f4fd; padding: 10px; border-radius: 8px; border: 1px solid #b8daff; margin-bottom: 15px;">
                     <label class="text-small text-blue"><b>⏱️ Jadwal Pengingat (Paket Data/Token):</b></label>
                     <div class="grid-2" style="margin-bottom: 5px;">
-                        <select id="kasirSiklus" style="margin-bottom:0; font-weight:bold; border-color:#80bdff;">
-                            <option value="0">Tidak ada pengingat</option>
-                            <option value="7">7 Hari (Mingguan)</option>
-                            <option value="15">15 Hari</option>
-                            <option value="30">30 Hari (Bulanan)</option>
-                        </select>
+                        <input type="number" id="kasirSiklus" placeholder="Siklus/Jeda Hari (Cth: 10)" style="margin-bottom:0; font-weight:bold; border-color:#80bdff;">
                         <input type="text" inputmode="numeric" id="kasirTargetId" placeholder="No. HP / ID PLN" style="margin-bottom:0; border-color:#80bdff;">
                     </div>
                 </div>
@@ -733,6 +728,16 @@
             </form>
             <hr style="margin:20px 0; border:0; border-top:1px dashed #ccc;">
             <h4 style="margin-bottom:10px;">Riwayat Pengeluaran</h4>
+            <div class="tabs">
+                <div id="tab-peng-kas" class="tab-btn active" onclick="switchPengeluaranTab('kas')">Kas/Digital</div>
+                <div id="tab-peng-pribadi" class="tab-btn" onclick="switchPengeluaranTab('pribadi')">Duit Pribadi</div>
+            </div>
+            <div class="flex-between" style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee;">
+                <label style="display: flex; align-items: center; font-size: 13px; font-weight: bold; cursor: pointer;">
+                    <input type="checkbox" id="checkSemuaPengeluaran" onchange="togglePilihSemuaPengeluaran()" style="width: auto; margin: 0 10px 0 0;"> Pilih Semua
+                </label>
+                <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusPengeluaranTerpilih()">🗑 Hapus Massal</button>
+            </div>
             <div id="listPengeluaran"></div>
         </div>
 
@@ -958,13 +963,7 @@
                 </button>
             </div>
 
-            <button
-                type="button"
-                class="btn-outline"
-                style="margin-top:5px; width:100%; padding:10px; border-radius:8px; font-size:13px; color:#666; border-color:#ccc;"
-                onclick="simpanDraftStrukManual(true)">
-                💾 Simpan Draft Struk
-            </button>
+            <!-- Tombol Simpan Draft Dihapus Berdasarkan Permintaan -->
 
             <button
                 type="button"
@@ -1281,6 +1280,7 @@
                 <select id="formPelTipe" style="background:#f0f8ff; font-weight:bold; margin-bottom:10px;">
                     <option value="Biasa">👤 Pelanggan Biasa (Harga Normal)</option>
                     <option value="Reseller">🤝 Reseller (Dapat Harga Khusus)</option>
+                    <option value="Keluarga">👨‍👩‍👧‍👦 Anggota Keluarga / Kerabat</option>
                 </select>
                 <div style="margin-bottom:10px;">
                     <b class="text-small text-blue">Data Info / Nomor:</b>
