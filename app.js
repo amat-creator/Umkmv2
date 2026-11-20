@@ -253,9 +253,6 @@ function simpanData(renderFungsiKhusus = null) {
             // Muat draft terakhir jika tersedia
             muatDraftStrukManual();
 
-            // Tampilkan status koneksi printer saat ini (tanpa mencoba menyambung otomatis)
-            updateStatusPrinterBT(!!(btCharacteristic && btDevice && btDevice.gatt.connected), btDevice ? btDevice.name : '');
-
             updatePreviewStruk(); 
         }
         if(sub==='sub-catatan') { jd="Catatan Bebas"; renderCatatanList(); }
@@ -296,64 +293,31 @@ function simpanData(renderFungsiKhusus = null) {
         }
     }
 
-    let tabPengeluaranAktif = 'kas';
-    function switchPengeluaranTab(tab) {
-        tabPengeluaranAktif = tab;
-        document.getElementById('tab-peng-kas').classList.remove('active');
-        document.getElementById('tab-peng-pribadi').classList.remove('active');
-        document.getElementById('tab-peng-' + tab).classList.add('active');
-        renderPengeluaranList();
-    }
-    
-    function togglePilihSemuaPengeluaran() {
-        let chk = document.getElementById('checkSemuaPengeluaran').checked;
-        document.querySelectorAll('.check-pengeluaran').forEach(cb => cb.checked = chk);
-    }
-    
-    function hapusPengeluaranTerpilih() {
-        let arr = Array.from(document.querySelectorAll('.check-pengeluaran:checked')).map(cb => String(cb.value));
-        if(arr.length === 0) return alert("Pilih minimal 1 pengeluaran!");
-        if(confirm(`Hapus ${arr.length} pengeluaran terpilih?`)) {
-            db.pengeluaran = db.pengeluaran.filter(p => !arr.includes(String(p.id)));
-            if(document.getElementById('checkSemuaPengeluaran')) document.getElementById('checkSemuaPengeluaran').checked = false;
-            simpanData();
-        }
-    }
-
     function renderPengeluaranList() {
         let container = document.getElementById('listPengeluaran');
         if(!container) return;
         
-        let data = db.pengeluaran.slice().reverse().filter(p => {
-            let isPribadi = false;
-            if(p.dompetId !== 'none') {
-                let d = db.dompet.find(x => String(x.id) === String(p.dompetId));
-                if(d && d.kategori === 'Pribadi') isPribadi = true;
-            }
-            return tabPengeluaranAktif === 'pribadi' ? isPribadi : !isPribadi;
-        });
-        
+        let data = db.pengeluaran.slice().reverse();
         container.innerHTML = data.map(p => {
             let namaDompet = "Tanpa Dompet";
             if(p.dompetId !== 'none') {
                 let d = db.dompet.find(x => String(x.id) === String(p.dompetId));
                 if(d) namaDompet = d.nama;
             }
-            return `<div class="list-item flex-between" style="background:#fff; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:8px; align-items:center;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" class="check-pengeluaran" value="${p.id}" style="width:auto; margin:0;">
+            return `<div class="list-item" style="background:#fff; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:8px;">
+                <div class="flex-between">
                     <div>
                         <span class="text-small">📅 ${formatTanggalIndo(p.tanggal)}</span><br>
                         <b>${p.keterangan}</b><br>
                         <span class="text-small" style="color:#666;">Sumber: <b class="text-red">${namaDompet}</b></span>
                     </div>
-                </div>
-                <div style="text-align:right;">
-                    <b class="text-red" style="font-size:16px;">- Rp ${formatRupiah(p.nominal)}</b><br>
-                    <button type="button" class="btn-outline" style="padding:4px 10px; font-size:10px; margin-top:5px; width:auto; border-color:#dc3545; color:#dc3545;" onclick="hapusPengeluaran('${p.id}')">Hapus</button>
+                    <div style="text-align:right;">
+                        <b class="text-red" style="font-size:16px;">- Rp ${formatRupiah(p.nominal)}</b><br>
+                        <button type="button" class="btn-outline" style="padding:4px 10px; font-size:10px; margin-top:5px; width:auto; border-color:#dc3545; color:#dc3545;" onclick="hapusPengeluaran('${p.id}')">Hapus</button>
+                    </div>
                 </div>
             </div>`;
-        }).join('') || '<div class="text-small text-center" style="padding:15px;">Belum ada pengeluaran di kategori ini</div>';
+        }).join('') || '<div class="text-small text-center" style="padding:15px;">Belum ada pengeluaran</div>';
     }
 
     function eksekusiKasir(e) {
@@ -1575,23 +1539,23 @@ function eksekusiSimpanCicilan(e) {
                      * ubah transaksi asli menjadi Lunas.
                      */
                     if(r.transId) {
-                        let td = db.transaksi.find(t => String(t.id) === String(r.transId));
-                        if(td && r.dibayar >= (Number(r.nominal) || 0)) {
-                            // Biarkan transaksi asli berstatus Piutang agar jadi histori, buat baris Lunas baru untuk masuk ke omset hari pembayaran
-                            td.status = 'Piutang (Lunas)'; 
-                            db.transaksi.push({
-                                id: Date.now() + Math.random(),
-                                tanggal: tgl,
-                                namaProduk: "Bayar Kasbon: " + (r.produk || td.namaProduk),
-                                jumlah: 1,
-                                modal: 0, 
-                                total: nominalAlokasi,
-                                untung: nominalAlokasi, 
-                                status: 'Lunas',
-                                pembeli: u.nama,
-                                dompetMasuk: dMasuk || 'none'
-                            });
+
+                        let td =
+                            db.transaksi.find(
+                                t =>
+                                    String(t.id) ===
+                                    String(r.transId)
+                            );
+
+                        if(td &&
+                           r.dibayar >=
+                           (Number(r.nominal) || 0)
+                        ) {
+
+                            td.status = 'Lunas';
+                            td.tanggal = tgl;
                         }
+
                     }
 
                     /*
@@ -2418,20 +2382,10 @@ function eksekusiSimpanCicilan(e) {
     }
 
     function pilihPelanggan(i, nama) { 
-        let noHp = '';
-        if(i) { 
-            let pData = db.pelanggan.find(x => String(x.id) === String(i)); 
-            if(pData && pData.info) {
-                let hpInfo = pData.info.find(inf => inf.label.toLowerCase().includes('hp') || inf.label.toLowerCase().includes('wa'));
-                if(hpInfo) noHp = hpInfo.value;
-            }
-        }
-
         if (modePencarian === 'pelanggan-kasir') {
             let isReseller = false;
             if(i) { let pData = db.pelanggan.find(x => String(x.id) === String(i)); if(pData && pData.tipe === 'Reseller') isReseller = true; }
             document.getElementById('kasirPelangganId').value = i; document.getElementById('labelKasirPelanggan').innerHTML = `<b>${nama} ${isReseller ? '⭐' : ''}</b>`; 
-            if(document.getElementById('kasirTargetId') && noHp) document.getElementById('kasirTargetId').value = noHp;
             
             // INJECT HTML UNTUK SPLIT PAYMENT TABUNGAN
             let wadahDep = document.getElementById('wadahDepositKasir');
@@ -2465,7 +2419,6 @@ function eksekusiSimpanCicilan(e) {
             document.getElementById('editTransPelangganNama').value = nama; document.getElementById('labelEditTransPelanggan').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-jadwal') {
             document.getElementById('jadwalPelangganNama').value = nama; document.getElementById('labelJadwalPelanggan').innerHTML = `<b>${nama}</b>`;
-            if(document.getElementById('jadwalTargetId') && noHp) document.getElementById('jadwalTargetId').value = noHp;
         }
         tutupPencarian(); 
 
@@ -2535,24 +2488,6 @@ function eksekusiSimpanCicilan(e) {
     function hapusTransaksiTerpilih() { let arr = Array.from(document.querySelectorAll('.check-transaksi-beranda:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Centang barisnya!"); if(confirm(`Hapus ${arr.length} baris?`)) { arr.forEach(id => hapusDariUtangOtomatis(id)); db.transaksi = db.transaksi.filter(t => !arr.includes(String(t.id))); document.getElementById('checkSemuaTransaksi').checked=false; simpanData(); } }
     function hapusTransaksiTerpilihRiwayat() { let arr = Array.from(document.querySelectorAll('.check-transaksi-riwayat:checked')).map(cb => String(cb.value)); if(arr.length===0) return alert("Centang barisnya!"); if(confirm(`Hapus ${arr.length} baris?`)) { arr.forEach(id => hapusDariUtangOtomatis(id)); db.transaksi = db.transaksi.filter(t => !arr.includes(String(t.id))); document.getElementById('checkSemuaTransaksiRiwayat').checked=false; simpanData(); } }
     function hapusTransaksi(id) { if(confirm("Yakin menghapus?")) { hapusDariUtangOtomatis(id); db.transaksi = db.transaksi.filter(t => String(t.id) !== String(id)); simpanData(); } }
-
-    function cetakStrukDariRiwayat(id) {
-        let t = db.transaksi.find(x => String(x.id) === String(id));
-        if(!t) return;
-        bukaSubHalaman('sub-struk-manual');
-        ubahModeStrukManual('biasa');
-        document.getElementById('strukManualTanggal').value = t.tanggal;
-        document.getElementById('strukManualPelanggan').value = t.pembeli || '';
-        document.getElementById('wadahBarangManual').innerHTML = `
-            <div class="grid-3 item-barang-manual" style="gap:5px; margin-bottom:10px;">
-                <input type="text" class="input-nama-barang" value="${t.namaProduk}" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
-                <input type="number" class="input-qty-barang" value="${t.jumlah}" min="1" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
-                <input type="number" class="input-harga-barang" value="${t.total / t.jumlah}" oninput="updatePreviewStruk()" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:8px;">
-            </div>
-        `;
-        document.getElementById('strukManualAdmin').value = t.admin || "";
-        updatePreviewStruk();
-    }
 
     let tempStatusLama = "";
     
@@ -2663,11 +2598,7 @@ function renderDaftarTransaksiBeranda() {
         <td class="text-right text-blue" style="font-weight:bold;">Rp ${formatRupiah(t.total)}<br><span style="font-size:9px; color:#28a745; display:block; font-weight:normal;">Masuk: ${nmDompetMasuk}</span></td>
         <td class="text-right text-orange" style="font-weight:bold;">Rp ${formatRupiah(t.diskon || 0)}</td>
         <td class="text-right text-green" style="font-weight:bold;">Rp ${formatRupiah(t.untung)}</td>
-        <td class="text-center">
-            <button type="button" class="btn-outline" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="bukaEditTransaksi('${t.id}')">E</button>
-            <button type="button" class="btn-outline" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px; border-color:#28a745; color:#28a745;" onclick="cetakStrukDariRiwayat('${t.id}')">🖨️</button>
-            <button type="button" class="btn-red" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="hapusTransaksi('${t.id}')">X</button>
-        </td></tr>`;
+        <td class="text-center"><button type="button" class="btn-outline" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="bukaEditTransaksi('${t.id}')">E</button><button type="button" class="btn-red" style="padding:4px 8px; font-size:11px; width:auto; margin:0 2px;" onclick="hapusTransaksi('${t.id}')">X</button></td></tr>`;
     }
 
     function simpanTemplateWA() { db.templateWA.pelanggan = document.getElementById('tplPelanggan').value; db.templateWA.tagihan = document.getElementById('tplTagihan').value; db.templateWA.bos = document.getElementById('tplBos').value; if(document.getElementById('tplPengingat')) { db.templateWA.pengingat = document.getElementById('tplPengingat').value; } simpanData(); alert("Disimpan!"); }
@@ -3706,200 +3637,6 @@ if (db.simulasi.utang) salPortal -= totalUtang;
         updatePreviewStruk();
     }
 
-    // ==========================================
-    // UKURAN FONT CATATAN (MODE BIASA / NON-PLN)
-    // Penting untuk info seperti Nomor Tukang / teknisi
-    // agar bisa dibuat lebih besar & jelas di struk.
-    // ==========================================
-    let catatanFontSize = 14;
-
-    function ubahUkuranFontCatatan(operasi) {
-        if(operasi === 'tambah') {
-            catatanFontSize += 2;
-        } else if(operasi === 'kurang') {
-            catatanFontSize -= 2;
-        }
-
-        if(catatanFontSize < 10) catatanFontSize = 10;
-        if(catatanFontSize > 48) catatanFontSize = 48;
-
-        let label = document.getElementById('labelUkuranCatatan');
-        if(label) {
-            label.innerText = catatanFontSize + "px";
-        }
-
-        if(!db.strukToggle) {
-            db.strukToggle = {};
-        }
-        db.strukToggle.catatanFontSize = catatanFontSize;
-
-        try {
-            localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
-        } catch(e) {
-            console.warn("Gagal menyimpan ukuran font catatan:", e);
-        }
-
-        updatePreviewStruk();
-    }
-
-    // ==========================================
-    // ZOOM PRATINJAU STRUK (hanya tampilan di layar,
-    // tidak memengaruhi hasil cetak fisik)
-    // ==========================================
-    let previewZoomLevel = 100;
-
-    function ubahZoomPreview(operasi) {
-        if(operasi === 'tambah') {
-            previewZoomLevel += 10;
-        } else if(operasi === 'kurang') {
-            previewZoomLevel -= 10;
-        }
-
-        if(previewZoomLevel < 60) previewZoomLevel = 60;
-        if(previewZoomLevel > 200) previewZoomLevel = 200;
-
-        let area = document.getElementById('areaStrukManual');
-        if(area) {
-            area.style.transform = "scale(" + (previewZoomLevel / 100) + ")";
-            area.style.marginBottom = (previewZoomLevel > 100 ? ((previewZoomLevel - 100) * 1.5) : 0) + "px";
-        }
-
-        if(!db.strukToggle) {
-            db.strukToggle = {};
-        }
-        db.strukToggle.previewZoom = previewZoomLevel;
-
-        try {
-            localStorage.setItem('sistemUMKMPro', JSON.stringify(db));
-        } catch(e) {
-            console.warn("Gagal menyimpan zoom pratinjau:", e);
-        }
-    }
-
-    // ==========================================
-    // SCAN OTOMATIS STRUK DARI FOTO (OCR)
-    // Mendukung deteksi Token PLN (20 digit) & info
-    // tagihan Pascabayar (ID Pelanggan, Total Bayar).
-    // ==========================================
-    function updateStatusScanStruk(teks, tampil) {
-        let el = document.getElementById('statusScanStruk');
-        if(!el) return;
-        el.innerText = teks || "";
-        el.style.display = tampil ? 'block' : 'none';
-    }
-
-    async function scanGambarStruk(event) {
-        let file = event.target.files && event.target.files[0];
-        if(!file) return;
-
-        if(typeof Tesseract === 'undefined') {
-            alert("❌ Modul pemindai (OCR) belum siap/gagal dimuat. Pastikan koneksi internet aktif, lalu coba lagi.");
-            event.target.value = "";
-            return;
-        }
-
-        updateStatusScanStruk("⏳ Memindai gambar... 0%", true);
-
-        try {
-            let hasil = await Tesseract.recognize(file, 'eng', {
-                logger: m => {
-                    if(m.status === 'recognizing text') {
-                        updateStatusScanStruk("⏳ Memindai gambar... " + Math.round((m.progress || 0) * 100) + "%", true);
-                    } else if(m.status) {
-                        updateStatusScanStruk("⏳ " + m.status + "...", true);
-                    }
-                }
-            });
-
-            let teksHasil = (hasil && hasil.data && hasil.data.text) ? hasil.data.text : "";
-            prosesHasilScanStruk(teksHasil);
-
-            updateStatusScanStruk("✅ Scan selesai. Hasil sudah diisi ke bawah, silakan periksa kembali.", true);
-        } catch(err) {
-            console.error("Gagal memindai gambar:", err);
-            updateStatusScanStruk("", false);
-            alert("❌ Gagal memindai gambar: " + err.message);
-        } finally {
-            event.target.value = ""; // Supaya bisa pilih file yang sama lagi jika perlu
-        }
-    }
-
-    function prosesHasilScanStruk(teksMentah) {
-        let teks = (teksMentah || "").trim();
-        if(teks === "") {
-            alert("⚠️ Tidak ada teks yang terbaca dari foto. Coba foto ulang dengan pencahayaan lebih jelas.");
-            return;
-        }
-
-        // Cari pola 20 digit angka (boleh berjarak spasi/strip) -> Token PLN
-        // Contoh: "3316 9982 2741 6323 7124"
-        let kandidatToken = teks.match(/(\d[\d\s-]{19,40}\d)/g) || [];
-        let tokenDitemukan = "";
-
-        for(let k of kandidatToken) {
-            let hanyaAngka = k.replace(/\D/g, '');
-            if(hanyaAngka.length === 20) {
-                tokenDitemukan = hanyaAngka;
-                break;
-            }
-        }
-
-        if(tokenDitemukan !== "") {
-            // ===== MODE TOKEN PLN =====
-            ubahModeStrukManual('token');
-
-            let tokenBerjarak = tokenDitemukan.replace(/(.{4})/g, '$1 ').trim();
-            let inputCatatan = document.getElementById('strukManualCatatan');
-            if(inputCatatan) {
-                inputCatatan.value = tokenBerjarak;
-                inputCatatan.style.height = '';
-                inputCatatan.style.height = inputCatatan.scrollHeight + 'px';
-            }
-
-            alert("✅ Token PLN (20 digit) terdeteksi dan sudah diisi otomatis.\nSilakan cek ulang angkanya sebelum mencetak.");
-
-        } else {
-            // ===== MODE PASCABAYAR / CATATAN BIASA =====
-            ubahModeStrukManual('biasa');
-
-            // Coba cari ID Pelanggan (ID PEL / IDPEL diikuti angka)
-            let cocokIdPel = teks.match(/ID\s?PEL\w*\D{0,5}(\d{6,14})/i);
-            if(cocokIdPel && document.getElementById('strukManualPelanggan')) {
-                let elPelanggan = document.getElementById('strukManualPelanggan');
-                if(!elPelanggan.value.trim()) {
-                    elPelanggan.value = "ID Pel: " + cocokIdPel[1];
-                }
-            }
-
-            // Coba cari nominal tagihan/total terbesar (format Rp 123.456 / Rp123456)
-            let cocokNominal = teks.match(/Rp\.?\s?([\d.,]{4,12})/gi) || [];
-            let nominalTerbesar = 0;
-            cocokNominal.forEach(n => {
-                let angka = parseInt(n.replace(/\D/g, '')) || 0;
-                if(angka > nominalTerbesar) nominalTerbesar = angka;
-            });
-            if(nominalTerbesar > 0 && document.getElementById('strukManualAdmin')) {
-                let elAdmin = document.getElementById('strukManualAdmin');
-                if(!elAdmin.value) {
-                    elAdmin.value = nominalTerbesar;
-                }
-            }
-
-            // Masukkan teks mentah hasil scan ke kolom catatan agar info yang tidak
-            // terbaca otomatis (mis. Nomor Tukang/teknisi) tetap bisa dilihat & diedit manual.
-            let inputCatatan = document.getElementById('strukManualCatatan');
-            if(inputCatatan && !inputCatatan.value.trim()) {
-                inputCatatan.value = teks.replace(/\n{2,}/g, '\n').trim();
-                inputCatatan.style.height = '';
-                inputCatatan.style.height = inputCatatan.scrollHeight + 'px';
-            }
-
-            alert("✅ Hasil scan tagihan pascabayar sudah diisi otomatis.\nMohon periksa & rapikan kembali (terutama Nomor Tukang/teknisi) sebelum mencetak.");
-        }
-
-        updatePreviewStruk();
-    }
-
     function tambahBarisBarang() {
         let wadah = document.getElementById('wadahBarangManual');
         let div = document.createElement('div');
@@ -3977,9 +3714,6 @@ if (db.simulasi.utang) salPortal -= totalUtang;
             if(document.getElementById('wadahFontToken')) {
                 document.getElementById('wadahFontToken').style.display = 'none';
             }
-            if(document.getElementById('wadahFontCatatan')) {
-                document.getElementById('wadahFontCatatan').style.display = 'flex';
-            }
         }
 
 
@@ -4020,9 +3754,6 @@ if (db.simulasi.utang) salPortal -= totalUtang;
 
             if(document.getElementById('wadahFontToken')) {
                 document.getElementById('wadahFontToken').style.display = 'flex';
-            }
-            if(document.getElementById('wadahFontCatatan')) {
-                document.getElementById('wadahFontCatatan').style.display = 'none';
             }
         }
 
@@ -4226,12 +3957,9 @@ if(prevStatus) {
 
                 prevCatatan.innerText = catatan;
 
-                let ukuranCatatanAktif =
-                    Number(catatanFontSize) || 14;
-
                 prevCatatan.style.setProperty(
                     'font-size',
-                    ukuranCatatanAktif + 'px',
+                    '14px',
                     'important'
                 );
 
@@ -4501,12 +4229,6 @@ if(prevStatus) {
         db.strukToggle.tokenFontSize =
             Number(tokenFontSize) || 30;
 
-        db.strukToggle.catatanFontSize =
-            Number(catatanFontSize) || 14;
-
-        db.strukToggle.previewZoom =
-            Number(previewZoomLevel) || 100;
-
         simpanData();
         updatePreviewStruk();
     }
@@ -4526,9 +4248,7 @@ if(prevStatus) {
                 footer: true,
                 alignHeader: 'center',
                 alignCatatan: 'left',
-                tokenFontSize: 30,
-                catatanFontSize: 14,
-                previewZoom: 100
+                tokenFontSize: 30
             };
         }
 
@@ -4586,23 +4306,6 @@ if(prevStatus) {
         let label = document.getElementById('labelUkuranToken');
         if(label) {
             label.innerText = tokenFontSize + "px";
-        }
-
-        catatanFontSize =
-            Number(db.strukToggle.catatanFontSize) || 14;
-
-        let labelCatatan = document.getElementById('labelUkuranCatatan');
-        if(labelCatatan) {
-            labelCatatan.innerText = catatanFontSize + "px";
-        }
-
-        previewZoomLevel =
-            Number(db.strukToggle.previewZoom) || 100;
-
-        let areaZoom = document.getElementById('areaStrukManual');
-        if(areaZoom) {
-            areaZoom.style.transform = "scale(" + (previewZoomLevel / 100) + ")";
-            areaZoom.style.marginBottom = (previewZoomLevel > 100 ? ((previewZoomLevel - 100) * 1.5) : 0) + "px";
         }
     }
 
@@ -4690,7 +4393,7 @@ if(prevStatus) {
         let catatan = document.getElementById('strukManualCatatan');
 
         if(namaToko) namaToko.value = draft.namaToko || "amat Bajualan";
-        if(tanggal) tanggal.value = ambilTanggal(); // Selalu reset ke tanggal hari ini
+        if(tanggal) tanggal.value = draft.tanggal || ambilTanggal();
         if(pelanggan) pelanggan.value = draft.pelanggan || "";
         if(admin) admin.value = draft.admin || "";
         if(catatan) catatan.value = draft.catatan || "";
@@ -4825,7 +4528,7 @@ if(prevStatus) {
 
             // Footer Sesuai Permintaan
             html += `<div style="border-top:1px dashed #ccc; margin:6px 0;"></div>`;
-            html += `<div style="text-align:center; font-size:9px; color:#555;">Powered by Sistem UMKM Pro<br>by Gemini AI, ChatGPT & Claude AI developer amat Bajualan</div>`;
+            html += `<div style="text-align:center; font-size:9px; color:#555;">Powered by Sistem UMKM Pro<br>by Gemini & CHATGPT developer amat Bajualan</div>`;
             html += `</div>`;
             info.innerHTML = html;
         }
@@ -4889,29 +4592,6 @@ if(prevStatus) {
     let btDevice = null;
     let btCharacteristic = null;
 
-    // ==========================================
-    // STATUS KONEKSI PRINTER BT (indikator di halaman)
-    // ==========================================
-    function updateStatusPrinterBT(terhubung, nama) {
-        let el = document.getElementById('statusPrinterBT');
-        if (!el) return;
-        if (terhubung) {
-            el.innerHTML = "🟢 Terhubung ke printer: <b>" + (nama || "Printer Thermal") + "</b>";
-            el.style.color = "#15803d";
-        } else {
-            el.innerHTML = "🔴 Belum terhubung ke printer";
-            el.style.color = "#b91c1c";
-        }
-    }
-
-    function onPrinterBTDisconnected() {
-        btCharacteristic = null;
-        updateStatusPrinterBT(false);
-    }
-
-    // Menghubungkan printer SECARA MANUAL (memunculkan pilihan device Bluetooth).
-    // Hanya dipanggil saat tombol "Hubungkan Printer BT" ditekan sendiri oleh pengguna,
-    // TIDAK dipanggil otomatis saat mencetak agar proses cetak tidak terasa lambat.
     async function hubungkanPrinterBT() {
         if (!("bluetooth" in navigator)) {
             return alert("❌ Web Bluetooth tidak didukung di browser/perangkat ini. Gunakan Google Chrome di Android dengan koneksi HTTPS.");
@@ -4927,8 +4607,6 @@ if(prevStatus) {
                     '00001101-0000-1000-8000-00805f9b34fb'
                 ]
             });
-
-            btDevice.addEventListener('gattserverdisconnected', onPrinterBTDisconnected);
 
             let server = await btDevice.gatt.connect();
             let services = await server.getPrimaryServices();
@@ -4946,49 +4624,12 @@ if(prevStatus) {
             }
 
             if (btCharacteristic) {
-                updateStatusPrinterBT(true, btDevice.name);
                 alert("✅ Printer Bluetooth Berhasil Terhubung: " + (btDevice.name || "Printer Thermal"));
             } else {
-                updateStatusPrinterBT(false);
                 alert("⚠️ Printer terhubung, tetapi jalur cetak (Characteristic Write) tidak ditemukan.");
             }
         } catch (err) {
-            updateStatusPrinterBT(false);
             alert("❌ Gagal menghubungkan printer: " + err.message);
-        }
-    }
-
-    // Menyambung ulang printer yang SUDAH PERNAH dipilih sebelumnya, tanpa memunculkan
-    // ulang dialog pilih-device (jauh lebih cepat). Dipakai otomatis sebelum mencetak.
-    // Jika gagal (printer mati/di luar jangkauan/belum pernah dipilih), fungsi ini akan
-    // mengembalikan false dan TIDAK memaksa membuka dialog pilih-device baru.
-    async function reconnectPrinterBTDiam() {
-        if (!btDevice) return false;
-        try {
-            let server = btDevice.gatt.connected ? btDevice.gatt : await btDevice.gatt.connect();
-
-            if (!btCharacteristic) {
-                let services = await server.getPrimaryServices();
-                for (let service of services) {
-                    let characteristics = await service.getCharacteristics();
-                    for (let c of characteristics) {
-                        if (c.properties.write || c.properties.writeWithoutResponse) {
-                            btCharacteristic = c;
-                            break;
-                        }
-                    }
-                    if (btCharacteristic) break;
-                }
-            }
-
-            if (btCharacteristic) {
-                updateStatusPrinterBT(true, btDevice.name);
-                return true;
-            }
-            return false;
-        } catch (err) {
-            console.warn("Gagal menyambung ulang printer secara otomatis:", err);
-            return false;
         }
     }
 
@@ -5012,21 +4653,8 @@ if(prevStatus) {
 
     async function cetakStrukBluetoothLangsung() {
         if (!btCharacteristic || !btDevice || !btDevice.gatt.connected) {
-            if (btDevice) {
-                // Sudah pernah pilih printer sebelumnya -> coba sambung ulang cepat dulu
-                // (tanpa dialog pilih-device, biar nggak lambat)
-                let berhasil = await reconnectPrinterBTDiam();
-                if (!berhasil) {
-                    // Gagal sambung cepat -> hubungkan otomatis (akan memunculkan
-                    // dialog pilih-device kalau memang belum ada koneksi sama sekali)
-                    await hubungkanPrinterBT();
-                    if (!btCharacteristic) return;
-                }
-            } else {
-                // Belum pernah pilih printer sama sekali -> hubungkan otomatis
-                await hubungkanPrinterBT();
-                if (!btCharacteristic) return;
-            }
+            await hubungkanPrinterBT();
+            if (!btCharacteristic) return;
         }
 
         let areaStruk = document.getElementById('areaStrukManual');
@@ -5171,7 +4799,7 @@ let statusTransaksi =
                 if (showFooter) {
                 addStr("--------------------------------\n");
                 addStr("Powered by Sistem UMKM Pro\n");
-                addStr("by Gemini, ChatGPT & Claude AI\n");
+                addStr("by Gemini & CHATGPT \n");
                 addStr("developer amat Bajualan\n");
             }
 
@@ -5249,32 +4877,14 @@ let statusTransaksi =
                 let alignC = document.getElementById('selectAlignCatatan') ? document.getElementById('selectAlignCatatan').value : 'left';
                 let cCode = alignC === 'left' ? 0 : (alignC === 'right' ? 2 : 1);
                 add([0x1B, 0x61, cCode]);
-
-                // Terapkan ukuran font catatan (penting utk info seperti Nomor Tukang
-                // yang harus terbaca jelas di struk fisik)
-                let ukuranCatatanCetak = Number(catatanFontSize) || 14;
-                let escposUkuranCatatan = 0x00; // normal
-                if (ukuranCatatanCetak > 24) {
-                    escposUkuranCatatan = 0x22; // 3x lebar + 3x tinggi
-                } else if (ukuranCatatanCetak > 14) {
-                    escposUkuranCatatan = 0x11; // 2x lebar + 2x tinggi
-                }
-                add([0x1D, 0x21, escposUkuranCatatan]);
-                add([0x1B, 0x45, 0x01]); // Bold, biar makin jelas saat diperbesar
-
                 addStr(catatan + "\n");
-
-                // Kembalikan printer ke ukuran & gaya normal
-                add([0x1D, 0x21, 0x00]);
-                add([0x1B, 0x45, 0x00]);
-                add([0x1B, 0x61, 0x00]);
             }
 
             if (showFooter) {
                 add([0x1B, 0x61, 0x01]);
                 addStr("--------------------------------\n");
                 addStr("Powered by Sistem UMKM Pro\n");
-                addStr("by Gemini, ChatGPT & Claude AI");
+                addStr("by Gemini & CHATGPT");
                 addStr("Developer amat Bajualan\n");
             }
             addStr("\n\n\n\n");
@@ -5506,22 +5116,17 @@ let statusTransaksi =
         }).join('');
 
         // Pemisahan Klasemen
-        let rekapBiasa = rekap.filter(r => { let p = db.pelanggan.find(x => x.nama === r.nama); return !p || (p.tipe !== 'Reseller' && p.tipe !== 'Keluarga'); });
+        let rekapBiasa = rekap.filter(r => { let p = db.pelanggan.find(x => x.nama === r.nama); return !p || p.tipe !== 'Reseller'; });
         let rekapReseller = rekap.filter(r => { let p = db.pelanggan.find(x => x.nama === r.nama); return p && p.tipe === 'Reseller'; });
-        let rekapKeluarga = rekap.filter(r => { let p = db.pelanggan.find(x => x.nama === r.nama); return p && p.tipe === 'Keluarga'; });
         
         let finalHtml = "";
         if(rekapBiasa.length > 0) {
-            finalHtml += `<h5 style="margin: 10px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #ddd; color:var(--primary);">🏆 Top Pelanggan Perorangan</h5>`;
+            finalHtml += `<h5 style="margin: 10px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #ddd; color:var(--primary);">🏆 Top Pelanggan Biasa</h5>`;
             finalHtml += renderList(rekapBiasa, 0);
-        }
-        if(rekapKeluarga.length > 0) {
-            finalHtml += `<h5 style="margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #28a745; color: #155724;">👨‍👩‍👧‍👦 Pengeluaran Anggota Keluarga</h5>`;
-            finalHtml += renderList(rekapKeluarga, 1000); 
         }
         if(rekapReseller.length > 0) {
             finalHtml += `<h5 style="margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 2px solid #ffc107; color: #856404;">🤝 Top Mitra Reseller</h5>`;
-            finalHtml += renderList(rekapReseller, 2000); 
+            finalHtml += renderList(rekapReseller, 1000); // 1000 agar ID accordion tidak bentrok
         }
 
         document.getElementById('listRaporPelanggan').innerHTML = finalHtml || '<div class="text-small text-center" style="padding:15px; color:gray;">Tidak ada pelanggan dengan transaksi atau kasbon.</div>';
