@@ -1394,4 +1394,55 @@
             <label><input type="checkbox" id="f-lainnya" checked> Catatan, Alokasi & Pengeluaran</label>
         </div>
         <button class="btn-green" onclick="eksekusiDownloadFilter()">Download Sekarang</button>
-        <button class="btn-outline" onclick="document.getElementById('modal-filter-
+        <button class="btn-outline" onclick="document.getElementById('modal-filter-backup').classList.remove('active')">Batal</button>
+    </div>
+</div>
+                <button type="button" class="btn-blue" style="margin-bottom:0; border:none; font-size:12px; color:white;" onclick="salinBackupJSON()">📋 Salin Teks (Copy)</button>
+            </div>
+            
+            <h4 style="color:#d81b60; margin-bottom:5px;">📂 Restore Data (Pulihkan)</h4>
+            <p class="text-small" style="margin-bottom:10px;">Pilih file backup (.json) yang pernah didownload untuk memulihkan data jika aplikasi tereset.</p>
+            <input type="file" id="fileRestoreJSON" accept=".json" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+            <button type="button" class="btn-green" onclick="restoreBackupJSON()">🔄 Pulihkan Data dari File</button>
+        </div>
+    </div>
+
+</div> 
+
+<!-- BOTTOM NAV MODERN BLUE -->
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="bukaHalaman('kasir', this, 'Kasir')">
+        <i class="fas fa-cash-register nav-icon"></i>
+        <span>Kasir</span>
+    </div>
+    <div class="nav-item" onclick="bukaHalaman('beranda', this, 'Riwayat Transaksi')">
+        <i class="fas fa-file-invoice-dollar nav-icon"></i>
+        <span>Riwayat</span>
+    </div>
+    <div class="nav-item" onclick="bukaHalaman('produk', this, 'Data Produk')">
+        <i class="fas fa-box-open nav-icon"></i>
+        <span>Produk</span>
+    </div>
+    <div class="nav-item" onclick="bukaHalaman('menu', this, 'Menu Lainnya')">
+        <i class="fas fa-cog nav-icon"></i>
+        <span>Setting</span>
+    </div>
+</div>
+
+<!-- Panggilan ke file Javascript Eksternal -->
+<script src="app.js"></script>
+
+<script>
+    // Pendaftaran Service Worker agar aplikasi bisa diinstal (PWA)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                console.log('Service Worker PWA berhasil didaftarkan!', reg);
+            }).catch(err => {
+                console.log('Pendaftaran Service Worker gagal:', err);
+            });
+        });
+    }
+</script>
+</body>
+</html>
