@@ -2,7 +2,8 @@
         dompet: [], produk: [], pelanggan: [], transaksi: [], utang: [], alokasi: [], 
         kategoriProduk: [], pengeluaran: [], simulasi: { piutang: false, utang: false, terapkanKeHeader: false }, 
         templateWA: null, tema: '#007bff', filterRiwayat: 'semua', filterAlokasi: 'bulanIni', filterRiwayatCustom: {mulai: '', akhir: ''},
-        strukToggle: { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center' }
+        strukToggle: { tanggal: true, pelanggan: true, barang: true, admin: true, total: true, alignHeader: 'center' },
+        mutasiManual: []
     };
     
     let filterSaatIni = 'semua';
@@ -67,6 +68,7 @@
         
         if(!db.alokasi) { db.alokasi = [{ id: Date.now(), nama: 'Putar Modal', persen: 100 }]; }
         if(!db.pengeluaran) db.pengeluaran = [];
+        if(!db.mutasiManual) db.mutasiManual = [];
         if(!db.jadwal) db.jadwal = [];
         if(!db.pemasukanLain) db.pemasukanLain = [];
         if(!db.tema) db.tema = '#007bff';
@@ -1574,6 +1576,11 @@ function eksekusiSimpanCicilan(e) {
                     if(r.transId) {
                         let td = db.transaksi.find(t => String(t.id) === String(r.transId));
                         if(td && r.dibayar >= (Number(r.nominal) || 0)) {
+                            // Hitung modal asli secara proporsional supaya TIDAK hilang dari laporan Untung
+                            let modalAsliTx = Number(td.modal) || 0;
+                            let hargaItem = Number(r.nominal) || 0;
+                            let modalBagian = hargaItem > 0 ? Math.round(modalAsliTx * (nominalAlokasi / hargaItem)) : 0;
+                            let untungBagian = nominalAlokasi - modalBagian;
                             // Biarkan transaksi asli berstatus Piutang agar jadi histori, buat baris Lunas baru untuk masuk ke omset hari pembayaran
                             td.status = 'Piutang (Lunas)'; 
                             db.transaksi.push({
@@ -1581,9 +1588,9 @@ function eksekusiSimpanCicilan(e) {
                                 tanggal: tgl,
                                 namaProduk: "Bayar Kasbon: " + (r.produk || td.namaProduk),
                                 jumlah: 1,
-                                modal: 0, 
+                                modal: modalBagian, 
                                 total: nominalAlokasi,
-                                untung: nominalAlokasi, 
+                                untung: untungBagian, 
                                 status: 'Lunas',
                                 pembeli: u.nama,
                                 dompetMasuk: dMasuk || 'none'
@@ -2085,10 +2092,42 @@ function eksekusiSimpanCicilan(e) {
         
         dDari.saldo -= nominal;
         dKe.saldo += nominal;
+
+        // Catat jejak pemindahan saldo supaya muncul di laporan Mutasi Saldo
+        if(!db.mutasiManual) db.mutasiManual = [];
+        db.mutasiManual.push({
+            id: Date.now() + Math.random(),
+            tanggal: ambilTanggal(),
+            dariId: dDari.id,
+            dariNama: dDari.nama,
+            keId: dKe.id,
+            keNama: dKe.nama,
+            nominal: nominal
+        });
         
         simpanData();
         document.getElementById('modal-mutasi').classList.remove('active');
         alert(`Berhasil pindah saldo Rp ${formatRupiah(nominal)} dari ${dDari.nama} ke ${dKe.nama}!`);
+    }
+
+    function renderRiwayatFull() {
+        let el = document.getElementById('cariRiwayatFullInput');
+        let kw = el ? el.value.toLowerCase().trim() : "";
+
+        let dataFilter = db.transaksi.filter(t => {
+            if (!kw) return true;
+            let pembeli = (t.pembeli || "").toLowerCase();
+            let produk = (t.namaProduk || "").toLowerCase();
+            let status = (t.status || "").toLowerCase();
+            return pembeli.includes(kw) || produk.includes(kw) || status.includes(kw);
+        });
+
+        let htmlRiwayatFull = ""; let lastDateFull = "";
+        dataFilter.slice().reverse().forEach(t => {
+            if (t.tanggal !== lastDateFull) { htmlRiwayatFull += `<tr><td colspan="7" style="background:#eef2f5; font-weight:bold; text-align:center; padding:10px 5px; color:#555; border-top: 2px solid #ccc;">📅 ${formatTanggalIndo(t.tanggal)}</td></tr>`; lastDateFull = t.tanggal; }
+            htmlRiwayatFull += renderItemTransaksi(t, 'riwayat');
+        });
+        document.getElementById('listRiwayatFullTabel').innerHTML = htmlRiwayatFull || '<tr><td colspan="7" class="text-center">Tidak ditemukan</td></tr>';
     }
 
     function bukaDetailDompet(id) {
@@ -3333,12 +3372,7 @@ if (db.simulasi.utang) salPortal -= totalUtang;
         
         try { renderDaftarTransaksiBeranda(); } catch(e) {}
         
-        let htmlRiwayatFull = ""; let lastDateFull = "";
-        db.transaksi.slice().reverse().forEach(t => {
-            if (t.tanggal !== lastDateFull) { htmlRiwayatFull += `<tr><td colspan="7" style="background:#eef2f5; font-weight:bold; text-align:center; padding:10px 5px; color:#555; border-top: 2px solid #ccc;">📅 ${formatTanggalIndo(t.tanggal)}</td></tr>`; lastDateFull = t.tanggal; }
-            htmlRiwayatFull += renderItemTransaksi(t, 'riwayat');
-        });
-        document.getElementById('listRiwayatFullTabel').innerHTML = htmlRiwayatFull || '<tr><td colspan="7" class="text-center">Kosong</td></tr>';
+        try { renderRiwayatFull(); } catch(e) {}
         
         try { renderDaftarProduk(); } catch(e) {}
         try { renderDaftarPelanggan(); } catch(e) {}
@@ -3476,6 +3510,18 @@ if (db.simulasi.utang) salPortal -= totalUtang;
                 totalOut += p.nominal;
             }
         });
+
+        // 3b. Ambil dari Pemindahan Saldo Manual (Mutasi Antar Dompet)
+        if (Array.isArray(db.mutasiManual)) {
+            db.mutasiManual.forEach(m => {
+                if (m.tanggal >= tglMulai && m.tanggal <= tglAkhir) {
+                    aliranDana.push({ tgl: m.tanggal, ket: "🔄 Pindah Saldo ke " + m.keNama, tipe: 'OUT', nominal: m.nominal, dId: m.dariId });
+                    aliranDana.push({ tgl: m.tanggal, ket: "🔄 Terima Pindah Saldo dari " + m.dariNama, tipe: 'IN', nominal: m.nominal, dId: m.keId });
+                    totalOut += Number(m.nominal);
+                    totalIn += Number(m.nominal);
+                }
+            });
+        }
 
         // 3. Ambil dari Cicilan & Catatan Awal Utang/Piutang
         db.utang.forEach(u => {
