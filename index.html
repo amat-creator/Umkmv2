@@ -358,6 +358,32 @@
         </div>
     </div>
 
+    <div id="modal-transfer-tabungan" class="modal-popup">
+        <div class="popup-content">
+            <h4 style="margin-bottom: 10px;">🔄 Transfer Saldo Tabungan</h4>
+            <form onsubmit="eksekusiTransferTabungan(event)">
+                <label class="text-small" style="text-align:left; display:block; color:#dc3545; font-weight:bold;">Dari (Saldo Berkurang):</label>
+                <select id="transferTabunganDariId" style="background:#ffebee; border-color:#dc3545;" onchange="updateInfoSaldoTransferTabungan()"></select>
+                <p class="text-small" style="margin:3px 0 10px 0; color:#555;">Sisa saldo: <b id="infoSisaTransferTabungan">Rp 0</b></p>
+
+                <div style="text-align:center; margin: 5px 0;">⬇️</div>
+
+                <label class="text-small" style="text-align:left; display:block; color:#28a745; font-weight:bold;">Ke (Saldo Bertambah):</label>
+                <div class="search-select" onclick="bukaPencarian('pelanggan-transfer-tabungan')"><span id="labelTransferTabunganKe"><b>Pilih Pelanggan</b></span></div>
+                <input type="hidden" id="transferTabunganKeNama" value="">
+
+                <label class="text-small" style="text-align:left; display:block; margin-top:10px;">Nominal Dipindah (Rp):</label>
+                <input type="text" inputmode="numeric" id="transferTabunganNominal" placeholder="0" oninput="formatInputRupiah(event)" required>
+                <button type="button" class="btn-outline" style="margin-top:5px; font-size:11px;" onclick="isiNominalMaxTransferTabungan()">Transfer Semua Saldo</button>
+
+                <div class="grid-2" style="margin-top: 15px;">
+                    <button type="submit" class="btn-blue" style="color:white;">🔄 Transfer</button>
+                    <button type="button" class="btn-red" onclick="document.getElementById('modal-transfer-tabungan').classList.remove('active')">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="page-kasir" class="page active">
         <div class="card">
             <h3>Buat Transaksi Kasir</h3>

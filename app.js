@@ -590,7 +590,7 @@ function simpanData(renderFungsiKhusus = null) {
         });
 
         // Tombol Tambah khusus Tabungan
-        let tombolTambahTab = kasbonTabAktif === 'Utang' ? `<button type="button" class="btn-green" style="margin-bottom:10px;" onclick="bukaModalTambahTabungan()">➕ Buka Tabungan Baru</button>` : '';
+        let tombolTambahTab = kasbonTabAktif === 'Utang' ? `<button type="button" class="btn-green" style="margin-bottom:10px;" onclick="bukaModalTambahTabungan()">➕ Buka Tabungan Baru</button> <button type="button" class="btn-blue" style="margin-bottom:10px; color:white;" onclick="bukaModalTransferTabungan()">🔄 Transfer Saldo</button>` : '';
 
         document.getElementById('listUtang').innerHTML = tombolTambahTab + filterUtang.map(u => {
             let tD = (Array.isArray(u.cicilan) ? u.cicilan : []).reduce((a,c) => a + (Number(c.nominal) || 0), 0);
@@ -1679,6 +1679,38 @@ function eksekusiSimpanCicilan(e) {
         }
 
         /*
+         * Pisahkan dulu porsi Biaya Admin (kalau ada) ke dompet
+         * admin yang sudah ditentukan saat transaksi dibuat,
+         * supaya tidak ikut nyemplung ke dompet "Uang Masuk".
+         */
+        let totalAdminDipisah = 0;
+
+        if(
+            u.jenis === 'Piutang' &&
+            Array.isArray(cicilanAlokasiDraft) &&
+            Array.isArray(u.rincianBarang)
+        ) {
+            cicilanAlokasiDraft.forEach(a => {
+                let r = u.rincianBarang[Number(a.idx)];
+                if(!r || !r.transId) return;
+
+                let td = db.transaksi.find(t => String(t.id) === String(r.transId));
+                if(!td) return;
+
+                let adminTx = Number(td.admin) || 0;
+                let dompetAdminTx = td.dompetAdmin;
+
+                if(adminTx > 0 && dompetAdminTx && dompetAdminTx !== 'none') {
+                    let da = db.dompet.find(x => String(x.id) === String(dompetAdminTx));
+                    if(da) {
+                        da.saldo += adminTx;
+                        totalAdminDipisah += adminTx;
+                    }
+                }
+            });
+        }
+
+        /*
          * Uang benar-benar masuk/keluar dompet.
          */
         if(
@@ -1696,7 +1728,7 @@ function eksekusiSimpanCicilan(e) {
             if(dk) {
 
                 if(u.jenis === 'Piutang') {
-                    dk.saldo += nom;
+                    dk.saldo += (nom - totalAdminDipisah);
                 }
 
                 else if(u.jenis === 'Utang') {
@@ -1787,6 +1819,93 @@ function eksekusiSimpanCicilan(e) {
         document.getElementById('modal-tambah-tabungan').classList.remove('active');
         mainkanSuara('ting');
         alert("Tabungan berhasil dibuka!");
+    }
+
+    function bukaModalTransferTabungan() {
+        let opsi = db.utang.filter(u => u.jenis === 'Utang' && u.status !== 'Lunas').map(u => {
+            let sisa = (Number(u.nominal)||0) - (Array.isArray(u.cicilan) ? u.cicilan.reduce((a,c)=>a+(Number(c.nominal)||0),0) : 0);
+            return `<option value="${u.id}" data-sisa="${sisa}">${u.nama} (Rp ${formatRupiah(sisa)})</option>`;
+        }).join('');
+
+        if(!opsi) return alert("Belum ada data Tabungan yang aktif untuk ditransfer!");
+
+        document.getElementById('transferTabunganDariId').innerHTML = opsi;
+        document.getElementById('transferTabunganKeNama').value = '';
+        document.getElementById('labelTransferTabunganKe').innerHTML = '<b>Pilih Pelanggan</b>';
+        document.getElementById('transferTabunganNominal').value = '';
+        document.getElementById('modal-transfer-tabungan').classList.add('active');
+        updateInfoSaldoTransferTabungan();
+    }
+
+    function updateInfoSaldoTransferTabungan() {
+        let el = document.getElementById('transferTabunganDariId');
+        let sisa = el && el.selectedOptions[0] ? Number(el.selectedOptions[0].dataset.sisa) || 0 : 0;
+        document.getElementById('infoSisaTransferTabungan').innerText = 'Rp ' + formatRupiah(sisa);
+    }
+
+    function isiNominalMaxTransferTabungan() {
+        let el = document.getElementById('transferTabunganDariId');
+        let sisa = el && el.selectedOptions[0] ? Number(el.selectedOptions[0].dataset.sisa) || 0 : 0;
+        document.getElementById('transferTabunganNominal').value = formatRupiah(sisa);
+    }
+
+    function eksekusiTransferTabungan(e) {
+        e.preventDefault();
+        let idSumber = document.getElementById('transferTabunganDariId').value;
+        let namaTujuan = document.getElementById('transferTabunganKeNama').value.trim();
+        let nominal = getAngkaMurni(document.getElementById('transferTabunganNominal').value);
+
+        let sumber = db.utang.find(x => String(x.id) === String(idSumber));
+        if(!sumber) return alert("Tabungan sumber tidak ditemukan!");
+        if(!namaTujuan) return alert("Pilih pelanggan tujuan dulu!");
+        if(sumber.nama === namaTujuan) return alert("Tidak bisa transfer ke diri sendiri!");
+        if(nominal <= 0) return alert("Nominal transfer tidak valid!");
+
+        let sisaSumber = (Number(sumber.nominal)||0) - (Array.isArray(sumber.cicilan) ? sumber.cicilan.reduce((a,c)=>a+(Number(c.nominal)||0),0) : 0);
+        if(nominal > sisaSumber) return alert(`Saldo ${sumber.nama} cuma Rp ${formatRupiah(sisaSumber)}, tidak cukup untuk transfer segitu!`);
+
+        // Kurangi saldo sumber (TANPA menyentuh dompet fisik, cuma catatan internal)
+        if(!Array.isArray(sumber.cicilan)) sumber.cicilan = [];
+        sumber.cicilan.push({
+            id: Date.now() + Math.random(),
+            tanggal: ambilTanggal(),
+            hari: getNamaHari(ambilTanggal()),
+            nominal: nominal,
+            keterangan: "🔄 Transfer Saldo ke " + namaTujuan,
+            alokasi: []
+        });
+
+        if(sisaSumber - nominal <= 0) {
+            selesaikanUtang(sumber);
+        } else {
+            sumber.status = 'Belum Lunas';
+        }
+
+        // Tambah saldo tujuan (buat baru kalau belum ada tabungan aktif)
+        let tujuan = db.utang.find(u => u.nama === namaTujuan && u.jenis === 'Utang' && u.status !== 'Lunas');
+        let rincianTujuan = { transId: null, tanggal: ambilTanggal(), hari: getNamaHari(ambilTanggal()), produk: "Transfer Saldo dari " + sumber.nama, nominal: nominal };
+
+        if(tujuan) {
+            tujuan.nominal = (Number(tujuan.nominal)||0) + nominal;
+            if(!Array.isArray(tujuan.rincianBarang)) tujuan.rincianBarang = [];
+            tujuan.rincianBarang.push(rincianTujuan);
+        } else {
+            db.utang.push({
+                id: Date.now() + 1,
+                transId: null,
+                jenis: 'Utang',
+                nama: namaTujuan,
+                nominal: nominal,
+                status: 'Belum Lunas',
+                cicilan: [],
+                rincianBarang: [rincianTujuan],
+                dompetId: 'none'
+            });
+        }
+
+        simpanData();
+        document.getElementById('modal-transfer-tabungan').classList.remove('active');
+        alert(`Berhasil transfer Rp ${formatRupiah(nominal)} dari ${sumber.nama} ke ${namaTujuan}!`);
     }
 
     function renderKategoriSelect() {
@@ -2495,6 +2614,8 @@ function eksekusiSimpanCicilan(e) {
             document.getElementById('utangPelangganId').value = i; document.getElementById('labelUtangPelanggan').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-tabungan') {
             document.getElementById('tabunganPelangganId').value = i; document.getElementById('labelTabunganPelanggan').innerHTML = `<b>${nama}</b>`; 
+        } else if (modePencarian === 'pelanggan-transfer-tabungan') {
+            document.getElementById('transferTabunganKeNama').value = nama; document.getElementById('labelTransferTabunganKe').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-kasbon') {
             document.getElementById('editKasbonNama').value = nama; document.getElementById('labelEditKasbonPelanggan').innerHTML = `<b>${nama}</b>`; 
         } else if (modePencarian === 'pelanggan-edit-trans') {
