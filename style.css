@@ -148,6 +148,7 @@ button.btn-outline:hover { background: #eff6ff; }
 
 /* Menu Grid Lainnya */
 .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.menu-section-title { grid-column: 1 / -1; font-size: 12px; font-weight: bold; color: #888; margin: 14px 2px 2px; text-transform: uppercase; letter-spacing: 0.3px; }
 .menu-btn {
     background: white; padding: 12px 5px; border-radius: 10px;
     text-align: center; cursor: pointer;
