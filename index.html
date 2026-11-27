@@ -628,6 +628,8 @@
         <div id="main-menu-grid" class="menu-grid">
             <div class="menu-btn" onclick="bukaSubHalaman('sub-rapor-pelanggan')"><span>👑</span>Rapor Pelanggan</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-pengeluaran')"><span>💸</span>Pengeluaran</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-pemasukan')"><span>💰</span>Pemasukan</div>
+            <div class="menu-btn" onclick="bukaSubHalaman('sub-log-mutasi')"><span>📜</span>Riwayat Mutasi Dompet</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-grafik')"><span>📈</span>Grafik Bisnis</div>
             <div class="menu-btn" onclick="bukaHalaman('utang', null, 'Kasbon (Utang & Piutang)')"><span>📒</span>Kasbon</div>
             <div class="menu-btn" onclick="bukaSubHalaman('sub-dompet')"><span>👛</span>Dompet</div>
@@ -765,6 +767,39 @@
                 <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusPengeluaranTerpilih()">🗑 Hapus Massal</button>
             </div>
             <div id="listPengeluaran"></div>
+        </div>
+
+        <div id="sub-pemasukan" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>💰 Catat Pemasukan</h4>
+            <p class="text-small" style="margin-bottom:10px;">Catat pemasukan dana di luar transaksi Kasir (misal: modal tambahan, hadiah, dsb) yang menambah saldo Dompet.</p>
+            <form onsubmit="eksekusiPemasukan(event)" style="margin-top: 10px; background:#d4edda; padding:15px; border-radius:8px; border:1px solid #c3e6cb;">
+                <label class="text-small">Tanggal Pemasukan:</label>
+                <input type="date" id="pemasukanTgl" required style="border-color: var(--primary);">
+                <label class="text-small">Keterangan:</label>
+                <input type="text" id="pemasukanKet" placeholder="Misal: Modal Tambahan / Hadiah" required>
+                <label class="text-small text-green" style="font-weight:bold;">Masukkan Uang Ke Dompet:</label>
+                <select id="pemasukanDompetId" style="background:#e8f5e9; font-weight:bold; border-color:#28a745;"></select>
+                <label class="text-small">Nominal Pemasukan:</label>
+                <input type="text" inputmode="numeric" id="pemasukanNominal" placeholder="Nominal (Rp)" oninput="formatInputRupiah(event)" required>
+                <button type="submit" class="btn-green" style="margin-top:10px; font-size:16px;">📈 Catat Pemasukan</button>
+            </form>
+            <hr style="margin:20px 0; border:0; border-top:1px dashed #ccc;">
+            <h4 style="margin-bottom:10px;">Riwayat Pemasukan</h4>
+            <div class="flex-between" style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee;">
+                <label style="display: flex; align-items: center; font-size: 13px; font-weight: bold; cursor: pointer;">
+                    <input type="checkbox" id="checkSemuaPemasukan" onchange="togglePilihSemuaPemasukan()" style="width: auto; margin: 0 10px 0 0;"> Pilih Semua
+                </label>
+                <button type="button" class="btn-red" style="width: auto; padding: 5px 10px; margin: 0; font-size: 12px;" onclick="hapusPemasukanTerpilih()">🗑 Hapus Massal</button>
+            </div>
+            <div id="listPemasukan"></div>
+        </div>
+
+        <div id="sub-log-mutasi" class="card" style="display:none;">
+            <button type="button" class="btn-outline btn-back" onclick="kembaliKeMenu()">⬅ Kembali</button>
+            <h4>📜 Riwayat Mutasi Dompet Pribadi & Kebaikan</h4>
+            <p class="text-small" style="margin-bottom:10px;">Mencatat otomatis setiap perubahan saldo Dompet Pribadi dan Dompet Kebaikan: tanggal, hari, dan jam.</p>
+            <div id="listLogMutasi"></div>
         </div>
 
         <div id="sub-grafik" class="card" style="display:none;">
@@ -1232,6 +1267,7 @@
     <option value="Kas Fisik">Kategori: Kas Fisik (Tunai)</option>
     <option value="Bank Digital">Kategori: Bank / Saldo Digital</option>
     <option value="Pribadi">💼 Kategori: Dompet Pribadi (Uang Jajan)</option>
+    <option value="Kebaikan">🤲 Kategori: Dompet Kebaikan (Wakaf/Amal)</option>
 </select>
                 <input type="text" inputmode="numeric" id="saldoAwalDompet" placeholder="Saldo Awal Tercatat (Rp)" oninput="formatInputRupiah(event)" required>
                 <button type="submit" class="btn-green">➕ Tambah Dompet</button>
@@ -1458,6 +1494,7 @@
 
 <!-- Panggilan ke file Javascript Eksternal -->
 <script src="app.js"></script>
+<script src="struk.js"></script>
 
 <script>
     // Pendaftaran Service Worker agar aplikasi bisa diinstal (PWA)
